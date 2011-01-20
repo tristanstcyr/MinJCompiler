@@ -9,7 +9,9 @@ open System.Reflection
 (* Thrown when an assertion fails. This is caught by RunAllTests. *)
 exception AssertionException of string
 
-let Assert m exp = if not exp then raise(AssertionException(m))
+let Fail m = raise(AssertionException(m))
+
+let Assert m exp = if not exp then Fail(m)
 
 (* Runs all functions in a class as tests. Some reflection stuff here,
    not really interesting. *)

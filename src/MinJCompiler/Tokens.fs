@@ -8,8 +8,8 @@ type Location = {
     Col: int;
 }
 
-let OriginLocation = {Row=0;Col=0;}
-let AdvanceRow l = {Row = l.Row + 1; Col = 0}
+let OriginLocation = {Row=1;Col=1;}
+let AdvanceRow l = {Row = l.Row + 1; Col = 1}
 let AdvanceCol l = {l with Col = l.Col + 1}
 
 (* Lets define some base token types that are useful for any language *)

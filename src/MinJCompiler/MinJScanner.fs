@@ -7,26 +7,56 @@ module private MinJStateMachine =
     open Tokens
     open MinJTokens
 
-    (* Define sets that are used by the active patterns below for pattern matching 
-       All Sets are based on binary trees and therefore offer fast access time *)
+    
+
+    /// Types of the tokens in MinJ
+    type CharType = 
+        | Letter | TerminalChar | Digit | Space | NewLine 
+        | Plus | Minus | Mul | Div | Mod
+        | Percent | Eq | Gt | Lt | Other | Ampersand | Pipe | SQuote | Eof
+    
+    (* Define sets that are used by the active patterns below for pattern matching. 
+        All Sets are based on binary trees and therefore offer fast access time *)
     let identifierChars = Set.ofList (['a'..'z'] @ ['A'..'Z'] @ ['$'; '_'])
     let digits = Set.ofList ['0'..'9']
     let terminals = Set.ofList ['('; ')'; ';'; ','; '['; ']'; '{'; '}'; '.']
-    let whiteSpace = Set.ofList [' '; '\n'; '\t'; '\r']
-    let newLines = Set.ofList ['\r'; '\n']
+    let whiteSpace = Set.ofList [' '; '\t'; '\r']
     let numOps = Set.ofList ['+'; '-'; '*'; '%']
 
-    (* Actives patterns for matching groups of characters. Active patterns
-       Are used to enhance pattern matching. *)
-    let Contains s c = if Set.contains c s then Some() else None
-    let (|IsEmpty|_|) a = if Seq.isEmpty a then Some() else None
-    let (|Letter|_|) c = Contains identifierChars c
-    let (|Terminal|_|) c = Contains terminals c
-    let (|Digit|_|) c = Contains digits c
-    let (|Space|_|) c = Contains whiteSpace c
-    let (|NewLine|_|) c = Contains newLines c
-    let (|NumOp|_|) c = Contains numOps c
+    /// Actives patterns for matching groups of characters. Active patterns
+    /// are used to enhance pattern matching.
+    let (|ContainedIn|_|) s c = if Set.contains c s then Some(ContainedIn) else None
+
+    /// Precomputed array of character where indices map to CharTypes
+    let charTypeArrayMap = 
+        Array.init 127 <| fun i -> 
+            match char(i) with
+                | ContainedIn identifierChars -> Letter
+                | ContainedIn terminals -> TerminalChar
+                | ContainedIn digits -> Digit
+                | ContainedIn whiteSpace -> Space
+                | '\n' -> NewLine
+                | '+' -> Plus
+                | '-' -> Minus
+                | '*' -> Mul
+                | '/' -> Div
+                | '=' -> Eq
+                | '>' -> Gt
+                | '<' -> Lt
+                | '&' -> Ampersand
+                | '|' -> Pipe
+                | ''' -> SQuote
+                | '%' -> Mod
+                | '\u0004' -> Eof
+                | _ -> Other
     
+    let GetCharType (c : char) = 
+        let intValue = int(c)
+        if intValue >= (charTypeArrayMap.Length) then
+            Other
+        else
+            charTypeArrayMap.[intValue]
+
     (* Returns an identifier or keyword token depending
        if it matches with what is in the keyword set *)
     let IdentifierOrToken t l =
@@ -35,9 +65,8 @@ module private MinJStateMachine =
         else
             Identifier(t, l) :> Token
 
-    (* Creates the MinJ lexer state machine. See documentation for a graphic
-       representation of the machine. Look at just the code might not make thing really clear.   
-     *)
+    /// Creates the MinJ lexer state machine. See documentation for a graphic
+    /// representation of the machine. Look at just the code might not make thing really clear.
     let MinJStateMachine =
         
         (* Define the states *)
@@ -55,11 +84,11 @@ module private MinJStateMachine =
         let comment = State(false)
 
         let identifier = State(true)
-        identifier.TokenProducer <- fun s l -> IdentifierOrToken s l;
+        identifier.TokenProducer <- fun s l -> IdentifierOrToken s l
 
         let or0 = State(true)
         let or1 = State(true)
-        or1.TokenProducer <- fun s l -> LogOp("||", l) :> Token;
+        or1.TokenProducer <- fun s l -> LogOp("||", l) :> Token
 
         let notEqual0 = State(true)
 
@@ -77,62 +106,63 @@ module private MinJStateMachine =
         and1.TokenProducer <- fun s l -> LogOp("&&", l) :> Token
 
         let digit = State(true)
-        digit.TokenProducer <- fun s l -> Number(s, l) :> Token
+        digit.TokenProducer <- CreateNumber
 
         let charConst0 = State(true)
         let charConst1 = State(true)
         let charConst2 = State(true)
-        charConst2.TokenProducer <- fun s l -> CharConst(s, l) :> Token
+        charConst2.TokenProducer <- CreateCharConst
 
         (* Define transitions *)
         root.Transition <- fun c ->
-            match c with
-                | Space             -> Some root
-                | NumOp             -> Some numOp
+            match GetCharType c with
+                | Space | NewLine   -> Some root
+                | Plus | Minus 
+                | Mul | Mod         -> Some numOp
                 | Letter            -> Some identifier
-                | '/'               -> Some div
-                | '|'               -> Some or0
-                | '<' | '>'         -> Some rel0
-                | '&'               -> Some and0
+                | Div               -> Some div
+                | Pipe              -> Some or0
+                | Lt | Gt           -> Some rel0
+                | Ampersand         -> Some and0
                 | Digit             -> Some digit
-                | '''               -> Some charConst0
-                | '='               -> Some assign
-                | Terminal          -> Some terminal
+                | SQuote            -> Some charConst0
+                | Eq                -> Some assign
+                | TerminalChar      -> Some terminal
                 | _                 -> None
         div.Transition <- fun c ->
-            match c with
-                | '/'                -> Some comment
-                | _                  -> None
+            match GetCharType c with
+                | Div                   -> Some comment
+                | _                     -> None
         comment.Transition <- fun c ->
-            match c with
-                | '\n' | '\u0004'    -> Some root
-                | _                  -> Some comment
+            match GetCharType c with
+                | NewLine | Eof         -> Some root
+                | _                     -> Some comment
         or0.Transition <- fun c ->
-            match c with
-                | '|'               -> Some or1
-                | _                 -> None
+            match GetCharType c with
+                | Pipe                  -> Some or1
+                | _                     -> None
         identifier.Transition <- fun c ->
-            match c with
-                | Letter | Digit    -> Some identifier
-                | _                 -> None
+            match GetCharType c with
+                | Letter | Digit        -> Some identifier
+                | _                     -> None
         notEqual0.Transition <- fun c ->
-            match c with
-                | '='               -> Some rel1
-                | _ -> None
+            match GetCharType c with
+                | Eq                    -> Some rel1
+                | _                     -> None
         assign.Transition <- fun c ->
-            match c with
-                | '='               -> Some rel1
+            match GetCharType c with
+                | Eq                    -> Some rel1
                 | _ -> None
         rel0.Transition <-  fun c ->
-            match c with
-                | '='               -> Some rel1
-                | _                 -> None
+            match GetCharType c with
+                | Eq                    -> Some rel1
+                | _                     -> None
         and0.Transition <- fun c ->
-            match c with
-                | '&'               -> Some and1
-                | _                 -> None
+            match GetCharType c with
+                | Ampersand             -> Some and1
+                | _                     -> None
         digit.Transition <- fun c ->
-            match c with
+            match GetCharType c with
                 | Digit             -> Some digit
                 | _                 -> None
         charConst0.Transition <- fun c->
@@ -140,13 +170,13 @@ module private MinJStateMachine =
                 | '''               -> None
                 | _                 -> Some charConst1
         charConst1.Transition <- fun c ->
-            match c with
-                | '''               -> Some charConst2
-                | _                 -> None
+            match GetCharType c with
+                | SQuote               -> Some charConst2
+                | _                 -> Some charConst1
 
         root
 
 open MinJStateMachine
 
-(* Function that takes a sequence of chars and returns a sequence of Tokens *)
+/// Tokenizes a sequence of chars
 let Tokenize chars = Tokenize MinJStateMachine chars

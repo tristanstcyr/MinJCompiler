@@ -76,11 +76,15 @@ let Tokenize (rootState: State) (characters : IEnumerable<char>) =
 
                 (* If the state is final, we can produce a token *)
                 if currentState.IsFinal then
-                            
-                    yield  MakeToken currentState
+     
+                    let token = MakeToken currentState
+                    yield token
                     currentToken := []
-                    yield! Scan rootState
-                        
+                    (* Only continue if the token is not an error *)
+                    match token with
+                        | :? Error -> ()
+                        | _ -> yield! Scan rootState
+                
                 else
                     (* It's not final, we've got only part of a token or an invalid character *)
                     yield MakeError("Unexpected character " + c.ToString())
