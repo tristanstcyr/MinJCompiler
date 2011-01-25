@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MinJCompiler", "MinJCompiler\MinJCompiler.fsproj", "{323325B1-7907-49AA-8BE6-433B17E3D693}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MinJCompilerTests", "MinJCompilerTests\MinJCompilerTests.fsproj", "{119589DE-E6C3-41AF-BD79-C818394B1FD6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -13,6 +15,10 @@ Global
 		{323325B1-7907-49AA-8BE6-433B17E3D693}.Debug|x86.Build.0 = Debug|x86
 		{323325B1-7907-49AA-8BE6-433B17E3D693}.Release|x86.ActiveCfg = Release|x86
 		{323325B1-7907-49AA-8BE6-433B17E3D693}.Release|x86.Build.0 = Release|x86
+		{119589DE-E6C3-41AF-BD79-C818394B1FD6}.Debug|x86.ActiveCfg = Debug|x86
+		{119589DE-E6C3-41AF-BD79-C818394B1FD6}.Debug|x86.Build.0 = Debug|x86
+		{119589DE-E6C3-41AF-BD79-C818394B1FD6}.Release|x86.ActiveCfg = Release|x86
+		{119589DE-E6C3-41AF-BD79-C818394B1FD6}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

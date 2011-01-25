@@ -1,13 +1,13 @@
-﻿module ScannerTests
-open Tokens
-open MinJTokens
-open MinJScanner
+﻿/// All tests for the MinJ scanner
+module ScannerTests
+
+open Scanner
+open MinJ
 open System
 open System.Diagnostics
 open TestFramework
 
-let Consume tokens = for token in tokens do ()
-
+/// Compares two tokens
 let Compare (result : Token) (expected : Token) = 
     if not (result.ToString() = expected.ToString()) then
         let message = sprintf "Tokens were different: got \"%s\" expected \"%s\"" (result.ToString()) (expected.ToString())
@@ -16,19 +16,21 @@ let Compare (result : Token) (expected : Token) =
         let message = sprintf "Tokens were of different type: got \"%s\" expected \"%s\"" (result.GetType().Name) (expected.GetType().Name)
         raise <| AssertionException(message)
 
+/// Verifies only the types of the tokens generated
 let CheckTokenType input expected =
     let tokens = Tokenize input
     let zip = Seq.zip tokens expected
     for (result, expected) in zip do
         Assert "Token types were different" (result.GetType() = expected)
 
+/// Verifies the types and values of generated tokens
 let CheckTokens  input (expected : Token list) = 
     let tokens = Tokenize input |> Seq.toList
     Assert "Insufficient tokens extracted" (tokens.Length = Seq.length expected)
     for result, expected in Seq.zip tokens expected do
         Compare result expected
 
-(* Some mock location *)
+/// Some mock location
 let l = OriginLocation
 
 let largeText = 
@@ -64,11 +66,12 @@ let largeText =
     {
     {"
 
+/// Contains the tests for MinJ, see the documentation for details.
 type ScannerTests() =
     
     static member TestIdentifierIsTokenizedWithSpaces = CheckTokens " hello " [Identifier("hello", l)]
 
-    static member TestIdentifierIsTokenizedNoSpaces = CheckTokens " hello " [Identifier("hello", l)]
+    static member TestIdentifierIsTokenizedNoSpaces = CheckTokens "hello" [Identifier("hello", l)]
     static member TestTwoIdentifiersAreTokenized = CheckTokens " he llo " [Identifier("he", l); Identifier("llo", l)]
     
     static member TestDivision = CheckTokens " / " [NumOp ("/", l)]
@@ -106,9 +109,9 @@ type ScannerTests() =
         CheckTokens "92473246238746238746287364872346283468273462834682364782648" 
             [Error("Number constants cannot exceed " + string(Int64.MaxValue), l)]
 
-    static member TestKeywords = 
-        let keywordsString  = String.Join(" ", keywords)
-        CheckTokens keywordsString (List.map (fun str -> Keyword(str, l) :> Token) (Set.toList (keywords)))
+    static member TestKeywords =  
+        let keywordsString  = String.Join(" ", Set.toArray keywords)
+        CheckTokens keywordsString (List.map (fun str -> Keyword(str, l) :> Token) (Set.toList (keywords))) 
 
     static member TestIncompleteToken =
         CheckTokenType "&" [typeof<Error>]
@@ -139,8 +142,9 @@ type ScannerTests() =
         let seconds = float32(sw.Elapsed.Milliseconds) / 1000.0f
         printfn "or %f chars / second" (float32((!input).Length) / seconds)
         printfn "or %f tokens / second" (float32(tokens.Length) / seconds)
-   
+
+/// Runs all tests for the MinJ lexer
 let RunAllTests() = 
     RunAllTests typeof<ScannerTests>
     Console.WriteLine("\nAll tests have been run")
-    Console.Read()
+    ignore(Console.Read())

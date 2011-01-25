@@ -1,33 +1,21 @@
 ﻿module MinJTokens
 open Tokens
-open System
 
 (* ll* *)
 type Identifier(str, startloc : Location) =
     inherit Token(str, startloc)
 
 (* [0-9]* *)
-type Number(value : Int64, startloc : Location) =
-    inherit Token(string(value), startloc)
-let CreateNumber (s : string) l =
-    try
-        Number(int64(s), l) :> Token
-    with | :? OverflowException -> 
-        Error("Number constants cannot exceed " + string(Int64.MaxValue), l) :> Token
+type Number(str, startloc : Location) =
+    inherit Token(str, startloc)
 
 (* = *)
 type Assign(startloc : Location) = 
     inherit Token("=", startloc)
 
 (* 'c' *)
-type CharConst(c : char, startloc : Location) = 
-    inherit Token("'" + string(char) + "'", startloc)
-let CreateCharConst (s : string) l =
-    let noQuotes = s.Substring(1, s.Length - 2)
-    try
-        CharConst(char(noQuotes), l) :> Token
-    with | :? FormatException ->
-        Error("Invalid character format " + noQuotes, l) :> Token
+type CharConst(str, startloc : Location) = 
+    inherit Token(str, startloc)
 
 (* A single character terminal symbol *)
 type Terminal(str, startloc : Location) = 

@@ -1,0 +1,2 @@
+﻿open ScannerTests
+RunAllTests()

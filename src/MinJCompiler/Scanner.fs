@@ -1,44 +1,66 @@
-﻿module Scanner
-open Tokens
+﻿/// A language agnostic scanner.
+module Scanner
 open System.Collections.Generic
 
-(* Essentially a function that takes a char and gives
-   the next state or no state if there's no match *)
+/// Defines a location in a file
+type Location = {
+    /// The line number
+    Row: int;
+    Col: int;
+}
+
+(* Some helpers for Location *)
+/// The beginning of a file
+let OriginLocation = {Row=1;Col=1;}
+let AdvanceRow l = {Row = l.Row + 1; Col = 1}
+let AdvanceCol l = {l with Col = l.Col + 1}
+
+(* Lets define some base token types that are useful for any language *)
+/// Base of all tokens
+type Token(str : string, startloc : Location) = 
+    member this.StartLocation with get() = startloc
+    override this.ToString() = str
+/// Represents an error during the lexing phase
+type Error(str, startloc : Location) =
+    inherit Token(str, startloc)
+type Keyword(str, startloc : Location) = 
+    inherit Token(str, startloc)
+
+/// A transition that goes nowhere regardless of the character
+let NullTransition x = None
+
+/// Essentially a function that takes a char and gives
+/// the next state or no state if there's no match
 type Transition = char -> State option  
 
-(* A functional produces a token given a string. Different
-   states may have different producers *)
+/// Produces a token given a string. Different states may have different producers
 and TokenProducer = string -> Location -> Token
 
-(* Represents a state in a state machine *)
-and State(isDefiningToken : bool) =
-    let mutable transition : Transition = fun a -> None
-    let mutable tokenProducer : TokenProducer option = None
+/// Represents a state in the scanner process
+and State(isDefiningToken : bool, tokenProducer : TokenProducer option, transition : Transition) =
    
-    (* True if this state produces a token *)
+    /// True if this state produces a token
     member this.IsFinal with get() = tokenProducer.IsSome
 
-    (* True if this state participates in the definition of a token *)
+    /// True if this state participates in the definition of a token
     member this.IsDefiningToken with get() = isDefiningToken
     
-    (* Setter for the transition function. This function
-       Determines what the next state will be in function of the character *)
-    member this.Transition with set(nt) = transition <- nt
-    
-    (* Returns the next state in function of the character *)
+    /// Returns the next state in function of the character or None
     member this.NextState c = transition c
-
-    (* Setter for a function that produces a token for this state *)
-    member this.TokenProducer with set(tp) = tokenProducer <- Some(tp)
     
-    (* Produces a token given the token's string value and its location *)
+    /// Produces a token given the token's string value and its location
     member this.ProduceToken(s, l) = 
         if tokenProducer.IsNone then
-            raise(System.Exception("Not token producer was defined"))
+            raise(System.Exception("State is not final an cannot produce a token"))
         tokenProducer.Value s l
+
+    new(isDefiningToken, transition) = State(isDefiningToken, None, transition)
+    new(isDefiningToken, producer : TokenProducer) = State(isDefiningToken, Some producer, NullTransition)
+    new(isDefiningToken, producer : TokenProducer, transition) = State(isDefiningToken, Some producer, transition)
+    new(isDefiningToken) = State(isDefiningToken, None, NullTransition)
         
-(* Function that takes a sequence of chars and a state machine
-   and returns a sequence of Tokens *)
+/// Function that takes a sequence of chars and a state machine
+/// and returns a sequence of Tokens *)
 let Tokenize (rootState: State) (characters : IEnumerable<char>) =
     
     (* Some mutable variables *)
@@ -46,15 +68,15 @@ let Tokenize (rootState: State) (characters : IEnumerable<char>) =
     let tokenStart = ref OriginLocation
     let currentToken = ref []
 
-    (* Some helper functions *)
-    let JoinChars c = List.fold (fun s c -> (s + c.ToString())) "" c
-    (* Helper function for creating tokens from the current state *)
+    /// Helper function for creating tokens from the current state
     let MakeToken (state : State) =
-        state.ProduceToken(List.rev !currentToken |> JoinChars, !tokenStart)
-    (* Helper funtion for create error tokens *)
-    let MakeError msg = Error(msg, !location) :> Token
-    (* Helper funciton for advancing the location depending
-        on the current character *)
+        let JoinChars c = List.fold (fun s c -> (s + c.ToString())) "" c
+        let token = state.ProduceToken(List.rev !currentToken |> JoinChars, !tokenStart)
+        currentToken := []
+        token
+    
+    /// Helper funciton for advancing the location depending
+    /// on the current character
     let AdvanceLocation c =
         location := match c with
                     | '\n' -> AdvanceRow !location
@@ -62,10 +84,13 @@ let Tokenize (rootState: State) (characters : IEnumerable<char>) =
             
     (* Setup the enumerator. Manipulating this enumerator creates some side-effects. *)
     let enum = characters.GetEnumerator()
-    if enum.MoveNext() then
-
-        (* This function does most of the work. It recursively
-            calls itself and yields tokens as is travels across states *)
+    
+    if not <| enum.MoveNext() then
+        (* The char sequence was empty *)
+        Seq.empty
+    else
+        /// Most of the work is done here. The funciton recursively
+        /// calls itself and yields tokens as is travels across states
         let rec Scan (currentState : State) = seq {
                     
             let c = enum.Current
@@ -79,29 +104,27 @@ let Tokenize (rootState: State) (characters : IEnumerable<char>) =
      
                     let token = MakeToken currentState
                     yield token
-                    currentToken := []
-                    (* Only continue if the token is not an error *)
+                    
                     match token with
-                        | :? Error -> ()
-                        | _ -> yield! Scan rootState
-                
+                        | :? Error -> () // Do not continue
+                        | _ -> yield! Scan rootState // Continue
+                    
                 else
                     (* It's not final, we've got only part of a token or an invalid character *)
-                    yield MakeError("Unexpected character " + c.ToString())
+                    yield Error("Unexpected character " + c.ToString(), !location) :> Token
                     
-            else (* We can move to another state *)
+            else (* We can move to the next state *)
                         
                 let nextState = nextState.Value
 
                 (* If the next state is defining a token, then
-                    we mark this as the start of the next token if
-                    the previous state was not so.
-
-                    We also start recording that token
-                    *)
+                   we mark this as the start of the next token if
+                   the previous state was not so. *)
                 if nextState.IsDefiningToken then
                     if not currentState.IsDefiningToken then
                         tokenStart := !location
+
+                    (* Record this character, it's part of token *)
                     currentToken := c :: !currentToken
                         
                 else 
@@ -114,10 +137,10 @@ let Tokenize (rootState: State) (characters : IEnumerable<char>) =
                             
                     (* We're done with the stream of characters.
                         Case 1: If we haven't collected any character.
-                        We just return.
+                        Just return.
                                
                         Case 2: If we're on a final state and we have characters.
-                        We generate a token.
+                        Generate a token.
                                
                         Case 3: If we're not on a final state but we have characters,
                         that's a problem. It means we only have part of a token.
@@ -126,15 +149,15 @@ let Tokenize (rootState: State) (characters : IEnumerable<char>) =
                         if nextState.IsFinal then
                             yield MakeToken nextState
                         else
-                            yield MakeError("Unexpected end of file")
+                            yield Error("Unexpected end of file", !location) :> Token
                 else
 
                     (* We ain't done yet! 
-                        Advance the location and recursively yield
-                        the remaining tokens *)
+                       Advance the location and recursively yield
+                       the remaining tokens *)
                     AdvanceLocation c
                     yield! Scan nextState
         }
+
+        (* Start with the root case *)
         Scan rootState
-    else
-        Seq.empty

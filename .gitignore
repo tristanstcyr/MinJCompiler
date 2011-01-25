@@ -1,3 +1,5 @@
 
 /src/MinJCompiler/bin
 /src/MinJCompiler/obj
+/src/MinJCompilerTests/obj
+/src/MinJCompilerTests/bin
