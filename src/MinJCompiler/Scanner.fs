@@ -25,6 +25,8 @@ type Error(str, startloc : Location) =
     inherit Token(str, startloc)
 type Keyword(str, startloc : Location) = 
     inherit Token(str, startloc)
+/// A single character terminal symbol
+type Terminal(str, startloc : Location) = inherit Token(str, startloc)
 
 /// A transition that goes nowhere regardless of the character
 let NullTransition x = None

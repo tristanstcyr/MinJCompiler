@@ -7,8 +7,6 @@ open System
 
 /// ll*
 type Identifier(str, startloc : Location) = inherit Token(str, startloc)
-/// A single character terminal symbol
-type Terminal(str, startloc : Location) = inherit Token(str, startloc)
 /// dd*
 type NumOp(str, startloc : Location) = inherit Token(str, startloc)
 /// Relation operators >= > < <= !=
