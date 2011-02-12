@@ -17,16 +17,13 @@ let AdvanceCol l = {l with Col = l.Col + 1}
 
 (* Lets define some base token types that are useful for any language *)
 /// Base of all tokens
-type Token(str : string, startloc : Location) = 
+type Token(startloc : Location) = 
     member this.StartLocation with get() = startloc
-    override this.ToString() = str
+
 /// Represents an error during the lexing phase
-type Error(str, startloc : Location) =
-    inherit Token(str, startloc)
-type Keyword(str, startloc : Location) = 
-    inherit Token(str, startloc)
-/// A single character terminal symbol
-type Terminal(str, startloc : Location) = inherit Token(str, startloc)
+type Error(message, startloc : Location) =
+    inherit Token(startloc)
+    override this.ToString() = message
 
 /// A transition that goes nowhere regardless of the character
 let NullTransition x = None
@@ -163,3 +160,13 @@ let Tokenize (rootState: State) (characters : IEnumerable<char>) =
 
         (* Start with the root case *)
         Scan rootState
+
+
+open System.IO
+/// Opens a file into a sequence of chars.
+/// This is where some of the magic of loading characters on demand happens.
+let ToCharSeq path = seq {
+    use reader = new StreamReader(File.OpenRead(path))
+    while not reader.EndOfStream do
+        yield char(reader.Read())
+} 

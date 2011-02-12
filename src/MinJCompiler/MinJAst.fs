@@ -1,11 +1,11 @@
-﻿module Parser.Production
+﻿module MinJ.Ast
 open Scanner
 open MinJ
 
 (*
 type Program = Declaration option * MainFunction * FunctionDefinition option
 and Declaration = 
-        | Declaration of TypeReference * identifier 
+        | Declaration of TypeReference * Identifier 
         | ArrayDeclaration of TypeReference * Identifier * Number 
 and MainFunction = Declaration * Statement list
 and FunctionDefinition = TypeReference * Identifier * Parameter list * Declaration option * Statement list
@@ -42,6 +42,4 @@ and Primitive =
     | NumberPrimitive of Number
     | CharPrimitive of CharConst
     | ParenPrimitive of Expression
-    | MethodInvocation of Identifier 
-
-*)
+    | MethodInvocation of Identifier *)

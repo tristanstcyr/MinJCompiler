@@ -10,14 +10,6 @@ open System.Diagnostics
 open Scanner
 open MinJ
 
-/// Opens a file into a sequence of chars.
-/// This is where some of the magic of loading characters on demand happens.
-let ToCharSeq path = seq {
-    use reader = new StreamReader(File.OpenRead(path))
-    while not reader.EndOfStream do
-        yield char(reader.Read())
-} 
-
 /// Writes the tokens and their attributes to a file as a table.
 let WriteAttributes path (tokens : Token seq) = 
     File.Delete(path)
@@ -34,45 +26,11 @@ let WriteAttributes path (tokens : Token seq) =
             <| token.ToString())
     writer.WriteLine(sprintf "\nGenerated %i tokens." <| Seq.length tokens)
 
-/// Writes the listing to a file.
-let WriteListing sourcePath listingPath tokens = 
-
-    /// Function that filters out tokens not on a line number.
-    /// Not very efficient, but this is just for presentation anyway.
-    let GetTokensOnLine lineNum = 
-        Seq.filter (fun (t : Token) -> t.StartLocation.Row = lineNum) tokens
-    
-    File.Delete(listingPath)
-    
-    (* Open the source file and the listing file *)
-    use sourceReader = new StreamReader(File.OpenRead(sourcePath))
-    use listingWriter = new StreamWriter(File.OpenWrite(listingPath))
-    
-    /// Prints the listing, line by line.
-    let rec PrintListing lineNum = 
-        (* As we read lines of text from the source,
-           we grab tokens that correspond to that line
-           and print them under the line. This is exactly
-           as it is done in the book *)
-        if not sourceReader.EndOfStream then
-            (* Print the line of source *)
-            listingWriter.WriteLine(sprintf "%i: %s" lineNum (sourceReader.ReadLine()))
-            let foundError = ref false
-            for token in GetTokensOnLine lineNum do
-                match token with :? Error -> foundError := true | _ -> ()
-                listingWriter.WriteLine(sprintf "\t%i: %s\tname = %s" 
-                    <|lineNum <| token.GetType().Name <| token.ToString())
-            (* Only continue if an error is not found *)
-            if not !foundError then
-                PrintListing <| lineNum + 1
-
-    PrintListing 1
-
 /// Entry point with command line params parsed
 let Run inputPath attributePath listingPath =
     (* To our stuff *)
     let sw = new Stopwatch()
-    let tokens = inputPath |> ToCharSeq |> Tokenize |> Seq.toList
+    let tokens = inputPath |> ToCharSeq |> tokenize |> Seq.toList
     sw.Stop()
 
     (* Print a helpful message *)

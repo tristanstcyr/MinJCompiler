@@ -7,6 +7,9 @@ open System
 open System.Diagnostics
 open TestFramework
 
+/// Some mock location
+let l = OriginLocation
+
 /// Compares two tokens
 let Compare (result : Token) (expected : Token) = 
     if not (result.ToString() = expected.ToString()) then
@@ -18,20 +21,20 @@ let Compare (result : Token) (expected : Token) =
 
 /// Verifies only the types of the tokens generated
 let CheckTokenType input expected =
-    let tokens = Tokenize input
+    let tokens = tokenize input
     let zip = Seq.zip tokens expected
     for (result, expected) in zip do
         Assert "Token types were different" (result.GetType() = expected)
 
 /// Verifies the types and values of generated tokens
 let CheckTokens  input (expected : Token list) = 
-    let tokens = Tokenize input |> Seq.toList
+    let tokens = tokenize input |> Seq.toList
     Assert "Insufficient tokens extracted" (tokens.Length = Seq.length expected)
     for result, expected in Seq.zip tokens expected do
         Compare result expected
 
-/// Some mock location
-let l = OriginLocation
+let CheckTerminal input tt =
+    CheckTokens input [Terminal(tt, l)]
 
 let largeText = 
     "// example of a code in MinJ
@@ -74,32 +77,11 @@ type ScannerTests() =
     static member TestIdentifierIsTokenizedNoSpaces = CheckTokens "hello" [Identifier("hello", l)]
     static member TestTwoIdentifiersAreTokenized = CheckTokens " he llo " [Identifier("he", l); Identifier("llo", l)]
     
-    static member TestDivision = CheckTokens " / " [NumOp ("/", l)]
-    static member TestPlus = CheckTokens " + " [NumOp ("+", l)]
-    static member TestMinus = CheckTokens " - " [NumOp ("-", l)]
-    static member TestMod = CheckTokens " % " [NumOp ("%", l)]
-   
-    static member TestCommentNewLine = CheckTokens " // world\n hello" [Identifier ("hello", l)]
-    
-    static member TestCommentEof = CheckTokens " // end of the file!" []
-    
-    static member TestLogicalOr = CheckTokens "||" [LogOp ("||", l)]
-    static member TestLogicalAnd = CheckTokens "&&" [LogOp ("&&", l)]
-    
-    static member TestGreaterThan = CheckTokens ">" [RelOp (">", l)]
-    static member TestGreaterEqualThan = CheckTokens ">=" [RelOp (">=", l)]
-    static member TestLessThan = CheckTokens "<" [RelOp ("<", l)]
-    static member TestEqualLessThan = CheckTokens "<=" [RelOp ("<=", l)]
-    
-    static member TestAssign = CheckTokens "=" [Assign(l)]
-    
-    static member TestEquals = CheckTokens "==" [RelOp ("==", l)]
-    
     static member TestSingleDigitNumber = CheckTokens "3" [Number(3L, l)]
 
     static member TestMultiDigitNumber = CheckTokens "3345Hello" [Number(3345L, l); Identifier("Hello", l)]
     
-    static member TestConstantChar = CheckTokens "'c'=='b'" [CharConst('c', l);RelOp("==", l);CharConst('b', l)]
+    static member TestConstantChar = CheckTokens "'c'=='b'" [CharConst('c', l);CreateIdentifierOrToken "==" l;CharConst('b', l)]
     
     static member TestUnicodeCharConst = CheckTokens "'Ń'" [CharConst('Ń', l)]
 
@@ -109,9 +91,15 @@ type ScannerTests() =
         CheckTokens "92473246238746238746287364872346283468273462834682364782648" 
             [Error("Number constants cannot exceed " + string(Int64.MaxValue), l)]
 
-    static member TestKeywords =  
-        let keywordsString  = String.Join(" ", Set.toArray keywords)
-        CheckTokens keywordsString (List.map (fun str -> Keyword(str, l) :> Token) (Set.toList (keywords))) 
+    static member TestTerminals =
+        let (input, tokens) = Map.fold (fun state strValue token -> 
+                                    match state with 
+                                        | (str, tokens) -> (strValue+" "+str, Terminal(token, l) :> Token :: tokens)) 
+                                        ("", []) terminalMap
+        CheckTokens input tokens
+
+        //let keywordsString  = String.Join(" ", Set.toArray terminalMap)
+        //CheckTokens keywordsString (List.map (fun str -> Terminal(str, l) :> Token) (Set.toList (keywords))) 
 
     static member TestIncompleteToken =
         CheckTokenType "&" [typeof<Error>]
@@ -124,7 +112,7 @@ type ScannerTests() =
     static member TestCommentEnd = CheckTokens "//\nIdentifier" [Identifier("Identifier", l)]
  
     static member TestLargeText =
-        let tokens = Tokenize largeText
+        let tokens = tokenize largeText
         for t in tokens do
             match t with
                 | :? Error ->  Fail <| "Found error token " + t.ToString()
@@ -136,7 +124,7 @@ type ScannerTests() =
             input := !input + !input
         let sw = Stopwatch()
         sw.Start()
-        let tokens = (Tokenize !input) |> Seq.toList
+        let tokens = (tokenize !input) |> Seq.toList
         sw.Stop()
         printfn "%i tokens scanned in %i ms" tokens.Length sw.Elapsed.Milliseconds
         let seconds = float32(sw.Elapsed.Milliseconds) / 1000.0f

@@ -6,28 +6,24 @@ open Scanner
 open System
 
 /// ll*
-type Identifier(str, startloc : Location) = inherit Token(str, startloc)
-/// dd*
-type NumOp(str, startloc : Location) = inherit Token(str, startloc)
-/// Relation operators >= > < <= !=
-type RelOp(str, startloc : Location) = inherit Token(str, startloc)
-/// Logical operators && ||
-type LogOp(str, startloc : Location) = inherit Token(str, startloc)
+type Identifier(str, startloc : Location) = 
+    inherit Token(startloc)
+    override this.ToString() = str
 
-/// [0-9]
+/// [0-9]*
 type Number(value : Int64, startloc : Location) =
-    inherit Token(value.ToString(), startloc)
+    inherit Token(startloc)
     member this.Value with get() = value
     /// Creates a CharConst or an error token if the number overflows
     static member Create (s : string) l =
         try Number(int64(s), l) :> Token
         with | :? OverflowException -> 
             Error(sprintf "Number constants cannot exceed %d" Int64.MaxValue, l) :> Token
-/// =
-type Assign(startloc : Location) = inherit Token("=", startloc)
+    override this.ToString() = value.ToString()
+
 /// 'c'
 type CharConst(value : char, startloc : Location) = 
-    inherit Token(sprintf "\'%c\'" value, startloc)
+    inherit Token(startloc)
     member this.Value with get() = value
     /// Creates a CharConst or an error token if the character
     /// form is invalid.
@@ -37,14 +33,81 @@ type CharConst(value : char, startloc : Location) =
         with | :? FormatException ->
             Error("Invalid character format " + noQuotes, l) :> Token
 
-/// All keywords in the language in a set for fast lookup
-let keywords = Set.ofList ["main"; "int"; "char"; "void"; "if"; 
-    "else"; "while"; "return"; "System"; "in"; "out"; "class"; "new"]
+    override this.ToString() = sprintf "\'%c\'" value
+
+type TerminalType =
+    | Main | IntT | CharT | VoidT | If | Else | While | Return | System | In | Out | Class | New
+    | Or | And | Assign | Equal | Greater | Lesser | GreaterEqual | LesserEqual | Not | NotEqual 
+    | Add | Sub | Div | Mul | Mod | OParen | CParen | SemiCol | Comma | OSquare | CSquare
+    | OCurly | CCurly | Period
+    with 
+        override this.ToString() =
+            match this with
+                | Main -> "main"
+                | IntT -> "int"
+                | CharT -> "char"
+                | VoidT -> "void"
+                | If -> "if"
+                | Else -> "else"
+                | While -> "while"
+                | Return -> "return"
+                | System -> "System"
+                | In -> "in"
+                | Out -> "out"
+                | Class -> "class"
+                | New -> "new"
+            
+                | Not -> "!"
+                | Or -> "||"
+                | And -> "&&"
+            
+                | Assign -> "="
+
+                | Equal -> "=="
+                | Greater -> ">"
+                | Lesser -> "<"
+                | GreaterEqual -> ">="
+                | LesserEqual -> "<="
+                | NotEqual -> "!="
+
+                | Add -> "+"
+                | Sub -> "-"
+                | Mul -> "*"
+                | Div -> "/"
+                | Mod -> "%"
+
+                | OParen -> "("
+                | CParen  -> ")"
+                | SemiCol -> ";"
+                | Comma -> ","
+                | OSquare -> "["
+                | CSquare -> "]"
+                | OCurly -> "{"
+                | CCurly -> "}"
+                | Period -> "."
+
+/// A single character terminal symbol
+type Terminal(ttype : TerminalType, startloc : Location) = 
+    inherit Token(startloc)
+    member this.Type with get() = ttype
+    override this.ToString() = ttype.ToString()
+
+let terminalMap = 
+    let allTokens = [Main; IntT; CharT; VoidT; If; Else; While; Return; System; In; Out; Class; New
+       ; Or; And; Assign; Equal; Greater; Lesser; GreaterEqual; LesserEqual; Not; NotEqual 
+       ; Add; Sub; Div; Mul; Mod; OParen; CParen; SemiCol; Comma; OSquare; CSquare
+       ; OCurly; CCurly; Period]
+    List.fold (fun map t -> Map.add <| t.ToString() <| t <| map) Map.empty allTokens
+
+let createTerminal str location = 
+    try
+        Terminal(terminalMap.[str], location) :> Token
+    with | e -> 
+        raise e
 
 /// Returns an identifier or keyword token depending
 /// if it matches with what is in the keyword set
 let CreateIdentifierOrToken t l =
-    if keywords.Contains (t) then
-        Keyword(t, l) :> Token
-    else
-        Identifier(t, l) :> Token
+    match Map.tryFind t terminalMap with
+        | Some(token) -> Terminal(token, l) :> Token
+        | _ -> Identifier(t, l) :> Token

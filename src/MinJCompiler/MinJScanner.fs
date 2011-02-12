@@ -8,12 +8,28 @@ open Scanner
 
 /// All types of characters that can be encountered.
 type private CharType = 
-        | Letter | TerminalChar | Digit | Space | NewLine 
-        | Plus | Minus | Mul | Div | Mod
-        | Percent | Eq | Gt | Lt | Other | Ampersand | Pipe | SQuote | Eof
+        | Letter 
+        | TerminalChar 
+        | Digit 
+        | Space 
+        | NewLine 
+        | Cross 
+        | Dash 
+        | Star 
+        | Slash
+        | Percent 
+        | Eq 
+        | Gt 
+        | Lt 
+        | Ampersand 
+        | Pipe 
+        | SQuote 
+        | Bang
+        | Eof
+        | Other
 
 /// Tokenizes a sequence of chars
-let Tokenize chars = 
+let tokenize chars = 
     
     /// The MinJ lexer state machine. See documentation for a graphic
     /// representation of the machine. Looking at just the code might not make thing really clear.
@@ -43,17 +59,18 @@ let Tokenize chars =
                         | ContainedIn digits -> Digit
                         | ContainedIn whiteSpace -> Space
                         | '\n' -> NewLine
-                        | '+' -> Plus
-                        | '-' -> Minus
-                        | '*' -> Mul
-                        | '/' -> Div
+                        | '+' -> Cross
+                        | '-' -> Dash
+                        | '*' -> Star
+                        | '/' -> Slash
                         | '=' -> Eq
                         | '>' -> Gt
                         | '<' -> Lt
+                        | '!' -> Bang
                         | '&' -> Ampersand
                         | '|' -> Pipe
                         | ''' -> SQuote
-                        | '%' -> Mod
+                        | '%' -> Percent
                         | '\u0004' -> Eof
                         | _ -> Other
 
@@ -75,10 +92,11 @@ let Tokenize chars =
         let rec root = new State(false, fun c ->
             match getCharType c with
                 | Space | NewLine   -> Some root
-                | Plus | Minus 
-                | Mul | Mod         -> Some numOp
+                | Cross | Dash
+                | Star | Percent         -> Some numOp
+                | Bang              -> Some notOp
                 | Letter            -> Some identifier
-                | Div               -> Some div
+                | Slash             -> Some div
                 | Pipe              -> Some or0
                 | Lt | Gt           -> Some rel0
                 | Ampersand         -> Some and0
@@ -88,14 +106,19 @@ let Tokenize chars =
                 | TerminalChar      -> Some terminal
                 | _                -> None)
         
-        and div = State(true, (fun s l -> NumOp("/", l) :> Token), fun c -> 
+        and notOp = State(true, (fun s l -> Terminal(Not, l) :> Token), fun c ->
             match getCharType c with
-                | Div -> Some comment
+                | Eq -> Some rel0
+                | _ -> None)
+
+        and div = State(true, (fun s l -> Terminal(Div, l) :> Token), fun c -> 
+            match getCharType c with
+                | Slash -> Some comment
                 | _ -> None)
         
-        and terminal = State(true, fun s l -> Terminal(s, l) :> Token)
+        and terminal = State(true, createTerminal)
         
-        and numOp = State(true, (fun s l -> NumOp(s, l) :> Token))
+        and numOp = State(true, createTerminal)
         
         and comment = State(false, fun c -> 
             match getCharType c with
@@ -112,30 +135,28 @@ let Tokenize chars =
             match getCharType c with
                 | Pipe -> Some or1
                 | _ -> None)
-        and or1 = State(true, fun s l -> LogOp("||", l) :> Token)
+        and or1 = State(true, createTerminal)
         
         and notEqual0 = State(true, fun c ->
             match getCharType c with
                 | Eq -> Some rel1
                 | _ -> None)
         
-        and assign = State(true, (fun s l -> Assign(l) :> Token), fun c -> 
+        and assign = State(true, createTerminal, fun c -> 
+            match getCharType c with
+                | Eq -> Some rel1
+                | _ -> None)        
+        and rel0 = State(true, createTerminal, fun c ->
             match getCharType c with
                 | Eq -> Some rel1
                 | _ -> None)
-        and relProducer = fun s l -> RelOp(s, l) :> Token
-        
-        and rel0 = State(true, relProducer, fun c ->
-            match getCharType c with
-                | Eq -> Some rel1
-                | _ -> None)
-        and rel1 = State(true, relProducer)
+        and rel1 = State(true, createTerminal)
         
         and and0 = State(true, fun c ->
             match getCharType c with
                 | Ampersand -> Some and1
                 | _ -> None)
-        and and1 = State(true, fun s l -> LogOp("&&", l) :> Token)
+        and and1 = State(true, createTerminal)
         
         and digit = State(true, (fun s l -> Number.Create s l), fun c ->
             match getCharType c with
@@ -156,3 +177,39 @@ let Tokenize chars =
     
     (* Do the tokenization *)
     stateMachine |> Tokenize <| chars
+
+open System.IO
+
+/// Writes the listing to a file.
+let WriteListing sourcePath listingPath tokens = 
+
+    /// Function that filters out tokens not on a line number.
+    /// Not very efficient, but this is just for presentation anyway.
+    let GetTokensOnLine lineNum = 
+        Seq.filter (fun (t : Token) -> t.StartLocation.Row = lineNum) tokens
+    
+    File.Delete(listingPath)
+    
+    (* Open the source file and the listing file *)
+    use sourceReader = new StreamReader(File.OpenRead(sourcePath))
+    use listingWriter = new StreamWriter(File.OpenWrite(listingPath))
+    
+    /// Prints the listing, line by line.
+    let rec PrintListing lineNum = 
+        (* As we read lines of text from the source,
+           we grab tokens that correspond to that line
+           and print them under the line. This is exactly
+           as it is done in the book *)
+        if not sourceReader.EndOfStream then
+            (* Print the line of source *)
+            listingWriter.WriteLine(sprintf "%i: %s" lineNum (sourceReader.ReadLine()))
+            let foundError = ref false
+            for token in GetTokensOnLine lineNum do
+                match token with :? Error -> foundError := true | _ -> ()
+                listingWriter.WriteLine(sprintf "\t%i: %s\tname = %s" 
+                    <|lineNum <| token.GetType().Name <| token.ToString())
+            (* Only continue if an error is not found *)
+            if not !foundError then
+                PrintListing <| lineNum + 1
+
+    PrintListing 1
