@@ -35,6 +35,7 @@ type CharConst(value : char, startloc : Location) =
 
     override this.ToString() = sprintf "\'%c\'" value
 
+/// An enumeration of all the possible types for a terminal.
 type TerminalType =
     | Main | IntT | CharT | VoidT | If | Else | While | Return | System | In | Out | Class | New
     | Or | And | Assign | Equal | Greater | Lesser | GreaterEqual | LesserEqual | Not | NotEqual 

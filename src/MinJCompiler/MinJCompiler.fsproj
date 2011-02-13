@@ -34,21 +34,24 @@
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <DocumentationFile>bin\Release\MinJCompiler.XML</DocumentationFile>
-    <StartArguments>..\..\..\..\resources\input.txt ..\..\..\..\resources\attribute.txt ..\..\..\..\resources\listing.txt</StartArguments>
+    <StartArguments>..\..\..\..\testdata\parser\unexpectedToken\input.txt ..\..\..\..\testdata\parser\unexpectedToken\rules.txt ..\..\..\..\testdata\parser\unexpectedToken\listing.txt</StartArguments>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <ItemGroup>
+    <Compile Include="Tokens.fs" />
+    <Compile Include="IListingWriter.fs" />
+    <Compile Include="NullListingWriter.fs" />
+    <Compile Include="ListingWriter.fs" />
     <Compile Include="Scanner.fs" />
     <Compile Include="MinJScannerTokens.fs" />
+    <Compile Include="MinJScannerStateMachine.fs" />
     <Compile Include="MinJScanner.fs" />
-    <Compile Include="MinJScannerCli.fs" />
     <Compile Include="MinJAst.fs" />
     <Compile Include="MinJParser.fs" />
     <Compile Include="MinJParserCli.fs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="FSharp.PowerPack, Version=2.0.0.0, Culture=neutral, PublicKeyToken=a19089b1c74d0809" />
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />

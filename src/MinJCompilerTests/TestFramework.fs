@@ -15,6 +15,12 @@ let Fail m = raise(AssertionException(m))
 /// Test fails if exp is false
 let Assert m exp = if not exp then Fail(m)
 
+let Catch exceptionType f =
+    try
+        f()
+    with
+        | e when e.GetType() = exceptionType -> ()
+
 /// Runs all functions in a class as tests. Some reflection stuff here,
 /// not really interesting.
 let RunAllTests (testClass : Type) =

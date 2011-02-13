@@ -6,6 +6,8 @@ open MinJ
 open System
 open System.Diagnostics
 open TestFramework
+open System.IO
+open System.Collections.Generic
 
 /// Some mock location
 let l = OriginLocation
@@ -19,19 +21,25 @@ let Compare (result : Token) (expected : Token) =
         let message = sprintf "Tokens were of different type: got \"%s\" expected \"%s\"" (result.GetType().Name) (expected.GetType().Name)
         raise <| AssertionException(message)
 
+let tokenize input =
+    createMinJScanner input <| NullListingWriter()
+
 /// Verifies only the types of the tokens generated
 let CheckTokenType input expected =
-    let tokens = tokenize input
-    let zip = Seq.zip tokens expected
-    for (result, expected) in zip do
-        Assert "Token types were different" (result.GetType() = expected)
+    use tokens = tokenize input
+    for expected in expected do
+        if not <| tokens.MoveNext() then
+            Fail "Less tokens than expected"
+        Assert "Token types were different" (tokens.Current.GetType() = expected)
+        
 
 /// Verifies the types and values of generated tokens
 let CheckTokens  input (expected : Token list) = 
-    let tokens = tokenize input |> Seq.toList
-    Assert "Insufficient tokens extracted" (tokens.Length = Seq.length expected)
-    for result, expected in Seq.zip tokens expected do
-        Compare result expected
+    use tokens = tokenize input
+    for expected in expected do
+        if not <| tokens.MoveNext() then
+            Fail "Less tokens than expected"
+        Compare tokens.Current expected
 
 let CheckTerminal input tt =
     CheckTokens input [Terminal(tt, l)]
@@ -69,7 +77,7 @@ let largeText =
     {
     {"
 
-/// Contains the tests for MinJ, see the documentation for details.
+/// Contains the tests for the MinJ scanner, see the documentation for details.
 type ScannerTests() =
     
     static member TestIdentifierIsTokenizedWithSpaces = CheckTokens " hello " [Identifier("hello", l)]
@@ -112,10 +120,10 @@ type ScannerTests() =
     static member TestCommentEnd = CheckTokens "//\nIdentifier" [Identifier("Identifier", l)]
  
     static member TestLargeText =
-        let tokens = tokenize largeText
-        for t in tokens do
-            match t with
-                | :? Error ->  Fail <| "Found error token " + t.ToString()
+        let tokens = (tokenize largeText)
+        while tokens.MoveNext() do
+            match tokens.Current with
+                | :? Error as e ->  Fail <| "Found error token " + e.ToString()
                 | _ -> ()
 
     static member PerfTest =
@@ -124,12 +132,15 @@ type ScannerTests() =
             input := !input + !input
         let sw = Stopwatch()
         sw.Start()
-        let tokens = (tokenize !input) |> Seq.toList
+        let tokens = (tokenize !input)
+        let count = ref 0
+        while tokens.MoveNext() do
+            count := !count + 1
         sw.Stop()
-        printfn "%i tokens scanned in %i ms" tokens.Length sw.Elapsed.Milliseconds
+        printfn "%i tokens scanned in %i ms" !count sw.Elapsed.Milliseconds
         let seconds = float32(sw.Elapsed.Milliseconds) / 1000.0f
         printfn "or %f chars / second" (float32((!input).Length) / seconds)
-        printfn "or %f tokens / second" (float32(tokens.Length) / seconds)
+        printfn "or %f tokens / second" (float32(!count) / seconds)
 
 /// Runs all tests for the MinJ lexer
 let RunAllTests() = 

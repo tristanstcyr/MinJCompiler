@@ -1,0 +1,129 @@
+0: class Example 
+	class
+		Type=Terminal
+		Loc=1, 1
+	Example
+		Type=Identifier
+		Loc=1, 7
+
+1: { 
+	{
+		Type=Terminal
+		Loc=2, 1
+
+2:     int[] field = new int[10];
+	int
+		Type=Terminal
+		Loc=3, 5
+	[
+		Type=Terminal
+		Loc=3, 8
+	]
+		Type=Terminal
+		Loc=3, 9
+	field
+		Type=Identifier
+		Loc=3, 11
+	=
+		Type=Terminal
+		Loc=3, 17
+	new
+		Type=Terminal
+		Loc=3, 19
+	int
+		Type=Terminal
+		Loc=3, 23
+	[
+		Type=Terminal
+		Loc=3, 26
+	10
+		Type=Number
+		Loc=3, 27
+	]
+		Type=Terminal
+		Loc=3, 29
+	;
+		Type=Terminal
+		Loc=3, 30
+
+3:     void main() 
+	void
+		Type=Terminal
+		Loc=4, 5
+	main
+		Type=Terminal
+		Loc=4, 10
+	(
+		Type=Terminal
+		Loc=4, 14
+	)
+		Type=Terminal
+		Loc=4, 15
+
+4:     { 
+	{
+		Type=Terminal
+		Loc=5, 5
+
+5:         int y;
+	int
+		Type=Terminal
+		Loc=6, 9
+	y
+		Type=Identifier
+		Loc=6, 13
+	;
+		Type=Terminal
+		Loc=6, 14
+
+6:         while (y == 0)
+	while
+		Type=Terminal
+		Loc=7, 9
+	(
+		Type=Terminal
+		Loc=7, 15
+	y
+		Type=Identifier
+		Loc=7, 16
+	==
+		Type=Terminal
+		Loc=7, 18
+	0
+		Type=Number
+		Loc=7, 21
+	)
+		Type=Terminal
+		Loc=7, 22
+
+7:         {
+	{
+		Type=Terminal
+		Loc=8, 9
+
+8:             if (y != 1)h
+	if
+		Type=Terminal
+		Loc=9, 13
+	(
+		Type=Terminal
+		Loc=9, 16
+	y
+		Type=Identifier
+		Loc=9, 17
+	!=
+		Type=Terminal
+		Loc=9, 19
+	1
+		Type=Number
+		Loc=9, 22
+	)
+		Type=Terminal
+		Loc=9, 23
+	h
+		Type=Identifier
+		Loc=9, 24
+
+Syntax Error: Encountered an unexpected token { at Line=10, Column=13
+Concluded in 0.000 seconds
+

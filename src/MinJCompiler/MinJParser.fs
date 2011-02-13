@@ -1,34 +1,56 @@
 ﻿module MinJ.Parser
 open Scanner
 open System
-  
-exception UnexpectedToken of Token
-exception UnexpectedEnd
+open System.IO
+open System.Collections.Generic
 
+/// Thrown when a token was encountered but another token was expected.
+/// This indicates that there is a syntax error in the input.
+exception UnexpectedToken of Token
+/// Thrown when the end of the source arrived earlier than expected.
+exception UnexpectedEnd
+/// Thrown by the parser when it encounters an Error token.
+exception TokenizationError of Error
+
+/// Instances of this class form a hierarchy of rules that can be used
+/// for printing the rules that were using 
 type Rule = | Rule of string * Rule option list
 
+// Add a method to print the Rule class to the TextWriter class
+type public TextWriter with
+    member public this.Write(rule : Rule) =
+        let rec printRule depth rule =
+            match rule with
+                | Some(Rule(str, subrules)) ->
+                    if depth > 0 then 
+                        for i in [1..depth] do 
+                            this.Write "  "
+                    this.WriteLine str
+                    for subrule in subrules do
+                        printRule (depth + 1) subrule 
+                | None -> ()
+        printRule 0 <| Some(rule)
+
+(* Some active patterns for matching tokens *)
 let private (|Terminal|_|) tt (token : Token) =
         match token with
             | :? Terminal as t when t.Type = tt -> Some(Terminal)
             | _ -> None
-
 let private (|CharConst|_|) (token : Token) =
     match token with
         | :? CharConst as cc -> Some(cc)
         | _ -> None
-
 let private (|Number|_|) (token : Token) =
     if token :? Number then
         Some(token :?> Number)
     else
         None
-
 let private (|Identifier|_|) (token : Token) = 
     if token :? Identifier then
         Some(token :?> Identifier)
     else
         None
-
+/// Matches any of a list of terminal types
 let private (|AnyTerminalOf|_|) strs token =
     let rec matchTerminal strs =
         if List.isEmpty strs then 
@@ -40,26 +62,19 @@ let private (|AnyTerminalOf|_|) strs token =
                 | _ -> matchTerminal <| List.tail strs
     matchTerminal strs
 
-let private parseIf condition f =
-        if Option.isSome condition then
-            f()
-        else
-            None
 
 /// The MinJ Parser.
-type Parser(tokens : seq<Token>) =
-    let input = tokens.GetEnumerator()
-    do input.MoveNext() |> ignore
-
+type Parser(scanner : IEnumerator<Token>) =
+  
     let terminal ttyp = 
-        match input.Current with
+        match scanner.Current with
             | :? Terminal as cu when cu.Type = ttyp -> Some()
             | _ -> None
 
     /// Returns an option with Some if the current lookahead
     /// is a terminal and matches with anything in str
     let terminals types =
-        match input.Current with
+        match scanner.Current with
             | :? Terminal as current ->
                 let rec matchList str =
                     match str with
@@ -71,8 +86,8 @@ type Parser(tokens : seq<Token>) =
     
     /// Returns the current token is its type matches tokenType
     let matchType (tokenType : Type) =
-        if tokenType.IsInstanceOfType(input.Current) then
-            Some(input.Current)
+        if tokenType.IsInstanceOfType(scanner.Current) then
+            Some(scanner.Current)
         else
             None
     
@@ -80,31 +95,54 @@ type Parser(tokens : seq<Token>) =
     let orRaise result =
         match result with
             | Some(d) -> d
-            | None -> raise <| UnexpectedToken(input.Current)
+            | None -> raise <| UnexpectedToken(scanner.Current)
 
-    /// Moves the input stream to the next token no matter what
+    /// Raises an exception if the current token is an Error.
+    let checkError() =
+        if scanner.Current :? Error then
+            raise <| TokenizationError(scanner.Current :?> Error)
+
+    /// Moves the scanner.stream to the next token no matter what
     /// lookahead token happens to be there.
     let pop() = 
-        match box input.Current with
-            | null -> raise <| UnexpectedEnd
-            | _ -> input.MoveNext() |> ignore
+        if scanner.MoveNext() then
+            checkError()
     
+    let raiseUnexpected() =
+        match scanner.Current with
+            | :? End -> raise <| UnexpectedEnd
+            | _ -> raise <| UnexpectedToken scanner.Current
+
+    /// Pops the End token or raises an expection
+    let popEnd() =
+        match scanner.Current with
+            | :? End ->
+                pop()
+            | _ ->
+                raise <| UnexpectedToken(scanner.Current)
+    
+    /// Pops a terminal of a specific type or raises an exception
     let popTerminal tt =
         terminal tt |> orRaise
         pop()
 
+    /// Pops all terminals in a list or raises an exception
     let popTerminals tts = for s in tts do popTerminal s
 
+    /// Pops an identifier or raises an exception
     let popIdentifier() = 
         let i = matchType typeof<Identifier> |> orRaise
         pop()
         i :?> Identifier
 
+    /// Pops a number or raises an exception
     let popNumber() =
         let n = matchType typeof<Number> |> orRaise
         pop()
         n :?> Number
-
+      
+    /// Runs a parsing function as long as the lookahead
+    /// returns true.
     let kleeneClosure lookahead parser =
         let rec kleeneClosure rules =
             if lookahead() then
@@ -113,7 +151,18 @@ type Parser(tokens : seq<Token>) =
                 rules
         kleeneClosure []
             
+    /// Returns a function that returns true if the next tokens are
+    /// terminals and match any of the terminals in the list
     let lookaheadTerminals strs = fun () -> (terminals strs).IsSome
+
+    (* Initiate the scanner *)
+    do scanner.MoveNext() |> ignore
+    (* Check if the first token is an error *)
+    do checkError()
+
+    (* The following methods have 1-1 to correspondance with the rules of the grammar 
+       most of what is going on here is simple and very repetitive. All rules return
+       a rule of option. Rule form a hierarchy which are then used for printing. *)
 
     member this.ParsePrg() =
         popTerminal Class
@@ -123,8 +172,7 @@ type Parser(tokens : seq<Token>) =
         let mainF = this.ParseMainF()
         let funcDef = kleeneClosure (lookaheadTerminals [IntT;CharT]) this.ParseFunctDef
         popTerminal CCurly
-        if box input.Current <> null then
-            raise <| UnexpectedToken input.Current
+        popEnd()
         Some<|Rule("< prg > −− > class i {{< decl >} < main f > {< funct def >}", 
             decls @ mainF :: funcDef)
     
@@ -171,7 +219,6 @@ type Parser(tokens : seq<Token>) =
     member this.ParseParList() =
         match terminal CParen with
             | Some(_) ->
-                pop();
                 Some<|Rule("<par_list> --> e", [])
             | None ->
                 let pType1 = this.ParsePType()
@@ -190,7 +237,7 @@ type Parser(tokens : seq<Token>) =
         Some<|Rule("<p_type> --> <type> <p_type'>", [typ;pTypeP])
         
     member this.ParsePTypeP() =
-        match input.Current with
+        match scanner.Current with
             | Terminal OSquare ->
                 pop()
                 popTerminal CSquare
@@ -199,7 +246,7 @@ type Parser(tokens : seq<Token>) =
                 Some<|Rule("<p_type'> --> e", [])
 
     member this.ParseType() =
-        match input.Current with
+        match scanner.Current with
             | Terminal IntT -> 
                 pop()
                 Some(Rule("<type> --> int", []))
@@ -207,10 +254,10 @@ type Parser(tokens : seq<Token>) =
                 pop()
                 Some(Rule("<type> --> char", []))
             | _ ->
-                raise <| UnexpectedToken input.Current
+                raise <| UnexpectedToken scanner.Current
 
     member this.ParseSt() =
-        match input.Current with
+        match scanner.Current with
             | Terminal OCurly ->
                 let compSt = this.ParseCompSt()
                 Some(Rule("<st> --> <comp_st>", [compSt]))
@@ -245,10 +292,10 @@ type Parser(tokens : seq<Token>) =
                 pop()
                 Some(Rule("<st> --> ;", []))
             | _ ->
-                raise <| UnexpectedToken input.Current
+                raiseUnexpected()
     
     member this.ParseStP() =
-        match input.Current with
+        match scanner.Current with
             | AnyTerminalOf [OSquare;Assign] ->
                 let asgSt = this.ParseAsgSt()
                 Some(Rule("<st'> --> <asg_st>;", [asgSt]))
@@ -267,7 +314,7 @@ type Parser(tokens : seq<Token>) =
     member this.ParseStList() =
         let st = this.ParseSt()
         let rest = kleeneClosure (fun () ->  
-            (terminals [OParen;If;Else;While;Return;System;SemiCol]).IsSome || input.Current :? Identifier) this.ParseSt
+            (terminals [OParen;If;Else;While;Return;System;SemiCol]).IsSome || scanner.Current :? Identifier) this.ParseSt
         Some<|Rule("<st_list> --> <st> {<st>}", st::rest)
 
     member this.ParseAsgSt() =
@@ -278,7 +325,7 @@ type Parser(tokens : seq<Token>) =
         Some(Rule("<asg_st> --> <index> = <asg_st'>", [index;asgStP]))
         
     member this.ParseAsgStP() =
-        match input.Current with
+        match scanner.Current with
             | Terminal System ->
                 pop()
                 popTerminals [Period;In;Period]
@@ -295,7 +342,7 @@ type Parser(tokens : seq<Token>) =
         Some(Rule("<var> --> i <index>;", [index]))
 
     member this.ParseIndex() =
-        match input.Current with
+        match scanner.Current with
             | Terminal OSquare ->
                 pop()
                 let exp = this.ParseExp()
@@ -310,7 +357,7 @@ type Parser(tokens : seq<Token>) =
         Some(Rule("<l_exp> --> <rel_exp><l_exp'>", [relExp;lexpP]))
 
     member this.ParseLExpP() =
-        match input.Current with
+        match scanner.Current with
             | AnyTerminalOf [And;Or] ->
                 let logop = this.ParseLogOp()
                 let lexp = this.ParseLExp()
@@ -319,13 +366,15 @@ type Parser(tokens : seq<Token>) =
                 Some(Rule("<l_exp'> --> e", []))
 
     member this.ParseLogOp() =
-        match input.Current with
+        match scanner.Current with
             | Terminal And ->
+                pop()
                 Some(Rule("<log_op> --> &&", []))
             | Terminal Or ->
+                pop()
                 Some(Rule("<log_op> --> ||", []))
             | _ ->
-                raise <| UnexpectedToken input.Current
+                raiseUnexpected()
 
     member this.ParseRelExp() =
         popTerminal OParen
@@ -336,16 +385,16 @@ type Parser(tokens : seq<Token>) =
         Some(Rule("<rel_exp> --> (<exp><rel_exp><exp>)", [expleft;relop;expright]))
 
     member this.ParseRelOp() =
-        match input.Current with
+        match scanner.Current with
             | AnyTerminalOf [Greater;Lesser;Equal;LesserEqual;GreaterEqual;Not;NotEqual] ->
-                let t = input.Current
+                let t = scanner.Current
                 pop()
                 Some(Rule("<rel_op> --> "+t.ToString(), []))
             | _ ->
-                raise <| UnexpectedToken input.Current
+                raiseUnexpected()
 
     member this.ParseExp() =
-        match input.Current with
+        match scanner.Current with
             | Terminal OParen
             | Identifier _
             | Number _
@@ -359,10 +408,10 @@ type Parser(tokens : seq<Token>) =
                 let expP = this.ParseExpP()
                 Some(Rule("<exp> --> - <term><exp'>", [term;expP]))
             | _ ->
-                raise <| UnexpectedToken input.Current
+                raiseUnexpected()
 
     member this.ParseExpP() =
-        match input.Current with
+        match scanner.Current with
             | AnyTerminalOf [Sub;Add] ->
                 let addOp = this.ParseAddOp()
                 let term = this.ParseTerm()
@@ -377,7 +426,7 @@ type Parser(tokens : seq<Token>) =
         Some(Rule("<term> --> <prim><term'>", [prim;termP]))
         
     member this.ParseTermP() =
-        match input.Current with
+        match scanner.Current with
             | AnyTerminalOf [Mul;Div;Mod] ->
                 let multOp = this.ParseMultOp()
                 let prim = this.ParsePrim()
@@ -387,7 +436,7 @@ type Parser(tokens : seq<Token>) =
                 Some(Rule("<term'> --> e", []))
 
     member this.ParsePrim() =
-        Some<| match input.Current with
+        Some<| match scanner.Current with
                 | Identifier i ->
                     pop()
                     let primP = this.ParsePrimP()
@@ -408,10 +457,10 @@ type Parser(tokens : seq<Token>) =
                     Rule("<prim> --> (<exp>)", [exp])
 
                 | _ ->
-                    raise <| UnexpectedToken input.Current
+                    raiseUnexpected()
 
     member this.ParsePrimP() =
-        match input.Current with
+        match scanner.Current with
             | Terminal OParen ->
                 pop()
                 let vlist = this.ParseVList()
@@ -423,28 +472,28 @@ type Parser(tokens : seq<Token>) =
                 Some(Rule("<prim> --> <index>", [index]))
     
     member this.ParseAddOp() =
-        match input.Current with
+        match scanner.Current with
             | AnyTerminalOf [Add;Sub] ->
-                let t = input.Current
+                let t = scanner.Current
                 pop()
                 Some(Rule("<add_op> --> "+t.ToString(), []))
 
             | _ ->
-                raise <| UnexpectedToken input.Current
+                raiseUnexpected()
 
     member this.ParseMultOp() =
-        match input.Current with
+        match scanner.Current with
             | AnyTerminalOf [Mul;Div;Mod] ->
-                let t = input.Current
+                let t = scanner.Current
                 pop()
                 Some(Rule("<add_op> --> "+t.ToString(), []))
 
             | _ ->
-                raise <| UnexpectedToken input.Current
+                raiseUnexpected()
 
     member this.ParseVList() =
         let elem = this.ParseElem()
-        match input.Current with
+        match scanner.Current with
             | Terminal Comma ->
                 let vlist = this.ParseVList()
                 Some(Rule("<vlist> --> <elem> , <v_list>", [elem;vlist]))
@@ -452,7 +501,7 @@ type Parser(tokens : seq<Token>) =
                 Some(Rule("<vlist> --> <elem>", [elem]))
 
     member this.ParseElem() =
-        match input.Current with
+        match scanner.Current with
             | Identifier i ->
                 pop()
                 let index = this.ParseIndex()
@@ -464,6 +513,8 @@ type Parser(tokens : seq<Token>) =
                 pop()
                 Some(Rule("<elem> --> n", []))
             | _ ->
-                raise <| UnexpectedToken input.Current
+                raiseUnexpected()
 
+/// Convenience function for calling the parser. This is equivalent to 
+/// Parser(tokens).ParsePrg().Value
 let parse tokens = Parser(tokens).ParsePrg().Value

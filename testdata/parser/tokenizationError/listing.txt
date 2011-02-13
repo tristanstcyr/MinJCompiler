@@ -1,0 +1,16 @@
+0: class Example 
+	class
+		Type=Terminal
+		Loc=1, 1
+	Example
+		Type=Identifier
+		Loc=1, 7
+
+1: { 
+	{
+		Type=Terminal
+		Loc=2, 1
+
+Tokenization error: Unexpected character ^ at Line=3, Column=9
+Concluded in 0.000 seconds
+
