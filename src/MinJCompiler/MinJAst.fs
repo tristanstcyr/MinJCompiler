@@ -1,45 +1,93 @@
-﻿module MinJ.Ast
-open Scanner
-open MinJ
+﻿namespace MinJ.Ast
 
-(*
-type Program = Declaration option * MainFunction * FunctionDefinition option
+open MinJ.Tokens
+open Scanner
+
+type PrimitiveType = IntType | CharType
+type MinJType =
+    | Primitive of PrimitiveType
+    | ArrayType of PrimitiveType
+
+type VariableAttributes = {
+    Type : MinJType;
+}
+
+type FunctionAttributes = {
+    ReturnType : MinJType;
+    ParameterTypes : MinJType list;
+}
+
+type FunctionIdentifier = | FunctionIdentifier of Identifier * FunctionAttributes option ref
+    with member this.Type with get() = match this with FunctionIdentifier(id, attributes) -> attributes.Value
+type VariableIdentifier = | VariableIdentifier of Identifier * VariableAttributes option ref
+    with member this.Type with get() = match this with VariableIdentifier(id, attributes) -> attributes.Value
+
+type Program =  
+    | Program of Declaration list * MainFunction * FunctionDefinition list
+
 and Declaration = 
-        | Declaration of TypeReference * Identifier 
-        | ArrayDeclaration of TypeReference * Identifier * Number 
-and MainFunction = Declaration * Statement list
-and FunctionDefinition = TypeReference * Identifier * Parameter list * Declaration option * Statement list
-and ParameterType =
-    | ParameterType of TypeReference
-    | ArrayParameterType of TypeReference
-and TypeReference = IntType | CharType
+        | VariableDeclaration of VariableIdentifier 
+        | ArrayDeclaration of VariableIdentifier * PrimitiveType * Number
+
+and MainFunction = 
+    | MainFunction of Declaration list * Statement list
+
+and FunctionDefinition = 
+    | FunctionDefinition of PrimitiveType * Identifier * Parameter list 
+        * Declaration list * Statement list
+
+and Parameter = | Parameter of VariableIdentifier
+    with member this.Type with get() = match this with | Parameter(id) -> id.Type
+
 and Statement = 
     | Block of Statement list 
     | AssignmentStatement of Assignment
     | IfElse of LogicalExpression * Statement * Statement
     | WhileStatement of LogicalExpression * Statement
     | ReturnStatement of Expression
-    | MethodInvocation of Element list
+    | MethodInvocationStatement of FunctionIdentifier * Element list
     | SystemOutInvocation of Element list
+    | EmptyStatement
+
 and Assignment = 
     | ExpressionAssignment of VariableReference * Expression
-    | SystemInAssignment of VariableReference * TypeReference
+    | SystemInAssignment of VariableReference * PrimitiveType
+
 and VariableReference =
-    | VariableReference of Identifier
-    | ArrayAccess of Identifier * Expression
+    | SimpleReference of VariableIdentifier
+    | ArrayAccess of VariableIdentifier * Expression
+
 and LogicalExpression =
-    | RelativeExpression of RelativeExpression
-    | LogicalExpression of RelativeExpression * LogOp * LogicalExpression
-and RelativeExpression = Expression * RelOp * Expression
+    | LogicalRelativeExpression of RelativeExpression
+    | AndExpression of RelativeExpression * LogicalExpression
+    | OrExpression of RelativeExpression * LogicalExpression
+
+and RelOperator = Lt | Gt | Eq | LtEq | GtEq | Not | NotEq
+
+and RelativeExpression = 
+    | RelativeExpression of Expression * RelOperator * Expression
+
 and Expression =
-    | Expression of Term * Addition option
-    | Negation of Expression
-and Addition = AddOperator * Term * Expression
-and Term = Primitive * Multiplication option
-and Multiplication = MulOp * Primitive * Addition
+    | Expression of Term * ExpressionPrime option
+    | Negation of Term * ExpressionPrime option
+
+and ExpressionPrime =
+    | AdditionExpP of Term * ExpressionPrime option
+    | SubstractionExpP of Term * ExpressionPrime option
+
+and Term = | Term of Primitive * TermP option
+
+and TermOp = MulOp | DivOp | ModOp
+and TermP = TermP of TermOp * Primitive * TermP option
+
 and Primitive =
-    | ArrayAccess of Identifier * Expression
+    | VariablePrimitive of VariableReference
     | NumberPrimitive of Number
     | CharPrimitive of CharConst
     | ParenPrimitive of Expression
-    | MethodInvocation of Identifier *)
+    | MethodInvocationPrimitive of FunctionIdentifier * Element list
+
+and Element =
+    | VariableElement of VariableIdentifier * Expression option
+    | NumberElement of Number
+    | CharConstElement of CharConst

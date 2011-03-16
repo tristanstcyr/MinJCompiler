@@ -1,2 +1,4 @@
-﻿open ScannerTests
+﻿module TestsMain
+open ParserIdentifierResolutionTests
+
 RunAllTests()

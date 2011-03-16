@@ -8,33 +8,27 @@ open System.Diagnostics
 
 /// Entry point with command line params parsed
 let Run inputPath rulesPath listingPath =
+
     (* Output our listing and attributes file *)
     File.Delete(listingPath)
     use listingOutput = new StreamWriter(File.OpenWrite(listingPath))
     use rulesOutput = new StreamWriter(File.OpenWrite(rulesPath))
 
+    let listingWriter = ListingWriter(listingOutput)
+    let scanner = createMinJScanner (ToCharSeq inputPath) listingWriter
+    let parser = Parser(scanner, rulesOutput, RuleLogger(rulesOutput))
+    
     (* Start a timer and do the work *)
     let sw = new Stopwatch()
-    try
-        let listingWriter = ListingWriter(listingOutput)
-        let scanner = createMinJScanner (ToCharSeq inputPath) listingWriter
-        let parser = Parser scanner
-        let root = parser.ParsePrg()
-        sw.Stop()
-        rulesOutput.Write(root.Value)
-        listingOutput.WriteLine("No errors encountered.");
-    with 
-        | UnexpectedToken(token) -> 
-            listingOutput.WriteLine(sprintf "Syntax Error: Encountered an unexpected token %s at Line=%d, Column=%d" 
-                <| token.ToString() <| token.StartLocation.Row <| token.StartLocation.Col);
-        | UnexpectedEnd -> 
-            listingOutput.WriteLine("Syntax error: Input ended too early")
-        | TokenizationError(e) ->
-            listingOutput.WriteLine(sprintf "Tokenization error: %s at Line=%d, Column=%d" 
-                <| e.ToString()
-                <| e.StartLocation.Row
-                <| e.StartLocation.Col)         
+    sw.Start()
+    let root, errors = parser.Parse()
     sw.Stop()
+
+    // Output the errors if any
+    if errors.Length = 0 then
+        listingOutput.WriteLine("No errors encountered.")
+    else
+        ErrorPrinter.print errors listingOutput
 
     listingOutput.WriteLine(sprintf "Concluded in %.3f seconds\n" <| float(sw.ElapsedMilliseconds) / float(1000))
 

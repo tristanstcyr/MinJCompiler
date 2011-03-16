@@ -2,13 +2,19 @@
 open Scanner
 open MinJ.Scanner
 open MinJ.Parser
+open MinJ.Tokens
+open MinJ
+
 open System
 open System.Diagnostics
 open TestFramework
 open System.IO
 
 let p str = 
-    new Parser(createMinJScanner str <| NullListingWriter())
+    let memStream = new StreamWriter(new MemoryStream())
+    let parser = new Parser(createMinJScanner str <| NullListingWriter(), memStream, RuleLogger(memStream))
+    parser.Init()
+    parser
 
 /// Contains the tests for the MinJ parser, see the documentation for details.
 type ScannerTests() =
@@ -37,8 +43,8 @@ type ScannerTests() =
     static member TestLExpSimple =          p("(a + b * b != 3)").ParseLExp()
     static member TestLExpComplex =         p("(a + b * b != 3) && (a != 3)").ParseLExp()
 
-    static member TestAsgStSystem =         p("[3] = System.in.int();").ParseAsgSt()
-    static member TestAsgStExp =            p("[3] = 1 + 3;").ParseAsgSt()
+    static member TestAsgStSystem =         p("[3] = System.in.int();").ParseAsgSt <| Identifier("a", OriginLocation)
+    static member TestAsgStExp =            p("[3] = 1 + 3;").ParseAsgSt <| Identifier("a", OriginLocation)
 
     static member TestCompSt =              p("{ ; }").ParseCompSt()
     

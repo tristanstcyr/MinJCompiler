@@ -46,6 +46,7 @@
     <Compile Include="TestFramework.fs" />
     <Compile Include="ScannerTests.fs" />
     <Compile Include="ParserTests.fs" />
+    <Compile Include="ParserIdentifierResolutionTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

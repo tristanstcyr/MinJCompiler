@@ -8,6 +8,7 @@ open System
 /// ll*
 type Identifier(str, startloc : Location) = 
     inherit Token(startloc)
+
     override this.ToString() = str
 
 /// [0-9]*
@@ -112,3 +113,35 @@ let CreateIdentifierOrToken t l =
     match Map.tryFind t terminalMap with
         | Some(token) -> Terminal(token, l) :> Token
         | _ -> Identifier(t, l) :> Token
+
+(* Some active patterns for matching tokens *)
+let (|Terminal|_|) tt (token : Token) =
+        match token with
+            | :? Terminal as t when t.Type = tt -> Some(Terminal)
+            | _ -> None
+let (|CharConst|_|) (token : Token) =
+    match token with
+        | :? CharConst as cc -> Some(cc)
+        | _ -> None
+let (|Number|_|) (token : Token) =
+    if token :? Number then
+        Some(token :?> Number)
+    else
+        None
+let (|Identifier|_|) (token : Token) = 
+    if token :? Identifier then
+        Some(token :?> Identifier)
+    else
+        None
+
+/// Matches any of a list of terminal types
+let (|AnyTerminalOf|_|) strs token =
+    let rec matchTerminal strs =
+        if List.isEmpty strs then 
+            None
+        else
+            let str = List.head strs
+            match token with
+                | Terminal str -> Some(AnyTerminalOf)
+                | _ -> matchTerminal <| List.tail strs
+    matchTerminal strs
