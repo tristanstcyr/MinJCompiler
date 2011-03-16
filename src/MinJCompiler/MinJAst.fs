@@ -1,4 +1,8 @@
-﻿namespace MinJ.Ast
+﻿(* Abstract syntax tree of the MinJ grammar. 
+   These nodes do not map 1:1 with the grammar rules to simplify compilation 
+   and type checking later one 
+*)
+namespace MinJ.Ast
 
 open MinJ.Tokens
 open Scanner
@@ -9,35 +13,37 @@ type MinJType =
     | ArrayType of PrimitiveType
 
 type VariableAttributes = {
+    Name : string;
     Type : MinJType;
 }
 
 type FunctionAttributes = {
+    Name : string;
     ReturnType : MinJType;
     ParameterTypes : MinJType list;
 }
 
-type FunctionIdentifier = | FunctionIdentifier of Identifier * FunctionAttributes option ref
-    with member this.Type with get() = match this with FunctionIdentifier(id, attributes) -> attributes.Value
-type VariableIdentifier = | VariableIdentifier of Identifier * VariableAttributes option ref
-    with member this.Type with get() = match this with VariableIdentifier(id, attributes) -> attributes.Value
+type FunctionIdentifier = | FunctionIdentifier of FunctionAttributes option ref
+    with member this.Attributes with get() = match this with FunctionIdentifier(attributes) -> attributes.Value.Value
+type VariableIdentifier = | VariableIdentifier of VariableAttributes option ref
+    with member this.Attributes with get() = match this with VariableIdentifier(attributes) -> attributes.Value.Value
 
 type Program =  
-    | Program of Declaration list * MainFunction * FunctionDefinition list
+    | Program of VariableDeclaration list * MainFunction * FunctionDefinition list
 
-and Declaration = 
-        | VariableDeclaration of VariableIdentifier 
-        | ArrayDeclaration of VariableIdentifier * PrimitiveType * Number
+and VariableDeclaration = 
+    | NonArrayVariableDeclaration of VariableIdentifier
+    | ArrayVariableDeclaration of VariableIdentifier * PrimitiveType * int64
 
 and MainFunction = 
-    | MainFunction of Declaration list * Statement list
+    | MainFunction of VariableDeclaration list * Statement list
 
 and FunctionDefinition = 
     | FunctionDefinition of PrimitiveType * Identifier * Parameter list 
-        * Declaration list * Statement list
+        * VariableDeclaration list * Statement list
 
 and Parameter = | Parameter of VariableIdentifier
-    with member this.Type with get() = match this with | Parameter(id) -> id.Type
+    with member this.Attributes with get() = match this with | Parameter(id) -> id.Attributes
 
 and Statement = 
     | Block of Statement list 
@@ -53,14 +59,14 @@ and Assignment =
     | ExpressionAssignment of VariableReference * Expression
     | SystemInAssignment of VariableReference * PrimitiveType
 
-and VariableReference =
-    | SimpleReference of VariableIdentifier
-    | ArrayAccess of VariableIdentifier * Expression
+/// A non-null expression indicates array access
+and VariableReference = | VariableReference of VariableIdentifier * Expression option
+
+and LogicalOperator = | OrOp | AndOp
 
 and LogicalExpression =
     | LogicalRelativeExpression of RelativeExpression
-    | AndExpression of RelativeExpression * LogicalExpression
-    | OrExpression of RelativeExpression * LogicalExpression
+    | LogicalExpression of RelativeExpression * LogicalOperator * LogicalExpression
 
 and RelOperator = Lt | Gt | Eq | LtEq | GtEq | Not | NotEq
 
@@ -78,7 +84,7 @@ and ExpressionPrime =
 and Term = | Term of Primitive * TermP option
 
 and TermOp = MulOp | DivOp | ModOp
-and TermP = TermP of TermOp * Primitive * TermP option
+and TermP = | TermP of TermOp * Primitive * TermP option
 
 and Primitive =
     | VariablePrimitive of VariableReference
@@ -88,6 +94,6 @@ and Primitive =
     | MethodInvocationPrimitive of FunctionIdentifier * Element list
 
 and Element =
-    | VariableElement of VariableIdentifier * Expression option
+    | VariableElement of VariableReference
     | NumberElement of Number
     | CharConstElement of CharConst

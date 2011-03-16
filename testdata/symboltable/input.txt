@@ -1,0 +1,41 @@
+class Example 
+{ 
+    int[] field = new int[10];
+    void main() 
+    { 
+        int y;
+	int y;
+	int i;
+	int z;
+	int[] a = new int[3];
+        while (y == 0)
+        {
+            if (y != 1)
+            {
+                foo(y);
+		bar(y);
+                return 3;
+            }
+            else
+            {
+                if (i == 'x')
+                {
+                    i = System.in.int();
+                    System.out(i);
+                }
+                else
+                {
+                    z = 'é';
+                    y = 4 + 5 / 5 % 4 + 3 - 223428;
+                    x = a[3 * 4 + 5];
+                }
+            }
+        }
+    } 
+
+    int foo(int x)
+    {
+        System.out(x);
+    }
+}
+

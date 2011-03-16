@@ -1,11 +1,16 @@
-﻿module MinJ.Translator
+﻿module MinJ.Translation
 open MinJ.Ast
 
 open System.IO
+open System
 
 exception TypeCheckError of string
 
-type Translator(output : TextWriter) =
+let translate (output : TextWriter) prg =
+
+    let checkArgumentTypes (types1 : MinJType list) (types2 : MinJType list) =
+        if types1 <> types2 then
+           raise <| TypeCheckError "Incorrect types for method invocation" 
 
     let checkTypes (typ1 : MinJType) (typ2 : MinJType) = 
         if typ1 <> typ2 then
@@ -13,14 +18,23 @@ type Translator(output : TextWriter) =
 
     let rec translateVariableReference varRef =
         match varRef with
-            | SimpleReference(varId) -> 
-                varId.Type.Value.Type
-            | ArrayAccess(varId, exp) -> 
-                match varId.Type.Value.Type with
+            | VariableReference(varId, None) -> 
+                varId.Attributes.Type
+            | VariableReference(varId, Some exp) -> 
+                match varId.Attributes.Type with
                     | ArrayType(_) as arrayType ->
                         arrayType
                     | _ ->
-                        raise <| TypeCheckError "expected array type"
+                        raise <| TypeCheckError "Expected array type"
+
+    and translateElement (element : Element) =
+        match element with
+            | VariableElement(varRef) ->
+                translateVariableReference(varRef)
+            | NumberElement(n) ->
+                Primitive(IntType)
+            | CharConstElement(c) ->
+                Primitive(CharType)
 
     and translatePrimitive prim =
         match prim with
@@ -37,14 +51,31 @@ type Translator(output : TextWriter) =
                 translateExpression(exp)
 
             | MethodInvocationPrimitive(funcId, arguments) ->
-                funcId.Type.Value.ReturnType
-                // TODO: Type chek params
+                let argTypes = List.map translateElement arguments
+                checkArgumentTypes funcId.Attributes.ParameterTypes argTypes  
+                funcId.Attributes.ReturnType
+
+    and translateTermP termP =
+        match termP with
+            | TermP(operator, primitive, rest) ->
+                let prim = translatePrimitive(primitive)
+                match rest with
+                    | Some(termP) ->
+                        let rest = translateTermP termP
+                        checkTypes rest prim
+                        prim
+                    | None ->
+                        prim
 
     and translateTerm term =
         match term with
             | Term(primitive, termP) ->
-                translatePrimitive(primitive)
-                // TODO: Type check termP
+                let prim = translatePrimitive(primitive)
+                match termP with
+                    | Some(e) ->
+                        prim
+                    | None -> 
+                        prim
 
     and translateExpressionPrime expressionPrime =
         match expressionPrime with
@@ -83,12 +114,18 @@ type Translator(output : TextWriter) =
                     translateStatement statement
             | AssignmentStatement(assignment) ->
                 translateAssignment assignment
-            | IfElse(lExp, ifStatement, elseStatement) -> ()
-            | WhileStatement(logicExp, body) -> ()
-            | ReturnStatement(exp) -> ()
-            | MethodInvocationStatement(identifier, arguments) -> ()
-            | SystemOutInvocation(arguments) -> ()
-            | EmptyStatement -> ()
+            | IfElse(lExp, ifStatement, elseStatement) ->
+                raise <| NotImplementedException()
+            | WhileStatement(logicExp, body) ->
+                raise <| NotImplementedException()
+            | ReturnStatement(exp) ->
+                raise <| NotImplementedException()
+            | MethodInvocationStatement(identifier, arguments) -> 
+                raise <| NotImplementedException()
+            | SystemOutInvocation(arguments) ->
+                raise <| NotImplementedException()
+            | EmptyStatement ->
+                raise <| NotImplementedException()
 
     and translateMainFunction (MainFunction(decls, stmts)) =
         for stmt in stmts do
@@ -97,6 +134,6 @@ type Translator(output : TextWriter) =
     and translatePrg (Program(decls, mainF, funcDefs)) =
         translateMainFunction mainF
         for func in funcDefs do
-            ()
+            raise <| NotImplementedException()
 
-    member this.Translate prg = translatePrg prg
+    translatePrg prg

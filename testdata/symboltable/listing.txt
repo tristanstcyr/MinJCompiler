@@ -1,0 +1,529 @@
+0: class Example 
+	class
+		Type=Terminal
+		Loc=1, 1
+	Example
+		Type=Identifier
+		Loc=1, 7
+
+1: { 
+	{
+		Type=Terminal
+		Loc=2, 1
+
+2:     int[] field = new int[10];
+	int
+		Type=Terminal
+		Loc=3, 5
+	[
+		Type=Terminal
+		Loc=3, 8
+	]
+		Type=Terminal
+		Loc=3, 9
+	field
+		Type=Identifier
+		Loc=3, 11
+	=
+		Type=Terminal
+		Loc=3, 17
+	new
+		Type=Terminal
+		Loc=3, 19
+	int
+		Type=Terminal
+		Loc=3, 23
+	[
+		Type=Terminal
+		Loc=3, 26
+	10
+		Type=Number
+		Loc=3, 27
+	]
+		Type=Terminal
+		Loc=3, 29
+	;
+		Type=Terminal
+		Loc=3, 30
+
+3:     void main() 
+	void
+		Type=Terminal
+		Loc=4, 5
+	main
+		Type=Terminal
+		Loc=4, 10
+	(
+		Type=Terminal
+		Loc=4, 14
+	)
+		Type=Terminal
+		Loc=4, 15
+
+4:     { 
+	{
+		Type=Terminal
+		Loc=5, 5
+
+5:         int y;
+	int
+		Type=Terminal
+		Loc=6, 9
+	y
+		Type=Identifier
+		Loc=6, 13
+	;
+		Type=Terminal
+		Loc=6, 14
+
+6: 	int y;
+	int
+		Type=Terminal
+		Loc=7, 2
+	y
+		Type=Identifier
+		Loc=7, 6
+	;
+		Type=Terminal
+		Loc=7, 7
+
+7: 	int i;
+	int
+		Type=Terminal
+		Loc=8, 2
+	i
+		Type=Identifier
+		Loc=8, 6
+	;
+		Type=Terminal
+		Loc=8, 7
+
+8: 	int z;
+	int
+		Type=Terminal
+		Loc=9, 2
+	z
+		Type=Identifier
+		Loc=9, 6
+	;
+		Type=Terminal
+		Loc=9, 7
+
+9: 	int[] a = new int[3];
+	int
+		Type=Terminal
+		Loc=10, 2
+	[
+		Type=Terminal
+		Loc=10, 5
+	]
+		Type=Terminal
+		Loc=10, 6
+	a
+		Type=Identifier
+		Loc=10, 8
+	=
+		Type=Terminal
+		Loc=10, 10
+	new
+		Type=Terminal
+		Loc=10, 12
+	int
+		Type=Terminal
+		Loc=10, 16
+	[
+		Type=Terminal
+		Loc=10, 19
+	3
+		Type=Number
+		Loc=10, 20
+	]
+		Type=Terminal
+		Loc=10, 21
+	;
+		Type=Terminal
+		Loc=10, 22
+
+10:         while (y == 0)
+	while
+		Type=Terminal
+		Loc=11, 9
+	(
+		Type=Terminal
+		Loc=11, 15
+	y
+		Type=Identifier
+		Loc=11, 16
+	==
+		Type=Terminal
+		Loc=11, 18
+	0
+		Type=Number
+		Loc=11, 21
+	)
+		Type=Terminal
+		Loc=11, 22
+
+11:         {
+	{
+		Type=Terminal
+		Loc=12, 9
+
+12:             if (y != 1)
+	if
+		Type=Terminal
+		Loc=13, 13
+	(
+		Type=Terminal
+		Loc=13, 16
+	y
+		Type=Identifier
+		Loc=13, 17
+	!=
+		Type=Terminal
+		Loc=13, 19
+	1
+		Type=Number
+		Loc=13, 22
+	)
+		Type=Terminal
+		Loc=13, 23
+
+13:             {
+	{
+		Type=Terminal
+		Loc=14, 13
+
+14:                 foo(y);
+	foo
+		Type=Identifier
+		Loc=15, 17
+	(
+		Type=Terminal
+		Loc=15, 20
+	y
+		Type=Identifier
+		Loc=15, 21
+	)
+		Type=Terminal
+		Loc=15, 22
+	;
+		Type=Terminal
+		Loc=15, 23
+
+15: 		bar(y);
+	bar
+		Type=Identifier
+		Loc=16, 3
+	(
+		Type=Terminal
+		Loc=16, 6
+	y
+		Type=Identifier
+		Loc=16, 7
+	)
+		Type=Terminal
+		Loc=16, 8
+	;
+		Type=Terminal
+		Loc=16, 9
+
+16:                 return 3;
+	return
+		Type=Terminal
+		Loc=17, 17
+	3
+		Type=Number
+		Loc=17, 24
+	;
+		Type=Terminal
+		Loc=17, 25
+
+17:             }
+	}
+		Type=Terminal
+		Loc=18, 13
+
+18:             else
+	else
+		Type=Terminal
+		Loc=19, 13
+
+19:             {
+	{
+		Type=Terminal
+		Loc=20, 13
+
+20:                 if (i == 'x')
+	if
+		Type=Terminal
+		Loc=21, 17
+	(
+		Type=Terminal
+		Loc=21, 20
+	i
+		Type=Identifier
+		Loc=21, 21
+	==
+		Type=Terminal
+		Loc=21, 23
+	'x'
+		Type=CharConst
+		Loc=21, 26
+	)
+		Type=Terminal
+		Loc=21, 29
+
+21:                 {
+	{
+		Type=Terminal
+		Loc=22, 17
+
+22:                     i = System.in.int();
+	i
+		Type=Identifier
+		Loc=23, 21
+	=
+		Type=Terminal
+		Loc=23, 23
+	System
+		Type=Terminal
+		Loc=23, 25
+	.
+		Type=Terminal
+		Loc=23, 31
+	in
+		Type=Terminal
+		Loc=23, 32
+	.
+		Type=Terminal
+		Loc=23, 34
+	int
+		Type=Terminal
+		Loc=23, 35
+	(
+		Type=Terminal
+		Loc=23, 38
+	)
+		Type=Terminal
+		Loc=23, 39
+	;
+		Type=Terminal
+		Loc=23, 40
+
+23:                     System.out(i);
+	System
+		Type=Terminal
+		Loc=24, 21
+	.
+		Type=Terminal
+		Loc=24, 27
+	out
+		Type=Terminal
+		Loc=24, 28
+	(
+		Type=Terminal
+		Loc=24, 31
+	i
+		Type=Identifier
+		Loc=24, 32
+	)
+		Type=Terminal
+		Loc=24, 33
+	;
+		Type=Terminal
+		Loc=24, 34
+
+24:                 }
+	}
+		Type=Terminal
+		Loc=25, 17
+
+25:                 else
+	else
+		Type=Terminal
+		Loc=26, 17
+
+26:                 {
+	{
+		Type=Terminal
+		Loc=27, 17
+
+27:                     z = '�';
+	z
+		Type=Identifier
+		Loc=28, 21
+	=
+		Type=Terminal
+		Loc=28, 23
+	'�'
+		Type=CharConst
+		Loc=28, 25
+	;
+		Type=Terminal
+		Loc=28, 28
+
+28:                     y = 4 + 5 / 5 % 4 + 3 - 223428;
+	y
+		Type=Identifier
+		Loc=29, 21
+	=
+		Type=Terminal
+		Loc=29, 23
+	4
+		Type=Number
+		Loc=29, 25
+	+
+		Type=Terminal
+		Loc=29, 27
+	5
+		Type=Number
+		Loc=29, 29
+	/
+		Type=Terminal
+		Loc=29, 31
+	5
+		Type=Number
+		Loc=29, 33
+	%
+		Type=Terminal
+		Loc=29, 35
+	4
+		Type=Number
+		Loc=29, 37
+	+
+		Type=Terminal
+		Loc=29, 39
+	3
+		Type=Number
+		Loc=29, 41
+	-
+		Type=Terminal
+		Loc=29, 43
+	223428
+		Type=Number
+		Loc=29, 45
+	;
+		Type=Terminal
+		Loc=29, 51
+
+29:                     x = a[3 * 4 + 5];
+	x
+		Type=Identifier
+		Loc=30, 21
+	=
+		Type=Terminal
+		Loc=30, 23
+	a
+		Type=Identifier
+		Loc=30, 25
+	[
+		Type=Terminal
+		Loc=30, 26
+	3
+		Type=Number
+		Loc=30, 27
+	*
+		Type=Terminal
+		Loc=30, 29
+	4
+		Type=Number
+		Loc=30, 31
+	+
+		Type=Terminal
+		Loc=30, 33
+	5
+		Type=Number
+		Loc=30, 35
+	]
+		Type=Terminal
+		Loc=30, 36
+	;
+		Type=Terminal
+		Loc=30, 37
+
+30:                 }
+	}
+		Type=Terminal
+		Loc=31, 17
+
+31:             }
+	}
+		Type=Terminal
+		Loc=32, 13
+
+32:         }
+	}
+		Type=Terminal
+		Loc=33, 9
+
+33:     } 
+	}
+		Type=Terminal
+		Loc=34, 5
+
+34: 
+
+35:     int foo(int x)
+	int
+		Type=Terminal
+		Loc=36, 5
+	foo
+		Type=Identifier
+		Loc=36, 9
+	(
+		Type=Terminal
+		Loc=36, 12
+	int
+		Type=Terminal
+		Loc=36, 13
+	x
+		Type=Identifier
+		Loc=36, 17
+	)
+		Type=Terminal
+		Loc=36, 18
+
+36:     {
+	{
+		Type=Terminal
+		Loc=37, 5
+
+37:         System.out(x);
+	System
+		Type=Terminal
+		Loc=38, 9
+	.
+		Type=Terminal
+		Loc=38, 15
+	out
+		Type=Terminal
+		Loc=38, 16
+	(
+		Type=Terminal
+		Loc=38, 19
+	x
+		Type=Identifier
+		Loc=38, 20
+	)
+		Type=Terminal
+		Loc=38, 21
+	;
+		Type=Terminal
+		Loc=38, 22
+
+38:     }
+	}
+		Type=Terminal
+		Loc=39, 5
+
+39: }
+	}
+		Type=Terminal
+		Loc=40, 1
+
+7, 6: y has already been defined
+16, 3: "bar" referenced but not declared
+30, 21: "x" referenced but not declared
+Concluded in 0.346 seconds
+

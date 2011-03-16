@@ -11,6 +11,8 @@ type Identifier(str, startloc : Location) =
 
     override this.ToString() = str
 
+    member this.Value with get() = str
+
 /// [0-9]*
 type Number(value : Int64, startloc : Location) =
     inherit Token(startloc)

@@ -1,4 +1,4 @@
-﻿module ParserIdentifierResolutionTests
+﻿module MinJ.ParserIdentifierResolutionTests
 
 open TestFramework
 open Scanner

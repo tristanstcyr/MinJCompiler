@@ -1,4 +1,4 @@
 ﻿module TestsMain
-open ParserIdentifierResolutionTests
+open MinJ.ParserTypeCheckingTests
 
 RunAllTests()

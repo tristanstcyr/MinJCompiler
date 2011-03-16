@@ -11,6 +11,9 @@ open MinJ
 open MinJ.Ast
 
 /// The MinJ Parser.
+/// <param name="scanner">The scanner that provides the tokens</param>
+/// <param name="debugOutput">A stream for logging debug information such as the content of the symbol table</param>
+/// <param name="ruleLogger">The helper object for logging the grammar used to parse</param>
 type Parser(scanner : MinJScanner, 
             debugOutput : StreamWriter,
             ruleLogger : RuleLogger) =
@@ -25,7 +28,8 @@ type Parser(scanner : MinJScanner,
                 rules
         kleeneClosure []
           
-    let mutable symbolTable = SymbolTable()
+    let variables = SymbolTable<VariableAttributes, VariableIdentifier>(fun (VariableIdentifier(r)) a -> r := Some a)
+    let functions = SymbolTable<FunctionAttributes, FunctionIdentifier>(fun (FunctionIdentifier(r)) a -> r := Some a)
 
     let raiseUnexpected() =
         match scanner.Current with
@@ -35,15 +39,19 @@ type Parser(scanner : MinJScanner,
     let printFunctionDebug funcId =
         // Output function debug information
         debugOutput.WriteLine(sprintf "Symbol table after parsing %A" funcId)
-        symbolTable.PrintContent debugOutput
+        variables.PrintDefinedSymbols debugOutput
         debugOutput.WriteLine()
 
+    /// Initializes the parser. This is no in the constructor to avoid throwing
+    /// an exception if the scanner doesn't have any tokens or an error.
     member this.Init() =
         (* Initiate the scanner *)
         scanner.MoveNext() |> ignore
         (* Check if the first token is an error *)
         scanner.checkError()
 
+    /// Parses.
+    /// <returns>The abstract syntax tree of the parsed input and a list of errors </returns>
     member this.Parse() =
         let ast, errors = 
             try
@@ -52,16 +60,28 @@ type Parser(scanner : MinJScanner,
                 Some prg, []
             with
                 | e -> None, [e]
+        let errors = variables.Errors @ functions.Errors @ errors
 
-        ast, symbolTable.Errors @ errors
+        let errorLocation e =
+            match e with 
+                | ParsingError(m, t) -> t.StartLocation
+                | _ -> OriginLocation
 
+        ast, List.sortBy errorLocation errors
+
+    /// "< prg > −− > class i {{< decl >} < main f > {< f unct def >}"
     member this.ParsePrg() =
         ruleLogger.Push "< prg > −− > class i {{< decl >} < main f > {< f unct def >}}"
 
+        // Create a news scope for variables and functions
+        variables.PushScope()
+        functions.PushScope()
+
+        // Parse
         scanner.PopTerminal Class
         let i = scanner.PopIdentifier()
         scanner.PopTerminal OCurly
-        let decls = kleeneClosure (scanner.LookaheadTerminals [IntT;CharT]) (fun () -> this.ParseDecl true)
+        let decls = kleeneClosure (scanner.LookaheadTerminals [IntT;CharT]) this.ParseDecl
         let mainF = this.ParseMainF()
         let funcDefs = kleeneClosure (scanner.LookaheadTerminals [IntT;CharT]) this.ParseFunctDef
         scanner.PopTerminal CCurly
@@ -69,20 +89,26 @@ type Parser(scanner : MinJScanner,
 
         ruleLogger.Pop()
 
-        symbolTable.ClearAndResolveFunctions()
+        // Pop the class scope and resolve all references.
+        // For MinJ, only function references should need to be resolved here.
+        variables.PopAndResolveScope()
+        functions.PopAndResolveScope()
+
         Ast.Program(decls, mainF, funcDefs)
     
-    member this.ParseDecl (isField : bool) : Ast.Declaration =
+    /// "< decl > −−> < type > <decl'>"
+    member this.ParseDecl () : Ast.VariableDeclaration =
         ruleLogger.Push "< decl > −−> < type > <decl'>"
         
         let typ = this.ParseType()
-        let declP = this.ParseDeclP typ isField
+        let declP = this.ParseDeclP typ
 
         ruleLogger.Pop()
 
         declP
 
-    member this.ParseDeclP typ isField =
+    /// "<decl’> --> i | [] i = new <type> [ n ];"
+    member this.ParseDeclP typ : VariableDeclaration =
         
         match scanner.Current with
             | Identifier i ->
@@ -93,13 +119,9 @@ type Parser(scanner : MinJScanner,
 
                 ruleLogger.Pop()
 
-                let attr = {Type=Primitive(typ)}
-                let varAttributes = VariableIdentifier(i, ref <| Some attr)
-                if isField then
-                    symbolTable.DefineField varAttributes
-                else
-                    symbolTable.DefineLocal i attr
-                Ast.VariableDeclaration(varAttributes)
+                let attributes = {Name=i.ToString();Type=Primitive(typ)}
+                variables.Define i attributes
+                Ast.NonArrayVariableDeclaration(VariableIdentifier(ref(Some attributes)))
 
             | _ ->
                 ruleLogger.Push "<decl'> --> [] i = new <type> [ n ];"
@@ -111,56 +133,63 @@ type Parser(scanner : MinJScanner,
                 scanner.PopTerminal OSquare
                 let n = scanner.PopNumber()
                 scanner.PopTerminals [CSquare;SemiCol]
-
-                let varAttributes = VariableIdentifier(i, ref <| Some {Type=ArrayType(typ)})
-                symbolTable.DefineField varAttributes
-
+                
                 ruleLogger.Pop()
 
-                Ast.ArrayDeclaration(varAttributes, typ, n)
+                let attributes = {Name=i.ToString();Type=ArrayType(typ)}
+                let varId = VariableIdentifier(ref <| Some attributes)
+                variables.Define i attributes
+                Ast.ArrayVariableDeclaration(varId, typ2, n.Value)
 
+    /// "<main_f> −−> void main(){{< decl >} < st list > }"
     member this.ParseMainF() =
         ruleLogger.Push  "<main_f> −−> void main(){{< decl >} < st list > }"
 
+        variables.PushScope()
+
         scanner.PopTerminals [VoidT;Main;OParen;CParen;OCurly]
-        let decls = kleeneClosure (scanner.LookaheadTerminals [IntT;CharT]) (fun () -> this.ParseDecl false)
+        let decls = kleeneClosure (scanner.LookaheadTerminals [IntT;CharT]) this.ParseDecl
         let stList = this.ParseStList()
         scanner.PopTerminal CCurly
         
-        printFunctionDebug "main"
-        symbolTable.ClearAndResolveLocals()
-
         ruleLogger.Pop()
+
+        printFunctionDebug "main"
+        variables.PopAndResolveScope()
 
         Ast.MainFunction(decls, stList)
 
+    /// "< funct_def > −−> < type > i ( < par list > ){{< decl >} < st list > }"
     member this.ParseFunctDef() =
         ruleLogger.Push "< funct_def > −−> < type > i ( < par list > ){{< decl >} < st list > }"
+
+        variables.PushScope()
 
         let typ = this.ParseType()
         let i = scanner.PopIdentifier()
         scanner.PopTerminal OParen
         let parList = this.ParseParList()
-        let parameterTypes = List.map (fun (p : Parameter) -> p.Type.Value.Type) parList
+        let parameterTypes = List.map (fun (p : Parameter) -> p.Attributes.Type) parList
 
-        symbolTable.DefineFunction i {
+        let attributes = {
+            Name = i.Value;
             ReturnType = Primitive(typ);
-            ParameterTypes = parameterTypes
-        }
+            ParameterTypes = parameterTypes }
+        functions.Define i attributes
                 
         scanner.PopTerminals [CParen;OCurly]
-        let decls = kleeneClosure (scanner.LookaheadTerminals [IntT;CharT]) (fun () -> this.ParseDecl false)
+        let decls = kleeneClosure (scanner.LookaheadTerminals [IntT;CharT]) this.ParseDecl
         let stList = this.ParseStList()
         scanner.PopTerminal CCurly
 
-        printFunctionDebug i
-        // Pop var scope
-        symbolTable.ClearAndResolveLocals()
-
         ruleLogger.Pop()
+
+        printFunctionDebug i
+        variables.PopAndResolveScope()
 
         Ast.FunctionDefinition(typ, i, parList, decls, stList)
 
+    /// "< par_list > --> e | < p type > i{, < p type > i}"
     member this.ParseParList() : Parameter list =
         match scanner.Current with
             | Terminal CParen -> 
@@ -173,9 +202,10 @@ type Parser(scanner : MinJScanner,
 
                 let typ = this.ParsePType()
                 let i = scanner.PopIdentifier()
-                let p = Ast.Parameter(VariableIdentifier(i, ref <| Some {Type=typ}))
-
-                symbolTable.DefineLocal i {Type=typ}
+                
+                let attributes = {Name=i.Value;Type=typ}
+                variables.Define i attributes
+                let p = Ast.Parameter(VariableIdentifier(ref <| Some attributes))
 
                 match scanner.Current with
                     | Terminal Comma -> 
@@ -183,6 +213,7 @@ type Parser(scanner : MinJScanner,
                         p :: this.ParseParList()
                     | _ -> [p]
     
+    /// "<p_type> --> <type> <p_type’>"
     member this.ParsePType() =
         ruleLogger.Push "<p_type> --> <type> <p_type’>"
 
@@ -192,6 +223,7 @@ type Parser(scanner : MinJScanner,
 
         pTyp
         
+    /// "<p_type’> --> [] | e"
     member this.ParsePTypeP typ : MinJType =
         match scanner.Current with
             | Terminal OSquare ->
@@ -208,6 +240,7 @@ type Parser(scanner : MinJScanner,
 
                 Primitive typ
 
+    /// "<type> --> int | char"
     member this.ParseType() : PrimitiveType  = 
 
         let pTyp = 
@@ -227,6 +260,7 @@ type Parser(scanner : MinJScanner,
 
         pTyp
 
+    /// "<st> −−> <comp_st> | i <st'> | while <l_exp><st> | if <lexp> <stmt> else <stmt> |  return <exp>; | System.out. (<v_list>); | ;"
     member this.ParseSt() =
         match scanner.Current with
             | Terminal OCurly ->
@@ -249,7 +283,7 @@ type Parser(scanner : MinJScanner,
                 stP
             
             | Terminal If ->
-                ruleLogger.Push  "<st> −−> i <st'>"   
+                ruleLogger.Push  "<st> −−> if <lexp> <stmt> else <stmt>"   
 
                 scanner.Pop()
                 let lExp = this.ParseLExp()
@@ -306,6 +340,7 @@ type Parser(scanner : MinJScanner,
             | _ ->
                 raiseUnexpected()
     
+    /// "<st'> −−> <asg_st> | (v_list)"
     member this.ParseStP (i : Identifier) =
         match scanner.Current with
             | AnyTerminalOf [OSquare;Assign] ->
@@ -326,10 +361,11 @@ type Parser(scanner : MinJScanner,
                 
                 ruleLogger.Pop()
 
-                let funcId = FunctionIdentifier(i, ref None)
-                symbolTable.ReferenceFunction funcId
+                let funcId = FunctionIdentifier(ref None)
+                functions.Reference i funcId
                 Ast.MethodInvocationStatement(funcId, vList)
 
+    /// "<comp_st> −−> { <st_list> }"
     member this.ParseCompSt() =
         ruleLogger.Push "<comp_st> −−> { <st_list> }"
         
@@ -341,16 +377,19 @@ type Parser(scanner : MinJScanner,
         
         Ast.Block stList
 
+    /// "<set> −−> <st> { <st> }"
     member this.ParseStList() =
         ruleLogger.Push "<set> −−> <st> { <st> }"
         let st = this.ParseSt()
         let rest = kleeneClosure (fun () ->  
-            (scanner.terminals [OParen;If;Else;While;Return;System;SemiCol]).IsSome || scanner.Current :? Identifier) this.ParseSt
+            (scanner.terminals [OParen;If;Else;While;Return;System;SemiCol]).IsSome 
+                || scanner.Current :? Identifier) this.ParseSt
         
         ruleLogger.Pop()
 
         st :: rest
 
+    /// "<set> −−> <st> { <st> }"
     member this.ParseAsgSt (i : Identifier) =
         ruleLogger.Push "<set> −−> <st> { <st> }"
         let var = this.ParseVar i
@@ -362,6 +401,7 @@ type Parser(scanner : MinJScanner,
 
         Ast.AssignmentStatement asgStP
 
+    /// "<var> −−> i <index>"
     member this.ParseVar() =
         this.ParseVar <| scanner.PopIdentifier()
 
@@ -372,15 +412,11 @@ type Parser(scanner : MinJScanner,
         
         ruleLogger.Pop()
         
-        let varId = VariableIdentifier(i, ref None)
-        match index with
-            | Some(exp) ->
-                symbolTable.AddVariableReference varId
-                Ast.ArrayAccess(varId, exp)
-            | None ->
-                symbolTable.AddVariableReference varId
-                Ast.SimpleReference(varId)
+        let varId = VariableIdentifier(ref None)
+        variables.Reference i varId
+        Ast.VariableReference(varId, index)
         
+    /// "<asg_st'> --> System.in.<type>() | <exp>"
     member this.ParseAsgStP var : Ast.Assignment =
         match scanner.Current with
             | Terminal System ->
@@ -404,6 +440,7 @@ type Parser(scanner : MinJScanner,
 
                 Ast.ExpressionAssignment(var, exp)
 
+    /// "<index> --> [<exp>] | e"
     member this.ParseIndex() : Ast.Expression option =
         match scanner.Current with
             | Terminal OSquare ->
@@ -422,6 +459,7 @@ type Parser(scanner : MinJScanner,
 
                 None
 
+    /// "<l_exp> --> <rel_exp> <l_exp’>"
     member this.ParseLExp() =
         ruleLogger.Push "<l_exp> --> <rel_exp> <l_exp’>"
 
@@ -431,34 +469,34 @@ type Parser(scanner : MinJScanner,
 
         lExp
 
+    /// "<l_exp> --> <log_op> <l_exp> | e"
     member this.ParseLExpP relExp =
-        match scanner.Current with
+        let operator = 
+            match scanner.Current with
             | Terminal And ->
-                ruleLogger.Push "<l_exp’> --> <log_op> <l_exp>"
-                
                 scanner.Pop()
-                let lExp = this.ParseLExp()
-
-                ruleLogger.Pop()
-
-                Ast.AndExpression(relExp, lExp)
-            
+                ruleLogger.Push "<l_exp’> --> <log_op> <l_exp>"
+                Some AndOp
             | Terminal Or ->
-                ruleLogger.Push "<l_exp’> --> <log_op> <l_exp>"
-
                 scanner.Pop()
-                let lExp = this.ParseLExp()
-
-                ruleLogger.Pop()
-
-                Ast.OrExpression(relExp, this.ParseLExp())
-            
+                ruleLogger.Push "<l_exp’> -->  <log_op> <l_exp>"
+                Some OrOp
             | _ ->
                 ruleLogger.Push "<l_exp’> --> e"
-                ruleLogger.Pop()
+                None
 
-                Ast.LogicalRelativeExpression relExp
+        let ast = 
+            match operator with
+                | Some(operator) ->
+                    let lExp = this.ParseLExp()
+                    Ast.LogicalExpression(relExp, operator, this.ParseLExp())
+                | None ->
+                    Ast.LogicalRelativeExpression relExp
 
+        ruleLogger.Pop()
+        ast
+
+    /// "<rel_exp> --> ( < exp >< rel op >< exp > )>"
     member this.ParseRelExp() : Ast.RelativeExpression =
         scanner.PopTerminal OParen
         let expLeft = this.ParseExp()
@@ -484,6 +522,7 @@ type Parser(scanner : MinJScanner,
 
         Ast.RelativeExpression(expLeft, operator, expRight)
 
+    /// "<exp> --> <term><exp'> | -<term><exp'>"
     member this.ParseExp() =
         match scanner.Current with
             | Terminal OParen
@@ -511,6 +550,7 @@ type Parser(scanner : MinJScanner,
             | _ ->
                 raiseUnexpected()
 
+    /// "<exp'> --> <add_op><term><exp'> | e"
     member this.ParseExpP() =
         match scanner.Current with
             | Terminal Add ->
@@ -532,13 +572,14 @@ type Parser(scanner : MinJScanner,
 
                 ruleLogger.Pop()
 
-                Some <| Ast.AdditionExpP(term, expP)
+                Some <| Ast.SubstractionExpP(term, expP)
             | _ ->
                 ruleLogger.Push "<exp'> --> e"
                 ruleLogger.Pop()
 
                 None
 
+    /// "<term> --> <prim><term'>"
     member this.ParseTerm() =
         ruleLogger.Push "<term> --> <prim><term'>"
 
@@ -549,6 +590,7 @@ type Parser(scanner : MinJScanner,
 
         Ast.Term(prim, termP)
         
+    /// "<term'> --> <mult_op><prim><term'>"
     member this.ParseTermP() =
         let operator = 
             match scanner.Current with
@@ -577,6 +619,7 @@ type Parser(scanner : MinJScanner,
         ruleLogger.Pop()
         ast
 
+    /// "<prim> --> i <prim'> | n | c | (<exp>)"
     member this.ParsePrim() =
         match scanner.Current with
             | Identifier i ->
@@ -617,6 +660,7 @@ type Parser(scanner : MinJScanner,
             | _ ->
                 raiseUnexpected()
 
+    /// "<prim'> --> (<v_list>) | <index>"
     member this.ParsePrimP i =
         match scanner.Current with
             
@@ -629,8 +673,8 @@ type Parser(scanner : MinJScanner,
 
                 ruleLogger.Pop()
 
-                let funcId = FunctionIdentifier(i, ref None)
-                symbolTable.ReferenceFunction funcId
+                let funcId = FunctionIdentifier(ref None)
+                functions.Reference i funcId
                 Ast.MethodInvocationPrimitive(funcId, vList)
             
             | _ ->
@@ -640,10 +684,11 @@ type Parser(scanner : MinJScanner,
 
                 ruleLogger.Pop()
 
-                let varId = VariableIdentifier(i, ref None)
-                symbolTable.AddVariableReference varId
-                Ast.VariablePrimitive(Ast.VariableReference(varId), index)
+                let varId = VariableIdentifier(ref None)
+                variables.Reference i varId
+                Ast.VariablePrimitive(Ast.VariableReference(varId, index))
 
+    /// "<v_list> --> <elem><v_list'> | ,<v_list> | e"
     member this.ParseVList() =
         ruleLogger.Push "<v_list> --> <elem><v_list'>"
         
@@ -668,6 +713,7 @@ type Parser(scanner : MinJScanner,
 
                 [elem]
 
+    /// "<elem> --> i <index> | 'c' | n"
     member this.ParseElem() =
         match scanner.Current with
             | Identifier i ->
@@ -679,10 +725,10 @@ type Parser(scanner : MinJScanner,
 
                 ruleLogger.Pop()
 
-                let varId = VariableIdentifier(i, ref None)
-                symbolTable.AddVariableReference varId
+                let varId = VariableIdentifier(ref None)
+                variables.Reference i varId
 
-                Ast.VariableElement(varId, index)
+                Ast.VariableElement(Ast.VariableReference(varId, index))
 
             | CharConst cc ->
                 ruleLogger.Push "<elem> --> 'c'"
