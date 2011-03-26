@@ -20,6 +20,8 @@ type SymbolTable<'AttributeType, 'IdentifierType>(resolver) =
     member private this.AddError message token =
         errors <- ParsingError(message, token) :: errors
 
+    member this.CountDefined() = List.sum <| List.map (fun (d : Dictionary<_,_>) -> d.Count) defined
+            
     /// Defines a symbol and its attributes in the symbol table of the current scope
     member this.Define (idToken : Identifier) a =
         // Ge the current scope

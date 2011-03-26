@@ -27,9 +27,9 @@ type Parser(scanner : MinJScanner,
             else
                 rules
         kleeneClosure []
-          
-    let variables = SymbolTable<VariableAttributes, VariableIdentifier>(fun (VariableIdentifier(r)) a -> r := Some a)
-    let functions = SymbolTable<FunctionAttributes, FunctionIdentifier>(fun (FunctionIdentifier(r)) a -> r := Some a)
+         
+    let variables = SymbolTable<VariableAttributes, VariableIdentifier>(fun id a -> id.Attributes <- Some a)
+    let functions = SymbolTable<FunctionAttributes, FunctionIdentifier>(fun id a -> id.Attributes <- Some a)
 
     let raiseUnexpected() =
         match scanner.Current with
@@ -81,7 +81,7 @@ type Parser(scanner : MinJScanner,
         scanner.PopTerminal Class
         let i = scanner.PopIdentifier()
         scanner.PopTerminal OCurly
-        let decls = kleeneClosure (scanner.LookaheadTerminals [IntT;CharT]) this.ParseDecl
+        let decls = kleeneClosure (scanner.LookaheadTerminals [IntT;CharT]) (fun () -> this.ParseDecl GlobalVariable)
         let mainF = this.ParseMainF()
         let funcDefs = kleeneClosure (scanner.LookaheadTerminals [IntT;CharT]) this.ParseFunctDef
         scanner.PopTerminal CCurly
@@ -97,31 +97,36 @@ type Parser(scanner : MinJScanner,
         Ast.Program(decls, mainF, funcDefs)
     
     /// "< decl > −−> < type > <decl'>"
-    member this.ParseDecl () : Ast.VariableDeclaration =
+    member this.ParseDecl (scope : VariableScope) : Ast.VariableDeclaration =
         ruleLogger.Push "< decl > −−> < type > <decl'>"
         
         let typ = this.ParseType()
-        let declP = this.ParseDeclP typ
+        let declP = this.ParseDeclP scope typ
 
         ruleLogger.Pop()
 
         declP
 
-    /// "<decl’> --> i | [] i = new <type> [ n ];"
-    member this.ParseDeclP typ : VariableDeclaration =
+    /// "<decl’> --> i; | [] i = new <type> [ n ];"
+    member this.ParseDeclP (scope : VariableScope) typ : VariableDeclaration =
         
         match scanner.Current with
             | Identifier i ->
-                ruleLogger.Push "<decl’> --> i"
+                ruleLogger.Push "<decl’> --> i;"
                 
                 scanner.Pop()
                 scanner.PopTerminal SemiCol
 
                 ruleLogger.Pop()
 
-                let attributes = {Name=i.ToString();Type=Primitive(typ)}
+                let attributes = {
+                    Definition=i;
+                    Type=Primitive(typ);
+                    Scope=scope;
+                    MemoryAddress=0;
+                }
                 variables.Define i attributes
-                Ast.NonArrayVariableDeclaration(VariableIdentifier(ref(Some attributes)))
+                Ast.NonArrayVariableDeclaration({Token=i;Attributes=Some attributes})
 
             | _ ->
                 ruleLogger.Push "<decl'> --> [] i = new <type> [ n ];"
@@ -136,10 +141,15 @@ type Parser(scanner : MinJScanner,
                 
                 ruleLogger.Pop()
 
-                let attributes = {Name=i.ToString();Type=ArrayType(typ)}
-                let varId = VariableIdentifier(ref <| Some attributes)
+                let attributes = {
+                    Definition=i;
+                    Type=ArrayType(typ);
+                    Scope=scope;
+                    MemoryAddress=0;
+                }
+                let varId = {Token=i;Attributes= Some attributes}
                 variables.Define i attributes
-                Ast.ArrayVariableDeclaration(varId, typ2, n.Value)
+                Ast.ArrayVariableDeclaration(varId, typ2, int(n.Value))
 
     /// "<main_f> −−> void main(){{< decl >} < st list > }"
     member this.ParseMainF() =
@@ -148,7 +158,7 @@ type Parser(scanner : MinJScanner,
         variables.PushScope()
 
         scanner.PopTerminals [VoidT;Main;OParen;CParen;OCurly]
-        let decls = kleeneClosure (scanner.LookaheadTerminals [IntT;CharT]) this.ParseDecl
+        let decls = kleeneClosure (scanner.LookaheadTerminals [IntT;CharT]) (fun () -> this.ParseDecl(LocalVariable))
         let stList = this.ParseStList()
         scanner.PopTerminal CCurly
         
@@ -157,7 +167,7 @@ type Parser(scanner : MinJScanner,
         printFunctionDebug "main"
         variables.PopAndResolveScope()
 
-        Ast.MainFunction(decls, stList)
+        Ast.MainFunction(FunctionBody(decls, stList))
 
     /// "< funct_def > −−> < type > i ( < par list > ){{< decl >} < st list > }"
     member this.ParseFunctDef() =
@@ -169,16 +179,18 @@ type Parser(scanner : MinJScanner,
         let i = scanner.PopIdentifier()
         scanner.PopTerminal OParen
         let parList = this.ParseParList()
-        let parameterTypes = List.map (fun (p : Parameter) -> p.Attributes.Type) parList
+        let parameterTypes = List.map (fun (p : Parameter) -> p.Attributes.Type, p.Attributes.Definition :> Token) parList
 
         let attributes = {
-            Name = i.Value;
+            Definition=i;
             ReturnType = Primitive(typ);
-            ParameterTypes = parameterTypes }
+            ParameterTypes = parameterTypes;
+            Index = functions.CountDefined() + 1;
+         }
         functions.Define i attributes
                 
         scanner.PopTerminals [CParen;OCurly]
-        let decls = kleeneClosure (scanner.LookaheadTerminals [IntT;CharT]) this.ParseDecl
+        let decls = kleeneClosure (scanner.LookaheadTerminals [IntT;CharT]) (fun () -> this.ParseDecl LocalVariable)
         let stList = this.ParseStList()
         scanner.PopTerminal CCurly
 
@@ -187,7 +199,7 @@ type Parser(scanner : MinJScanner,
         printFunctionDebug i
         variables.PopAndResolveScope()
 
-        Ast.FunctionDefinition(typ, i, parList, decls, stList)
+        Ast.FunctionDefinition({Token=i;Attributes=Some attributes}, parList, FunctionBody(decls, stList))
 
     /// "< par_list > --> e | < p type > i{, < p type > i}"
     member this.ParseParList() : Parameter list =
@@ -203,9 +215,14 @@ type Parser(scanner : MinJScanner,
                 let typ = this.ParsePType()
                 let i = scanner.PopIdentifier()
                 
-                let attributes = {Name=i.Value;Type=typ}
+                let attributes = {
+                    Definition=i;
+                    Type=typ;
+                    Scope=ParameterVariable;
+                    MemoryAddress=0;
+                }
                 variables.Define i attributes
-                let p = Ast.Parameter(VariableIdentifier(ref <| Some attributes))
+                let p = Ast.Parameter({Token=i;Attributes= Some attributes})
 
                 match scanner.Current with
                     | Terminal Comma -> 
@@ -361,7 +378,7 @@ type Parser(scanner : MinJScanner,
                 
                 ruleLogger.Pop()
 
-                let funcId = FunctionIdentifier(ref None)
+                let funcId : FunctionIdentifier = {Token=i;Attributes=None}
                 functions.Reference i funcId
                 Ast.MethodInvocationStatement(funcId, vList)
 
@@ -412,7 +429,7 @@ type Parser(scanner : MinJScanner,
         
         ruleLogger.Pop()
         
-        let varId = VariableIdentifier(ref None)
+        let varId = {Token=i;Attributes=None}
         variables.Reference i varId
         Ast.VariableReference(varId, index)
         
@@ -531,7 +548,7 @@ type Parser(scanner : MinJScanner,
             | CharConst _ ->
                 ruleLogger.Push "<exp> --> <term><exp'>"
                 
-                let exp = Ast.Expression(this.ParseTerm(), this.ParseExpP())
+                let exp = Ast.Expression(false, this.ParseTerm(), this.ParseExpP())
 
                 ruleLogger.Pop()
 
@@ -541,7 +558,7 @@ type Parser(scanner : MinJScanner,
                 ruleLogger.Push "<exp> --> -<term><exp'>"
 
                 scanner.Pop()
-                let neg = Ast.Negation(this.ParseTerm(), this.ParseExpP())
+                let neg = Ast.Expression(true, this.ParseTerm(), this.ParseExpP())
 
                 ruleLogger.Pop()
 
@@ -553,7 +570,8 @@ type Parser(scanner : MinJScanner,
     /// "<exp'> --> <add_op><term><exp'> | e"
     member this.ParseExpP() =
         match scanner.Current with
-            | Terminal Add ->
+            | Terminal Add 
+            | Terminal Sub as token ->
                 ruleLogger.Push "<exp'> --> <add_op><term><exp'>"
 
                 scanner.Pop()
@@ -562,21 +580,15 @@ type Parser(scanner : MinJScanner,
                 
                 ruleLogger.Pop()
                 
-                Some <| Ast.AdditionExpP(term, expP)
-            | Terminal Sub ->
-                ruleLogger.Push "<exp'> --> <add_op><term><exp'>"
-
-                scanner.Pop()
-                let term = this.ParseTerm()
-                let expP = this.ParseExpP()
-
-                ruleLogger.Pop()
-
-                Some <| Ast.SubstractionExpP(term, expP)
+                match token with
+                    | Terminal Add -> 
+                        Some <| Ast.ExpressionPrime(AddOp, term, expP)
+                    | Terminal Sub -> 
+                        Some <| Ast.ExpressionPrime(SubOp, term, expP)
+                    | _ -> raise <| Exception("Programming error")
             | _ ->
                 ruleLogger.Push "<exp'> --> e"
                 ruleLogger.Pop()
-
                 None
 
     /// "<term> --> <prim><term'>"
@@ -673,7 +685,7 @@ type Parser(scanner : MinJScanner,
 
                 ruleLogger.Pop()
 
-                let funcId = FunctionIdentifier(ref None)
+                let funcId : FunctionIdentifier = {Token=i;Attributes=None}
                 functions.Reference i funcId
                 Ast.MethodInvocationPrimitive(funcId, vList)
             
@@ -684,7 +696,7 @@ type Parser(scanner : MinJScanner,
 
                 ruleLogger.Pop()
 
-                let varId = VariableIdentifier(ref None)
+                let varId = {Token=i;Attributes=None}
                 variables.Reference i varId
                 Ast.VariablePrimitive(Ast.VariableReference(varId, index))
 
@@ -725,7 +737,7 @@ type Parser(scanner : MinJScanner,
 
                 ruleLogger.Pop()
 
-                let varId = VariableIdentifier(ref None)
+                let varId = {Token=i;Attributes=None}
                 variables.Reference i varId
 
                 Ast.VariableElement(Ast.VariableReference(varId, index))

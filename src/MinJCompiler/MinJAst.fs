@@ -12,38 +12,52 @@ type MinJType =
     | Primitive of PrimitiveType
     | ArrayType of PrimitiveType
 
+type VariableScope = 
+    | GlobalVariable 
+    | ParameterVariable 
+    | LocalVariable
+
 type VariableAttributes = {
-    Name : string;
+    Definition : Identifier;
     Type : MinJType;
+    Scope : VariableScope;
+    mutable MemoryAddress : int;
 }
 
 type FunctionAttributes = {
-    Name : string;
+    Definition : Identifier;
     ReturnType : MinJType;
-    ParameterTypes : MinJType list;
+    ParameterTypes : (MinJType * Token) list;
+    Index : int;
 }
 
-type FunctionIdentifier = | FunctionIdentifier of FunctionAttributes option ref
-    with member this.Attributes with get() = match this with FunctionIdentifier(attributes) -> attributes.Value.Value
-type VariableIdentifier = | VariableIdentifier of VariableAttributes option ref
-    with member this.Attributes with get() = match this with VariableIdentifier(attributes) -> attributes.Value.Value
+type FunctionIdentifier = {
+    Token : Identifier;
+    mutable Attributes : FunctionAttributes option;
+}
+
+type VariableIdentifier = {
+    Token : Identifier;
+    mutable Attributes : VariableAttributes option;
+}
 
 type Program =  
     | Program of VariableDeclaration list * MainFunction * FunctionDefinition list
 
 and VariableDeclaration = 
     | NonArrayVariableDeclaration of VariableIdentifier
-    | ArrayVariableDeclaration of VariableIdentifier * PrimitiveType * int64
+    | ArrayVariableDeclaration of VariableIdentifier * PrimitiveType * int
+
+and FunctionBody = | FunctionBody of VariableDeclaration list * Statement list
 
 and MainFunction = 
-    | MainFunction of VariableDeclaration list * Statement list
+    | MainFunction of FunctionBody
 
-and FunctionDefinition = 
-    | FunctionDefinition of PrimitiveType * Identifier * Parameter list 
-        * VariableDeclaration list * Statement list
+and FunctionDefinition =
+    | FunctionDefinition of FunctionIdentifier * Parameter list * FunctionBody 
 
 and Parameter = | Parameter of VariableIdentifier
-    with member this.Attributes with get() = match this with | Parameter(id) -> id.Attributes
+    with member this.Attributes with get() = match this with | Parameter(id) -> id.Attributes.Value
 
 and Statement = 
     | Block of Statement list 
@@ -74,12 +88,12 @@ and RelativeExpression =
     | RelativeExpression of Expression * RelOperator * Expression
 
 and Expression =
-    | Expression of Term * ExpressionPrime option
-    | Negation of Term * ExpressionPrime option
+    | Expression of bool * Term * ExpressionPrime option
 
-and ExpressionPrime =
-    | AdditionExpP of Term * ExpressionPrime option
-    | SubstractionExpP of Term * ExpressionPrime option
+and ExpressionOp = AddOp | SubOp
+
+and ExpressionPrime = 
+    | ExpressionPrime of ExpressionOp * Term * ExpressionPrime option
 
 and Term = | Term of Primitive * TermP option
 

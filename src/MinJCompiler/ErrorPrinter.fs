@@ -2,6 +2,7 @@
 
 open System.IO
 open Scanner
+open MinJ.Ast.TypeCheck
 
 // Helper closure for printing errors
 let print errors (writer : TextWriter) =
@@ -13,5 +14,6 @@ let print errors (writer : TextWriter) =
                 | UnexpectedEnd ->  "Syntax error: Input ended too early", OriginLocation
                 | TokenizationError(e) -> sprintf "Tokenization error: %s" <| e.ToString(), e.StartLocation
                 | ParsingError(message, token) -> message, token.StartLocation
+                | TypeCheckError(message, typ, token) -> message, token.StartLocation
                 | e -> e.Message, OriginLocation
         writer.WriteLine(sprintf "%d, %d: %s" location.Row location.Col message) 
