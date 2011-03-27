@@ -1,9 +1,11 @@
-﻿module Tac.Printing
+﻿/// Contains extensions to Three Address Code types for printing them.
+/// The printed representation are almost identical to the class slides.
+module Tac.Printing
 
 open System.IO
 open Tac
 
-type TacOperator with
+type Operator with
     member this.ToAssembly() =
         match this with
             | Add       -> "+"
@@ -20,7 +22,6 @@ type TacOperator with
             | LtEq    -> "<="
             | Gt   -> ">"
             | GtEq -> ">="
-            | ArrayAccess -> "["
 
 type Ptr with
     member this.ToAssembly() =

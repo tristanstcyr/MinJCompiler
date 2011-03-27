@@ -2,8 +2,10 @@
 
 open TestFramework
 open Scanner
+open Compiler
 open MinJ.Scanner
 open MinJ.Parser
+open MinJ.Ast.TypeCheck
 open System.IO
 open System
 open MinJ.Ast.TypeCheck
@@ -11,15 +13,15 @@ open MinJ.Ast.TypeCheck
 let p str expectError = 
     let memStream = new StreamWriter(new MemoryStream())
     let parser = new Parser(createMinJScanner str <| NullListingWriter(), memStream, RuleLogger(memStream))
-    let prg, errors = parser.Parse()
-    Assert (sprintf "Got %d parsing errors" errors.Length) (errors.Length = 0)
+    let prg = parser.Parse()
     try
-        prg.Value.TypeCheck()
+        typeCheck prg
         if expectError then
             Fail "Expected an error but got none"
     with
-        | TypeCheckError(message, typ, token) -> 
-            Assert (sprintf "Expected no error but got: %s" message) expectError
+        | CompilerException(errors) ->
+            if (not expectError) || Seq.length errors > 1 then
+                Fail (sprintf "Got more errors than expected")
     
 
 type ParserIdentifierResolutionTests() =

@@ -4,6 +4,7 @@ open System
 open System.IO
 open System.Collections.Generic
 
+open Compiler
 open Scanner
 open MinJ.Scanner
 open MinJ.Tokens
@@ -33,8 +34,8 @@ type Parser(scanner : MinJScanner,
 
     let raiseUnexpected() =
         match scanner.Current with
-            | :? End -> raise <| UnexpectedEnd
-            | _ -> raise <| UnexpectedToken scanner.Current
+            | :? End -> raise <| CompilerException(["Unexpected end ", scanner.Current.StartLocation])
+            | _ -> raise <| CompilerException([sprintf "Unexpected token \"%A\"" scanner.Current, scanner.Current.StartLocation])
 
     let printFunctionDebug funcId =
         // Output function debug information
@@ -51,23 +52,19 @@ type Parser(scanner : MinJScanner,
         scanner.checkError()
 
     /// Parses.
-    /// <returns>The abstract syntax tree of the parsed input and a list of errors </returns>
+    /// Returns the abstract syntax tree
+    /// Throws 
     member this.Parse() =
-        let ast, errors = 
+        let prg, errors = 
             try
                 this.Init()
-                let prg = this.ParsePrg()
-                Some prg, []
+                Some(this.ParsePrg()), Seq.empty
             with
-                | e -> None, [e]
-        let errors = variables.Errors @ functions.Errors @ errors
-
-        let errorLocation e =
-            match e with 
-                | ParsingError(m, t) -> t.StartLocation
-                | _ -> OriginLocation
-
-        ast, List.sortBy errorLocation errors
+                | CompilerException(errors) -> 
+                    None, errors
+        if prg.IsNone || variables.Errors.Length > 0 || functions.Errors.Length > 0 then
+            raise <| CompilerException(Seq.concat [Seq.ofList variables.Errors; Seq.ofList functions.Errors;])
+        prg.Value
 
     /// "< prg > −− > class i {{< decl >} < main f > {< f unct def >}"
     member this.ParsePrg() =
@@ -271,7 +268,10 @@ type Parser(scanner : MinJScanner,
                     scanner.Pop()
                     Ast.CharType
                 | _ ->
-                    raise <| UnexpectedToken scanner.Current
+                    raise <| CompilerException(
+                        [
+                        sprintf "Unexpected token \"%A\"" scanner.Current, 
+                        scanner.Current.StartLocation])
 
         ruleLogger.Pop()
 
@@ -420,7 +420,7 @@ type Parser(scanner : MinJScanner,
 
     /// "<var> −−> i <index>"
     member this.ParseVar() =
-        this.ParseVar <| scanner.PopIdentifier()
+        this.ParseVar(scanner.PopIdentifier())
 
     member this.ParseVar i =
         ruleLogger.Push "<var> −−> i <index>"
@@ -478,40 +478,28 @@ type Parser(scanner : MinJScanner,
 
     /// "<l_exp> --> <rel_exp> <l_exp’>"
     member this.ParseLExp() =
-        ruleLogger.Push "<l_exp> --> <rel_exp> <l_exp’>"
-
-        let lExp = this.ParseLExpP <| this.ParseRelExp()
-
-        ruleLogger.Pop()
-
-        lExp
-
-    /// "<l_exp> --> <log_op> <l_exp> | e"
-    member this.ParseLExpP relExp =
-        let operator = 
-            match scanner.Current with
-            | Terminal And ->
-                scanner.Pop()
-                ruleLogger.Push "<l_exp’> --> <log_op> <l_exp>"
-                Some AndOp
+        ruleLogger.Push "<l_exp> --> <l_exp'> { || <l_exp> }"
+        let logExpLeft = this.ParseAnd()
+        match scanner.Current with
             | Terminal Or ->
                 scanner.Pop()
-                ruleLogger.Push "<l_exp’> -->  <log_op> <l_exp>"
-                Some OrOp
+                let logExpRight = this.ParseLExp()
+                Ast.LogicalExpression(logExpLeft, Ast.OrOp, logExpRight)
             | _ ->
-                ruleLogger.Push "<l_exp’> --> e"
-                None
+                logExpLeft
 
-        let ast = 
-            match operator with
-                | Some(operator) ->
-                    let lExp = this.ParseLExp()
-                    Ast.LogicalExpression(relExp, operator, this.ParseLExp())
-                | None ->
-                    Ast.LogicalRelativeExpression relExp
-
-        ruleLogger.Pop()
-        ast
+    member this.ParseAnd() =
+        ruleLogger.Push "<l_exp’> --> <exp> { && <l_exp'> }"
+        let logLeft = Ast.SingletonLogicalExpression(this.ParseRelExp())
+        match scanner.Current with
+            | Terminal And ->
+                scanner.Pop()
+                let logRight = this.ParseAnd()
+                ruleLogger.Pop()
+                Ast.LogicalExpression(logLeft, Ast.AndOp, logRight)
+            | _ ->
+                ruleLogger.Pop()
+                logLeft
 
     /// "<rel_exp> --> ( < exp >< rel op >< exp > )>"
     member this.ParseRelExp() : Ast.RelativeExpression =

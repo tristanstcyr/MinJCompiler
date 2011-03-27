@@ -484,15 +484,26 @@
 		Type=Terminal
 		Loc=36, 22
 
-36:     }
+36:         return 3;
+	return
+		Type=Terminal
+		Loc=37, 9
+	3
+		Type=Number
+		Loc=37, 16
+	;
+		Type=Terminal
+		Loc=37, 17
+
+37:     }
 	}
 		Type=Terminal
-		Loc=37, 5
+		Loc=38, 5
 
-37: }
+38: }
 	}
 		Type=Terminal
-		Loc=38, 1
+		Loc=39, 1
 
-Concluded in 0.414 seconds
+Concluded in 0.391 seconds
 

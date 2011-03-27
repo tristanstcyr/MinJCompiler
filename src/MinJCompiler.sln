@@ -6,19 +6,43 @@ EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MinJCompilerTests", "MinJCompilerTests\MinJCompilerTests.fsproj", "{119589DE-E6C3-41AF-BD79-C818394B1FD6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CEED9256-6391-4B4D-A086-BFED2A140359}"
+	ProjectSection(SolutionItems) = preProject
+		Local.testsettings = Local.testsettings
+		MinJCompiler.vsmdi = MinJCompiler.vsmdi
+		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
+	EndProjectSection
 EndProject
 Global
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = MinJCompiler.vsmdi
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|Mixed Platforms = Debug|Mixed Platforms
 		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|Mixed Platforms = Release|Mixed Platforms
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{323325B1-7907-49AA-8BE6-433B17E3D693}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{323325B1-7907-49AA-8BE6-433B17E3D693}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{323325B1-7907-49AA-8BE6-433B17E3D693}.Debug|Mixed Platforms.Build.0 = Debug|x86
 		{323325B1-7907-49AA-8BE6-433B17E3D693}.Debug|x86.ActiveCfg = Debug|x86
 		{323325B1-7907-49AA-8BE6-433B17E3D693}.Debug|x86.Build.0 = Debug|x86
+		{323325B1-7907-49AA-8BE6-433B17E3D693}.Release|Any CPU.ActiveCfg = Release|x86
+		{323325B1-7907-49AA-8BE6-433B17E3D693}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{323325B1-7907-49AA-8BE6-433B17E3D693}.Release|Mixed Platforms.Build.0 = Release|x86
 		{323325B1-7907-49AA-8BE6-433B17E3D693}.Release|x86.ActiveCfg = Release|x86
 		{323325B1-7907-49AA-8BE6-433B17E3D693}.Release|x86.Build.0 = Release|x86
+		{119589DE-E6C3-41AF-BD79-C818394B1FD6}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{119589DE-E6C3-41AF-BD79-C818394B1FD6}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{119589DE-E6C3-41AF-BD79-C818394B1FD6}.Debug|Mixed Platforms.Build.0 = Debug|x86
 		{119589DE-E6C3-41AF-BD79-C818394B1FD6}.Debug|x86.ActiveCfg = Debug|x86
 		{119589DE-E6C3-41AF-BD79-C818394B1FD6}.Debug|x86.Build.0 = Debug|x86
+		{119589DE-E6C3-41AF-BD79-C818394B1FD6}.Release|Any CPU.ActiveCfg = Release|x86
+		{119589DE-E6C3-41AF-BD79-C818394B1FD6}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{119589DE-E6C3-41AF-BD79-C818394B1FD6}.Release|Mixed Platforms.Build.0 = Release|x86
 		{119589DE-E6C3-41AF-BD79-C818394B1FD6}.Release|x86.ActiveCfg = Release|x86
 		{119589DE-E6C3-41AF-BD79-C818394B1FD6}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection

@@ -2,6 +2,8 @@
 
 open System.IO
 
+open Compiler
+open Scanner.Tokens
 open MinJ.Tokens
 open System.Collections.Generic
 
@@ -10,15 +12,15 @@ open System.Collections.Generic
 type SymbolTable<'AttributeType, 'IdentifierType>(resolver) =
 
     /// Stores errors that are encountered while add definitions or resolving references
-    let mutable errors = []
+    let mutable errors : CompilationError list = []
     /// Stores defined symbols
     let mutable defined : Dictionary<string, 'AttributeType> list = []
     /// Stores referenced symbols
     let mutable referenced : (Identifier * 'IdentifierType) list = []
 
     /// Convenience method for adding errors in the errors list
-    member private this.AddError message token =
-        errors <- ParsingError(message, token) :: errors
+    member private this.AddError message location =
+        errors <- (message, location) :: errors
 
     member this.CountDefined() = List.sum <| List.map (fun (d : Dictionary<_,_>) -> d.Count) defined
             
@@ -28,7 +30,7 @@ type SymbolTable<'AttributeType, 'IdentifierType>(resolver) =
         let scope = defined.Head
         // Add to the current scope if it doesn't already exist
         if scope.ContainsKey(idToken.Value) then
-            this.AddError (sprintf "%s has already been defined" idToken.Value) idToken
+            this.AddError (sprintf "%s has already been defined" idToken.Value) idToken.StartLocation
         else
             scope.Add(idToken.Value, a)
 
@@ -62,7 +64,7 @@ type SymbolTable<'AttributeType, 'IdentifierType>(resolver) =
                 | Some(a) ->
                     resolver astNode a
                 | None ->
-                     this.AddError (sprintf "\"%s\" referenced but not declared" name) id
+                     this.AddError (sprintf "\"%s\" referenced but not declared" name) id.StartLocation
         referenced <- []
         defined <- defined.Tail
 

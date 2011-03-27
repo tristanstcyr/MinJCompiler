@@ -17,7 +17,7 @@ let p str =
     parser
 
 /// Contains the tests for the MinJ parser, see the documentation for details.
-type ScannerTests() =
+type ParserTests() =
     
     static member TestIndexNull =           p("x").ParseIndex()
     static member TestIndex =               p("[1]").ParseIndex()
@@ -41,8 +41,9 @@ type ScannerTests() =
     static member TestRelExp =              p("(a + b * b != 3)").ParseRelExp()
     
     static member TestLExpSimple =          p("(a + b * b != 3)").ParseLExp()
+    
     static member TestLExpComplex =         p("(a + b * b != 3) && (a != 3)").ParseLExp()
-
+    
     static member TestAsgStSystem =         p("[3] = System.in.int();").ParseAsgSt <| Identifier("a", OriginLocation)
     static member TestAsgStExp =            p("[3] = 1 + 3;").ParseAsgSt <| Identifier("a", OriginLocation)
 
@@ -60,21 +61,16 @@ type ScannerTests() =
     static member TestPTypeSimple =         p("int").ParsePType()
     static member TestPTypeArray =          p("int[]").ParsePType()
 
-    static member TestParList =             p("int feer, int deer, char beer, char ceer").ParseParList()
+    static member TestFunctDefNoParam =     p("class hello{void main(){;} char hello(){;}}").ParsePrg()
+    static member TestFunctDefNoDecl =      p("class hello{void main(){;} char hello(int a, int b){;}}").ParsePrg()
+    static member TestFunctDef =            p("class hello{void main(){;} char hello(int a, int b){int i;;}}").ParsePrg()
 
-    static member TestFunctDefNoParam =     p("char hello() { ; }").ParseFunctDef()
-    static member TestFunctDefNoDecl =      p("char hello(int a, int b) { ; }").ParseFunctDef()
-    static member TestFunctDef =            p("char hello(int a, int b) { int i;; }").ParseFunctDef()
-
-    static member TestDeclSimple =          p("int i;")
-    static member TestDeclArray =           p("int[] myArray = new int[3];")
-
-    static member TestPrgSimple =           p("class hello { void main() { ; } }")
-    static member TestPrgDecl =             p("class hello { int z; char x; void main() { ; } }")
-    static member TestPrgFunctDef =         p("class hello { int z; char x; void main() { ; } int myFunc() { ; } }")     
-
+    static member TestPrgDeclSimple =       p("class hello{int i; void main(){;}}").ParsePrg()
+    static member TestPrgDeclArray =        p("class hello{int[] myArray = new int[3]; void main(){;}}").ParsePrg()
+    
+    
 /// Runs all tests for the MinJ lexer
 let RunAllTests() = 
-    RunAllTests typeof<ScannerTests>
+    RunAllTests typeof<ParserTests>
     Console.WriteLine("\nAll tests have been run")
     ignore(Console.Read())

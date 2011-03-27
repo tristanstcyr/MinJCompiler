@@ -1,4 +1,4 @@
-﻿module TestsMain
-open MinJ.ParserTypeCheckingTests
+﻿module Main
+open MinJ.ThreeAddressCodeTranslationTests
 
 RunAllTests()

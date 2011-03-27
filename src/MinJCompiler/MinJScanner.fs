@@ -2,18 +2,11 @@
 [<AutoOpen>]
 module MinJ.Scanner
 
+open Compiler
 open Scanner
 open System.Collections.Generic
 open System
 open MinJ.ScannerStateMachine
-
-/// Thrown when a token was encountered but another token was expected.
-/// This indicates that there is a syntax error in the input.
-exception UnexpectedToken of Token
-/// Thrown when the end of the source arrived earlier than expected.
-exception UnexpectedEnd
-/// Thrown by the parser when it encounters an Error token.
-exception TokenizationError of Error
 
 type MinJScanner(scanner : IEnumerator<Token>) =
     
@@ -50,13 +43,19 @@ type MinJScanner(scanner : IEnumerator<Token>) =
     member private this.orRaise result =
         match result with
             | Some(d) -> d
-            | None -> raise <| UnexpectedToken(scanner.Current)
+            | None -> 
+                raise <| CompilerException(
+                    [
+                    sprintf "Unexpected token \"%A\"" scanner.Current, 
+                    scanner.Current.StartLocation])
 
     /// Raises an exception if the current token is an Error.
     member this.checkError() =
-        if scanner.Current :? Error then
-            raise <| TokenizationError(scanner.Current :?> Error)
-
+        match scanner.Current with
+            | :? Error as error -> 
+                raise <| CompilerException(["An error occured during tokenization ", error.StartLocation])
+            | _ -> ()
+            
     /// Moves the scanner.stream to the next token no matter what
     /// lookahead token happens to be there.
     member this.Pop() = 
@@ -69,7 +68,7 @@ type MinJScanner(scanner : IEnumerator<Token>) =
             | :? End ->
                 this.Pop()
             | _ ->
-                raise <| UnexpectedToken(scanner.Current)
+                raise <| CompilerException(["Unexpected token ", scanner.Current.StartLocation])
     
     /// Pops a terminal of a specific type or raises an exception
     member this.PopTerminal tt =

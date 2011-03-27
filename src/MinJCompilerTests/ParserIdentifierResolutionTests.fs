@@ -1,6 +1,7 @@
 ﻿module MinJ.ParserIdentifierResolutionTests
 
 open TestFramework
+open Compiler
 open Scanner
 open MinJ.Parser
 open MinJ.Scanner
@@ -12,18 +13,24 @@ open System
 let p str errorCount = 
     let memStream = new StreamWriter(new MemoryStream())
     let parser = new Parser(createMinJScanner str <| NullListingWriter(), memStream, RuleLogger(memStream))
-    let ast, errors = parser.Parse()
-    if errors.Length <> errorCount then
-        ErrorPrinter.print errors Console.Out
-        Fail (sprintf "Expected %d errors but got %d" errorCount errors.Length)
+    let errors = 
+        try
+            let ast = parser.Parse()
+            Seq.empty
+        with
+            | CompilerException(errors) -> errors
+    if Seq.length errors <> errorCount then
+        Fail (sprintf "Expected %d errors but got %d" errorCount (Seq.length errors))
+
 
 type ParserIdentifierResolutionTests() =
     static member TestNoErrors = 
         p "class X { int field; void main() {;} }" 0
     static member TestPrimError = 
         p "class X { int field; void main() { i=3;} }" 1
+
     static member TestFunctionForwardReference = 
-        p "class X { void main() { func(); } int func() {;} }" 1
+        p "class X { void main() { func(3); } int func(int i) {;} }" 0
     static member TestElemError = 
         p "class X { int field; void main() { int i; i=func(x); } int func(int x) {;} }" 1
     static member TestVarError = 
@@ -48,7 +55,7 @@ type ParserIdentifierResolutionTests() =
 
     static member TestFunctionTableClearing = 
         p "class X { void main() { int i; i=func(3); } int func(int x) { i=3;} }" 1
-
+    
 
 /// Runs all tests for the MinJ lexer
 let RunAllTests() = 

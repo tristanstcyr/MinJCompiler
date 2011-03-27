@@ -40,6 +40,7 @@
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <ItemGroup>
     <Compile Include="Tokens.fs" />
+    <Compile Include="CompilerException.fs" />
     <Compile Include="IListingWriter.fs" />
     <Compile Include="NullListingWriter.fs" />
     <Compile Include="ListingWriter.fs" />
@@ -47,7 +48,6 @@
     <Compile Include="MinJScannerTokens.fs" />
     <Compile Include="MinJScannerStateMachine.fs" />
     <Compile Include="MinJScanner.fs" />
-    <Compile Include="ParsingException.fs" />
     <Compile Include="MinJAst.fs" />
     <Compile Include="SymbolTable.fs" />
     <Compile Include="RuleLogger.fs" />
@@ -56,7 +56,6 @@
     <Compile Include="Tac.fs" />
     <Compile Include="MinJAstToTac.fs" />
     <Compile Include="TacPrinting.fs" />
-    <Compile Include="ErrorPrinter.fs" />
     <Compile Include="MinJParserCli.fs" />
   </ItemGroup>
   <ItemGroup>

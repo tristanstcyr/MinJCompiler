@@ -2,8 +2,10 @@
 open Parser
 open Scanner
 
-open MinJ.Ast.TypeCheck
+open Compiler
+open MinJ.Ast
 open MinJ.Ast.ToTac
+open MinJ.Ast.TypeCheck
 open Tac.Printing
 
 open System
@@ -29,23 +31,21 @@ let Run inputPath =
     let scanner = createMinJScanner (ToCharSeq inputPath) listingWriter
     let parser = Parser(scanner, rulesOutput, RuleLogger(rulesOutput))
     
-    (* Start a timer and do the work *)
     let sw = new Stopwatch()
-    sw.Start()
-    let root, errors = parser.Parse()
-    
-    // Output the errors if any
-    if errors.Length = 0 then
-        try
-            root.Value.TypeCheck()
-            assemblyOutput.PrintProgram <| root.Value.ToTac()
-        with
-            | TypeCheckError(m, typ, token) as e ->
-                ErrorPrinter.print [e] listingOutput
-    else
-        ErrorPrinter.print errors listingOutput
-
-    sw.Stop()
+    (* Start a timer and do the work *)
+    try
+        sw.Start()
+        let prg = parser.Parse()
+        let typeChecker = TypeChecker()
+        typeCheck prg
+        assemblyOutput.PrintProgram <| prg.ToTac()
+        sw.Stop()
+    with
+        | CompilerException(errors) as e ->
+            sw.Stop()
+            for message, location in Seq.sortBy (fun (m, l) -> l) errors do
+                printfn "%i:%i\t%s" location.Row location.Col message
+        
     listingOutput.WriteLine(sprintf "Concluded in %.3f seconds\n" <| float(sw.ElapsedMilliseconds) / float(1000))
 
 /// Main entry point of the application
