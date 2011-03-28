@@ -5,17 +5,16 @@ open Scanner
 open Compiler
 open MinJ.Scanner
 open MinJ.Parser
-open MinJ.Ast.TypeCheck
+open MinJ.Ast
 open System.IO
 open System
-open MinJ.Ast.TypeCheck
 
 let p str expectError = 
     let memStream = new StreamWriter(new MemoryStream())
     let parser = new Parser(createMinJScanner str <| NullListingWriter(), memStream, RuleLogger(memStream))
     let prg = parser.Parse()
     try
-        typeCheck prg
+        SemanticVerification.verify prg |> ignore
         if expectError then
             Fail "Expected an error but got none"
     with
@@ -39,6 +38,12 @@ type ParserIdentifierResolutionTests() =
         p " class X {int field;void main(){field = func(3);}int func(int i){return 3;}}" false
     static member TestFunctionInvocationNonMatchingReturnType() =
         p "class X { int field; void main() {field = func(3);} char func(int i) { return 'a'; } }" true
+
+    static member TestNotAllIfElsePathsReturn() =
+        p "class X { void main() {;} int foo() { if (3 == 4) { return 3;} else {;} } }" true
+
+    static member TestNotAllWhilePathsReturn() =
+        p "class X { void main() {;} int foo() { while (3 == 4) { return 3;} } }" true
 
 /// Runs all tests for the MinJ lexer
 let RunAllTests() = 

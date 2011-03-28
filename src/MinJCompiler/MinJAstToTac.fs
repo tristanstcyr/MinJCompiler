@@ -13,6 +13,8 @@ let TmpPtr1 = Local(12)
 let TmpPtr2 = Local(16)
 
 /// Context of a program being translated to three address code.
+/// It is passed directly to "ToTac" functions that translate AST
+/// nodes found directly inside the global scope such as functions and fields.
 type ProgramContext(instructions, functionCount) =
     /// The literals encountered in the program.
     let mutable literals : Literal list = [];
@@ -35,28 +37,47 @@ type ProgramContext(instructions, functionCount) =
         labelCount <- labelCount + 1
         Label labelCount
 
-    /// 
+    /// The literals encountered while converting
+    /// a program to three address code.
     member this.Literals with get() = literals
 
+    /// Convenient operator for adding a three address code
+    /// instruction to this context.
     static member (<--) (context : ProgramContext, instruction) =
         context.Instructions.Add(instruction)
+    /// Convenient operator for adding several three address code
+    /// instruction to the prorgam context.
     static member (<--) (context : ProgramContext, instructions) =
         context.Instructions.AddRange(instructions)
 
+/// Context for a function that is being translated to three address code.
+/// An instant of this class is used for keeping track of instrucitons, labels, literals etc.
+/// It is passed to "ToTac" functions that translate AST node found inside functions.
 type FunctionContext(program : ProgramContext, label) =
     let mutable stackSize = 20;
 
+    /// The label for this function
     member this.Label with get() = label
+    /// The stack size of this function. It is increased when
+    /// local variables are encountered.
     member this.StackSize with get() = stackSize and set v = stackSize <- v
+    /// Creates a label with a unique number.
     member this.CreateLabel() = program.CreateLabel()
+    /// Context for the program being translated.
     member this.Program with get() = program
 
+    /// Convenient operator for adding a three address code
+    /// instruction to this context.
     static member (<--) (context : FunctionContext, instruction) =
         context.Program.Instructions.Add(instruction)
+    /// Convenient operator for adding several three address code
+    /// instruction to this context.
     static member (<--) (context : FunctionContext, instructions) =
         context.Program.Instructions.AddRange(instructions)
 
-let private functionEpilogue (context : FunctionContext)  index =
+/// Generates the instructions that are at the beginning of
+/// every function.
+let private functionPrologue (context : FunctionContext)  index =
     context <--
         [
         Labeled(context.Label)
@@ -66,13 +87,20 @@ let private functionEpilogue (context : FunctionContext)  index =
         Assign(FrSz, Frame(index))
         ]
 
-let private functionProlog (context : FunctionContext) =
+/// Generates the instructions that are at the end of every function.
+let private functionEpilogue (context : FunctionContext) =
     context <-- 
         [
         Assign(FrSz, Frame(8))
         Assign(TopSt, Local(4))
         Assign(RetAdd, Local(0))
         ]
+
+(*
+    The following code adds static functions for MinJ AST nodes for translating them
+    to a three address code program. Each function takes a "context". Contexts are
+    essentially the state of the translation.
+*)
 
 type Ast.Program with
     member this.ToTac() =
@@ -253,12 +281,13 @@ and Term with
     static member ToTac context dest this =
         match this with
             | Term(prim, termPOp) ->
-                let primPtr = Primitive.ToTac context dest prim
+                
                 match termPOp with
                     | Some(termP) ->
+                        let primPtr = Primitive.ToTac context TmpPtr2 prim
                         TermP.ToTac context primPtr dest termP
                     | None ->
-                        primPtr
+                        Primitive.ToTac context dest prim
 
 and ExpressionOp with
     static member ToTac this =
@@ -283,12 +312,12 @@ and Expression with
         match this with
             | Expression(isNegated, term, rest) ->
                 // TODO: Negation
-                let expPtr = Term.ToTac context destPtr term
                 match rest with
                     | Some(expP) ->
-                        ExpressionPrime.ToTac context expPtr destPtr expP
+                        let termPtr = Term.ToTac context TmpPtr2 term
+                        ExpressionPrime.ToTac context termPtr destPtr expP
                     | None ->
-                        expPtr
+                        Term.ToTac context destPtr term
 
 and VariableReference with
     static member ToTac context (tmpPtr : Ptr) this =
@@ -333,9 +362,9 @@ and MainFunction with
         match this with
             | MainFunction(body) ->
                 let context = FunctionContext(context, Label(0))
-                functionEpilogue context 0
+                functionPrologue context 0
                 FunctionBody.ToTac context body
-                functionProlog context
+                functionEpilogue context
                 context.StackSize
 
 and FunctionDefinition with
@@ -343,7 +372,7 @@ and FunctionDefinition with
         match this with
             | FunctionDefinition(id, parameters, body) ->
                 let context = FunctionContext(context, Label(id.Attributes.Value.Index))
-                functionEpilogue context id.Attributes.Value.Index
+                functionPrologue context id.Attributes.Value.Index
                 FunctionBody.ToTac context body
-                functionProlog context
+                functionEpilogue context
                 context.StackSize

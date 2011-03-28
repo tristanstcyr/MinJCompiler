@@ -501,12 +501,12 @@ type Parser(scanner : MinJScanner,
                 ruleLogger.Pop()
                 logLeft
 
-    /// "<rel_exp> --> ( < exp >< rel op >< exp > )>"
+    /// "<rel_exp> --> ( < exp >< rel op >< exp > )"
     member this.ParseRelExp() : Ast.RelativeExpression =
         scanner.PopTerminal OParen
         let expLeft = this.ParseExp()
 
-        ruleLogger.Push "<rel_exp> --> ( < exp >< rel op >< exp > )>"
+        ruleLogger.Push "<rel_exp> --> ( < exp >< rel op >< exp > )"
 
         let operator = 
             match scanner.Current with
@@ -747,7 +747,3 @@ type Parser(scanner : MinJScanner,
 
             | _ ->
                 raiseUnexpected()
-
-/// Convenience function for calling the parser. This is equivalent to 
-/// Parser(tokens).ParsePrg().Value
-let parse tokens = Parser(tokens).ParsePrg()

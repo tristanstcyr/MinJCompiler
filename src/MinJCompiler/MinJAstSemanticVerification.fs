@@ -1,4 +1,4 @@
-﻿module MinJ.Ast.TypeCheck
+﻿module MinJ.Ast.SemanticVerification
 
 open Compiler
 open Scanner.Tokens
@@ -11,7 +11,7 @@ open System.Collections.Generic
 /// on MinJ AST nodes.
 /// The class does not have any state except for a collection of 
 /// errors encountered while checking.
-type TypeChecker() =
+type SemanticVerifier() =
     
     /// Accumulator for errors encountered
     let mutable errors = new List<CompilationError>()
@@ -29,7 +29,7 @@ type TypeChecker() =
 
     member this.Errors with get() = errors
 
-    member this.TypeCheck ast  =
+    member this.Verify ast  =
         match ast with
             | VariableReference(varId, None) -> 
                 varId.Attributes.Value.Type, varId.Token :> Token
@@ -41,57 +41,57 @@ type TypeChecker() =
                         errors.Add("Expected array type", varId.Token.StartLocation)
                         typ, varId.Token :> Token
 
-    member this.TypeCheck ast = 
+    member this.Verify ast = 
         match ast with
             | VariableElement(varRef) ->
-                this.TypeCheck varRef
+                this.Verify varRef
             | NumberElement(n) ->
                 Primitive(IntType), n :> Token
             | CharConstElement(c) ->
                 Primitive(CharType), c :> Token
   
-    member this.TypeCheck (TermP(operator, primitive, rest)) =
-        let primType, (token : Token) = this.TypeCheck primitive
+    member this.Verify (TermP(operator, primitive, rest)) =
+        let primType, (token : Token) = this.Verify primitive
         if primType <> Primitive(IntType) then
             errors.Add("* / % operators may only be used on values of type \"int\"", token.StartLocation)
         match rest with
             | Some(termP) ->
-                let rest = this.TypeCheck termP
+                let rest = this.Verify termP
                 checkTypes rest (primType, token)
                 primType, token
             | None ->
                 primType, token
 
-    member this.TypeCheck (Term(primitive, termP)) =
-        let primType, token = this.TypeCheck primitive
+    member this.Verify (Term(primitive, termP)) =
+        let primType, token = this.Verify primitive
         match termP with
             | Some(termP) ->
                 if primType <> Primitive(IntType) then
                     errors.Add("* / % operators may only be used on values of type \"int\"", token.StartLocation)
-                this.TypeCheck(termP)
+                this.Verify(termP)
             | None -> 
                 primType, token
 
-    member this.TypeCheck (ExpressionPrime(op, term, rest)) =
-        let termType = this.TypeCheck term
+    member this.Verify (ExpressionPrime(op, term, rest)) =
+        let termType = this.Verify term
         match rest with
-            | Some(rest) -> checkTypes termType <| this.TypeCheck rest
+            | Some(rest) -> checkTypes termType <| this.Verify rest
             | _ -> ()
         termType
 
-    member this.TypeCheck(Expression(bool, term, rest)) =
-        let termType, token = this.TypeCheck term
+    member this.Verify(Expression(bool, term, rest)) =
+        let termType, token = this.Verify term
         if bool && termType <> Primitive(IntType) then
             errors.Add("Only expressions of type int can be negated", token.StartLocation)
         if rest.IsSome then
-            let restType = this.TypeCheck rest.Value
+            let restType = this.Verify rest.Value
             checkTypes (termType, token) restType
         termType, token
 
-    member this.TypeCheck(ast : Primitive) =
+    member this.Verify(ast : Primitive) =
         match ast with
             | VariablePrimitive(varRef) ->
-                this.TypeCheck varRef
+                this.Verify varRef
             
             | NumberPrimitive(n) -> 
                 Primitive IntType, n :> Token
@@ -100,59 +100,60 @@ type TypeChecker() =
                 Primitive CharType, c :> Token
             
             | ParenPrimitive(exp) ->
-                this.TypeCheck exp
+                this.Verify exp
 
             | MethodInvocationPrimitive(funcId, arguments) ->
-                let argTypes = List.map (fun (a : Element) -> this.TypeCheck a) arguments
+                let argTypes = List.map (fun (a : Element) -> this.Verify a) arguments
                 checkTypeLists funcId.Attributes.Value.ParameterTypes argTypes
                 funcId.Attributes.Value.ReturnType, funcId.Token :> Token
 
-    member this.TypeCheck (RelativeExpression(expLeft, relOp, expRight)) =
-        let typeLeft = this.TypeCheck expLeft
-        let typeRight = this.TypeCheck expRight
+    member this.Verify (RelativeExpression(expLeft, relOp, expRight)) =
+        let typeLeft = this.Verify expLeft
+        let typeRight = this.Verify expRight
         checkTypes typeLeft typeRight
 
-    member this.TypeCheck (ast : LogicalExpression) =
+    member this.Verify (ast : LogicalExpression) =
         match ast with
             | SingletonLogicalExpression(relExp) ->
-                this.TypeCheck relExp
+                this.Verify relExp
             | LogicalExpression(relExp, logOp, logExp) ->
-                this.TypeCheck relExp
-                this.TypeCheck logExp
+                this.Verify relExp
+                this.Verify logExp
 
-    member this.TypeCheck (ast : Assignment) =
+    member this.Verify (ast : Assignment) =
         match ast with
             | ExpressionAssignment(varRef, expression) ->
-                checkTypes (this.TypeCheck varRef) (this.TypeCheck expression)
+                checkTypes (this.Verify varRef) (this.Verify expression)
             | SystemInAssignment(assigned, inType) ->
-                let assignedType, token = this.TypeCheck assigned
+                let assignedType, token = this.Verify assigned
                 let expected = Primitive(inType)
                 if assignedType <> expected then
                     errors.Add("Incompatible type used with System.in", token.StartLocation)
 
-    member this.TypeCheck(ast, funcId : FunctionIdentifier option) =
+    member this.Verify(ast, funcId : FunctionIdentifier option) =
         match ast with
             | Block(statements) ->
                 let returnFound = ref false
                 for stmt in statements do
-                    returnFound := !returnFound || this.TypeCheck(stmt, funcId)
+                    returnFound := !returnFound || this.Verify(stmt, funcId)
                 !returnFound
             
             | AssignmentStatement(assignment) ->
-                this.TypeCheck assignment
+                this.Verify assignment
                 false
 
             | IfElse(lExp, ifStatement, elseStatement) ->
-                this.TypeCheck lExp
-                this.TypeCheck(ifStatement, funcId) 
-                    && this.TypeCheck(elseStatement, funcId)
+                this.Verify lExp
+                this.Verify(ifStatement, funcId) 
+                    && this.Verify(elseStatement, funcId)
 
             | WhileStatement(logicExp, body) ->
-                this.TypeCheck logicExp
-                this.TypeCheck(body, funcId)
+                this.Verify logicExp
+                this.Verify(body, funcId) |> ignore
+                false
 
             | ReturnStatement(exp) ->
-                let expType, expToken = this.TypeCheck exp
+                let expType, expToken = this.Verify exp
                 match funcId with
                     | Some(funcId) ->
                         let funcType = funcId.Attributes.Value.ReturnType, funcId.Token :> Token
@@ -162,7 +163,7 @@ type TypeChecker() =
                 true
 
             | MethodInvocationStatement(identifier, arguments) ->
-                let argTypes = List.map (fun (a : Element) -> this.TypeCheck a) arguments
+                let argTypes = List.map (fun (a : Element) -> this.Verify a) arguments
                 checkTypeLists argTypes identifier.Attributes.Value.ParameterTypes
                 false
             
@@ -171,29 +172,30 @@ type TypeChecker() =
             | EmptyStatement -> false
     
 
-    member this.TypeCheck(FunctionBody(decls, stmts), funcId) =
+    member this.Verify(FunctionBody(decls, stmts), funcId) =
         let returnFound = ref false
         for stmt in stmts do
-            returnFound := !returnFound || this.TypeCheck(stmt, funcId)
+            returnFound := !returnFound || this.Verify(stmt, funcId)
         !returnFound
     
-    member this.TypeCheck (MainFunction(body)) =
-        this.TypeCheck(body, None) |> ignore
+    member this.Verify (MainFunction(body)) =
+        this.Verify(body, None) |> ignore
     
-    member this.TypeCheck (FunctionDefinition(funcId, _, body)) =
-        if not <| this.TypeCheck(body, Some funcId) then
+    member this.Verify (FunctionDefinition(funcId, _, body)) =
+        if not <| this.Verify(body, Some funcId) then
             errors.Add("Not all paths return a value", funcId.Token.StartLocation)
     
-    member this.TypeCheck (Program(decls, mainF, funcDefs)) =
-        this.TypeCheck mainF
+    member this.Verify (Program(decls, mainF, funcDefs)) =
+        this.Verify mainF
         for funcDef in funcDefs do 
-            this.TypeCheck funcDef
+            this.Verify funcDef
 
 /// Type checks are MinJ Ast Program node and all of its children.
 /// If an error is encountered, a CompilerException is thrown
 /// with all the encountered errors.
-let typeCheck (prg : Program) =
-    let typeCheck = TypeChecker()
-    typeCheck.TypeCheck prg
-    if (typeCheck.Errors.Count > 0) then
-        raise <| CompilerException(typeCheck.Errors)
+let verify (prg : Program) =
+    let verifier = SemanticVerifier()
+    verifier.Verify prg
+    if (verifier.Errors.Count > 0) then
+        raise <| CompilerException(verifier.Errors)
+    prg

@@ -52,7 +52,7 @@
     <Compile Include="SymbolTable.fs" />
     <Compile Include="RuleLogger.fs" />
     <Compile Include="MinJParser.fs" />
-    <Compile Include="MinJAstTypeCheck.fs" />
+    <Compile Include="MinJAstSemanticVerification.fs" />
     <Compile Include="Tac.fs" />
     <Compile Include="MinJAstToTac.fs" />
     <Compile Include="TacPrinting.fs" />
