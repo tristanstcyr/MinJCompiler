@@ -31,7 +31,7 @@
           <index> --> e
         <term'> --> e
        <exp'> --> e
-      <rel_exp> --> ( < exp >< rel op >< exp > )>
+      <rel_exp> --> ( < exp >< rel op >< exp > )
        <exp> --> <term><exp'>
         <term> --> <prim><term'>
          <prim> --> n
@@ -50,7 +50,7 @@
                <index> --> e
              <term'> --> e
             <exp'> --> e
-           <rel_exp> --> ( < exp >< rel op >< exp > )>
+           <rel_exp> --> ( < exp >< rel op >< exp > )
             <exp> --> <term><exp'>
              <term> --> <prim><term'>
               <prim> --> n
@@ -78,7 +78,7 @@
                     <index> --> e
                   <term'> --> e
                  <exp'> --> e
-                <rel_exp> --> ( < exp >< rel op >< exp > )>
+                <rel_exp> --> ( < exp >< rel op >< exp > )
                  <exp> --> <term><exp'>
                   <term> --> <prim><term'>
                    <prim> --> n
@@ -168,27 +168,27 @@ Symbol table after parsing "main"
 {Definition = y;
  Type = Primitive IntType;
  Scope = LocalVariable;
- MemoryAddress = 0;}
+ MemoryAddress = 0u;}
 {Definition = i;
  Type = Primitive IntType;
  Scope = LocalVariable;
- MemoryAddress = 0;}
+ MemoryAddress = 0u;}
 {Definition = x;
  Type = Primitive IntType;
  Scope = LocalVariable;
- MemoryAddress = 0;}
+ MemoryAddress = 0u;}
 {Definition = z;
  Type = Primitive CharType;
  Scope = LocalVariable;
- MemoryAddress = 0;}
+ MemoryAddress = 0u;}
 {Definition = a;
  Type = ArrayType IntType;
  Scope = LocalVariable;
- MemoryAddress = 0;}
+ MemoryAddress = 0u;}
 {Definition = field;
  Type = ArrayType IntType;
  Scope = GlobalVariable;
- MemoryAddress = 0;}
+ MemoryAddress = 0u;}
 
     < funct_def > −−> < type > i ( < par list > ){{< decl >} < st list > }
      <type> --> int
@@ -212,9 +212,9 @@ Symbol table after parsing foo
 {Definition = x;
  Type = Primitive IntType;
  Scope = ParameterVariable;
- MemoryAddress = 0;}
+ MemoryAddress = 0u;}
 {Definition = field;
  Type = ArrayType IntType;
  Scope = GlobalVariable;
- MemoryAddress = 0;}
+ MemoryAddress = 0u;}
 

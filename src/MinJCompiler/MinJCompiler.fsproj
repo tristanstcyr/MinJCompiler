@@ -56,6 +56,9 @@
     <Compile Include="Tac.fs" />
     <Compile Include="MinJAstToTac.fs" />
     <Compile Include="TacPrinting.fs" />
+    <Compile Include="MoonAst.fs" />
+    <Compile Include="TacToMoon.fs" />
+    <Compile Include="MoonToStream.fs" />
     <Compile Include="MinJParserCli.fs" />
   </ItemGroup>
   <ItemGroup>

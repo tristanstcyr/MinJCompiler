@@ -4,10 +4,10 @@ class Example
     void main() 
     { 
         int y;
-	int i;
-	int x;
-	char z;
-	int[] a = new int[3];
+		int i;
+		int x;
+		char z;
+		int[] a = new int[3];
         while (y == 0)
         {
             if (y != 1)
@@ -23,7 +23,7 @@ class Example
                 }
                 else
                 {
-                    z = 'é';
+                    z = 'e';
                     y = 4 + 5 / 5 % 4 + 3 - 223428;
                     x = a[3 * 4 + 5];
                 }

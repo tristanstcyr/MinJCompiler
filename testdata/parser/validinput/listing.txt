@@ -76,73 +76,73 @@
 		Type=Terminal
 		Loc=6, 14
 
-6: 	int i;
+6: 		int i;
 	int
 		Type=Terminal
-		Loc=7, 2
+		Loc=7, 3
 	i
 		Type=Identifier
-		Loc=7, 6
+		Loc=7, 7
 	;
 		Type=Terminal
-		Loc=7, 7
+		Loc=7, 8
 
-7: 	int x;
+7: 		int x;
 	int
 		Type=Terminal
-		Loc=8, 2
+		Loc=8, 3
 	x
 		Type=Identifier
-		Loc=8, 6
+		Loc=8, 7
 	;
 		Type=Terminal
-		Loc=8, 7
+		Loc=8, 8
 
-8: 	char z;
+8: 		char z;
 	char
 		Type=Terminal
-		Loc=9, 2
+		Loc=9, 3
 	z
 		Type=Identifier
-		Loc=9, 7
+		Loc=9, 8
 	;
 		Type=Terminal
-		Loc=9, 8
+		Loc=9, 9
 
-9: 	int[] a = new int[3];
+9: 		int[] a = new int[3];
 	int
 		Type=Terminal
-		Loc=10, 2
+		Loc=10, 3
 	[
-		Type=Terminal
-		Loc=10, 5
-	]
 		Type=Terminal
 		Loc=10, 6
-	a
-		Type=Identifier
-		Loc=10, 8
-	=
-		Type=Terminal
-		Loc=10, 10
-	new
-		Type=Terminal
-		Loc=10, 12
-	int
-		Type=Terminal
-		Loc=10, 16
-	[
-		Type=Terminal
-		Loc=10, 19
-	3
-		Type=Number
-		Loc=10, 20
 	]
 		Type=Terminal
+		Loc=10, 7
+	a
+		Type=Identifier
+		Loc=10, 9
+	=
+		Type=Terminal
+		Loc=10, 11
+	new
+		Type=Terminal
+		Loc=10, 13
+	int
+		Type=Terminal
+		Loc=10, 17
+	[
+		Type=Terminal
+		Loc=10, 20
+	3
+		Type=Number
 		Loc=10, 21
-	;
+	]
 		Type=Terminal
 		Loc=10, 22
+	;
+		Type=Terminal
+		Loc=10, 23
 
 10:         while (y == 0)
 	while
@@ -321,14 +321,14 @@
 		Type=Terminal
 		Loc=25, 17
 
-25:                     z = '�';
+25:                     z = 'e';
 	z
 		Type=Identifier
 		Loc=26, 21
 	=
 		Type=Terminal
 		Loc=26, 23
-	'�'
+	'e'
 		Type=CharConst
 		Loc=26, 25
 	;
@@ -505,5 +505,5 @@
 		Type=Terminal
 		Loc=39, 1
 
-Concluded in 0.391 seconds
+Concluded in 0.541 seconds
 

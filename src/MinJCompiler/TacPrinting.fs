@@ -34,6 +34,7 @@ type Ptr with
             | TopSt -> "TopSt"
             | FrSz -> "FrSz"
             | RetAdd -> "RetAdd"
+            | Result -> "Result"
 
 type Label with
     member this.ToAssembly() =

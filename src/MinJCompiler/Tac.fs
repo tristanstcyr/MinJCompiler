@@ -7,21 +7,23 @@ open System.IO
 /// A pointer to a value.
 type Ptr = 
     /// The address of a global value from a field in MinJ.
-    | Global of int
+    | Global of uint32
     /// The address of a local value.
-    | Local of int 
+    | Local of uint32 
     /// The address of a parameter.
-    | Param of int 
+    | Param of uint32 
     /// The address of a constnat.
-    | Constant of int
+    | Constant of uint32
     /// The address of the size of a frame of a function.
-    | Frame of int
+    | Frame of uint32
     /// The top of the current stack.
     | TopSt 
     /// The frame size of the current function.
     | FrSz 
     /// The address to return to.
     | RetAdd
+    /// The address for return values of functons
+    | Result
 
 type Operator = 
     | Add | Sub | Mul | Div | Mod
@@ -75,8 +77,8 @@ type Instruction =
     /// Returns from the current function.
     | Return
 
-type GlobalsSize = int
-type FrameSize = int
+type GlobalsSize = uint32
+type FrameSize = uint32
 type Constants = Literal list
 /// A three address code program.
 type Program = | Program of Instruction seq * FrameSize list * Constants * GlobalsSize

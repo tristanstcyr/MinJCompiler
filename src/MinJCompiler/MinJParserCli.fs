@@ -5,7 +5,10 @@ open Scanner
 open Compiler
 open MinJ.Ast
 open MinJ.Ast.ToTac
+open Tac
 open Tac.Printing
+open Tac.ToMoon
+open Moon.ToStream
 
 open System
 open System.IO
@@ -21,15 +24,17 @@ let Run inputPath =
     // directory as the the input file.
     let rulesPath = file.Directory.FullName + @"\rules.txt"
     let listingPath = file.Directory.FullName + @"\listing.txt"
-    let assemblyPath = file.Directory.FullName + @"\assembly.txt"
+    let tacPath = file.Directory.FullName + @"\tac.txt"
+    let moonPath = file.Directory.FullName + @"\moon.m"
     
     // Delete the files if they already exist
-    List.iter File.Delete [rulesPath;listingPath;assemblyPath]
+    List.iter File.Delete [rulesPath;listingPath;tacPath;moonPath]
     
     // Open streams for writing to the output files.
     use listingOutput = new StreamWriter(File.OpenWrite(listingPath))
     use rulesOutput = new StreamWriter(File.OpenWrite(rulesPath))
-    use assemblyOutput = new StreamWriter(File.OpenWrite(assemblyPath))
+    use tacOutput = new StreamWriter(File.OpenWrite(tacPath))
+    use moonOutput = new StreamWriter(File.OpenWrite(moonPath))
 
     // Create the Scanner and parser. These are objects because they need to be stateful
     // for performance reasons.
@@ -40,7 +45,9 @@ let Run inputPath =
     let sw = new Stopwatch()
     try
         sw.Start()
-        (parser.Parse() |> SemanticVerification.verify ).ToTac() |> assemblyOutput.PrintProgram
+        let tacPrg = (parser.Parse() |> SemanticVerification.verify ).ToTac() 
+        tacOutput.PrintProgram tacPrg
+        Program.ToMoon tacPrg |> Moon.ToStream.write moonOutput
         sw.Stop()
     with
         // A CompilerException might occure at any stage of the compilation process.

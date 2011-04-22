@@ -39,7 +39,7 @@ type VariableAttributes = {
     /// The address where the variable can be referenced.
     /// It is mutable because it is only determind during 
     /// the intermediate code generation.
-    mutable MemoryAddress : int;
+    mutable MemoryAddress : uint32;
 }
 
 /// Attributes for function identifiers.
@@ -75,7 +75,7 @@ type VariableIdentifier = {
 }
 
 type Program =  
-    | Program of VariableDeclaration list * MainFunction * FunctionDefinition list
+   | Program of VariableDeclaration list * MainFunction * FunctionDefinition list
 
 and VariableDeclaration = 
     | NonArrayVariableDeclaration of VariableIdentifier
@@ -120,6 +120,7 @@ and RelOperator = Lt | Gt | Eq | LtEq | GtEq | Not | NotEq
 and RelativeExpression = 
     | RelativeExpression of Expression * RelOperator * Expression
 
+/// 
 and Expression =
     | Expression of bool * Term * ExpressionPrime option
 

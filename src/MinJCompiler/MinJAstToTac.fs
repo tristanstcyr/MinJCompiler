@@ -3,15 +3,27 @@ module MinJ.Ast.ToTac
 
 open MinJ
 open Tac
+open System
 open System.Collections.Generic
 
-/// Temporary storage address 1.
-/// This is also assumed to be used for storing the return
-/// value of functions.
-let TmpPtr1 = Local(12)
-/// Temporary storage address 2.
-let TmpPtr2 = Local(16)
+let private baseFunctionSize = 12u
+let private tempSize = 4u
 
+exception TemporaryVariableReleaseException of string * Ptr
+
+type TemporaryVariablePool() =
+    let mutable count = 0u
+    let mutable max = 0u
+
+    member this.RequiredStackSpace with get() = max
+
+    member this.Acquire(func : Ptr -> 'a) =
+        count <- count + 1u
+        let result = func (Local(baseFunctionSize + (count - 1u) * tempSize))
+        count <- count - 1u
+        max <- Math.Max(max, count)
+        result
+            
 /// Context of a program being translated to three address code.
 /// It is passed directly to "ToTac" functions that translate AST
 /// nodes found directly inside the global scope such as functions and fields.
@@ -30,7 +42,7 @@ type ProgramContext(instructions, functionCount) =
     /// Adds a constant to this context.
     member this.CreateConstant(literal) =
         literals <- literal :: literals
-        Tac.Constant(literals.Length - 1)
+        Tac.Constant(((uint32)literals.Length) - 1u)
     
     /// Creates a label with a unique number.
     member this.CreateLabel() =
@@ -54,15 +66,28 @@ type ProgramContext(instructions, functionCount) =
 /// An instant of this class is used for keeping track of instrucitons, labels, literals etc.
 /// It is passed to "ToTac" functions that translate AST node found inside functions.
 type FunctionContext(program : ProgramContext, label) =
-    let mutable stackSize = 20;
+
+    let mutable localDeclarationsSize = 12u;
+
+    let tempVariablePool = TemporaryVariablePool()
+
+    member this.TemporaryVariables with get() = tempVariablePool
 
     /// The label for this function
     member this.Label with get() = label
+    
     /// The stack size of this function. It is increased when
     /// local variables are encountered.
-    member this.StackSize with get() = stackSize and set v = stackSize <- v
+    member this.LocalDeclarationsSize 
+        with get() = localDeclarationsSize 
+        and set v = localDeclarationsSize <- v
+
+    member this.TotalStackSize 
+        with get() = localDeclarationsSize + tempVariablePool.RequiredStackSpace
+
     /// Creates a label with a unique number.
     member this.CreateLabel() = program.CreateLabel()
+    
     /// Context for the program being translated.
     member this.Program with get() = program
 
@@ -81,9 +106,9 @@ let private functionPrologue (context : FunctionContext)  index =
     context <--
         [
         Labeled(context.Label)
-        Assign(Local(4), TopSt)
+        Assign(Local(4u), TopSt)
         Inst3(TopSt, Add, TopSt, FrSz)
-        Assign(Local(8), FrSz)
+        Assign(Local(8u), FrSz)
         Assign(FrSz, Frame(index))
         ]
 
@@ -91,9 +116,9 @@ let private functionPrologue (context : FunctionContext)  index =
 let private functionEpilogue (context : FunctionContext) =
     context <-- 
         [
-        Assign(FrSz, Frame(8))
-        Assign(TopSt, Local(4))
-        Assign(RetAdd, Local(0))
+        Assign(FrSz, Frame(8u))
+        Assign(TopSt, Local(4u))
+        Assign(RetAdd, Local(0u))
         ]
 
 (*
@@ -107,25 +132,27 @@ type Ast.Program with
         match this with
             | Ast.Program(varDecls, main, funcDecls) ->
                 let context = ProgramContext(funcDecls.Length + 1)
-                let globalSpace = List.fold VariableDeclaration.ToTac 0 varDecls
+                let globalSpace = List.fold VariableDeclaration.ToTac 0u varDecls
                 let mainSize = MainFunction.ToTac context main
                 let frameSizes = mainSize :: List.map (FunctionDefinition.ToTac context) funcDecls
-                Tac.Program(context.Instructions, frameSizes, context.Literals, globalSpace)
+                Tac.Program(context.Instructions, frameSizes, List.rev context.Literals, globalSpace)
 
 
 and Ast.Assignment with
     static member ToTac (context : FunctionContext) this =
-        match this with
-            | ExpressionAssignment(varRef, exp) ->
-                let varPtr = VariableReference.ToTac context TmpPtr1 varRef
-                let ptr = Expression.ToTac context TmpPtr1 exp
-                
-                context <-- Assign(varPtr, ptr)
+        // TODO: We could potentially be using more temp variables than needed
+        context.TemporaryVariables.Acquire(fun tempPtr ->
+            match this with
+                | ExpressionAssignment(varRef, exp) ->
+                    let destPtr = VariableReference.ToTac context tempPtr varRef
+                    let expressionResultPtr = Expression.ToTac context destPtr exp
+                    if (expressionResultPtr <> destPtr) then
+                        context <-- Assign(destPtr, expressionResultPtr)
             
-            | SystemInAssignment(varRef, _) ->
-                let varPtr = VariableReference.ToTac context TmpPtr1 varRef
-                
-                context <-- Read(varPtr)
+                | SystemInAssignment(varRef, _) ->
+                    let varPtr = VariableReference.ToTac context tempPtr varRef
+                    context <-- Read(varPtr)
+        )
 
 and Ast.RelOperator with
     member this.ToTac() =
@@ -139,40 +166,44 @@ and Ast.RelOperator with
             | Ast.NotEq -> Tac.NotEq
 
 and Ast.RelativeExpression with
-    static member ToTac (context : FunctionContext) ptr this =
+    static member ToTac (context : FunctionContext) destPtr this =
         match this with
             | RelativeExpression(expLeft, relOp, expRight) ->
-                let leftPtr = Expression.ToTac context TmpPtr2 expLeft
-                let rightPtr = Expression.ToTac context TmpPtr1 expRight
-                context <-- Inst3(ptr, relOp.ToTac(), leftPtr, rightPtr)
+                context.TemporaryVariables.Acquire(fun tempLeft ->
+                    context.TemporaryVariables.Acquire(fun tempRight ->
+                        let resultLeft = Expression.ToTac context tempLeft expLeft
+                        let resultRight = Expression.ToTac context tempRight expRight
+                        context <-- Inst3(destPtr, relOp.ToTac(), resultLeft, resultRight)
+                    )
+               )
 
 and Ast.LogicalExpression with
-    static member ToTac (context : FunctionContext) ptr this =
+    static member ToTac (context : FunctionContext) destPtr this =
         match this with
             | SingletonLogicalExpression(relExp) ->
-                RelativeExpression.ToTac context ptr relExp
+                RelativeExpression.ToTac context destPtr relExp
             
             | LogicalExpression(logLeft, Ast.AndOp, logRight) ->
 
-                LogicalExpression.ToTac context ptr logLeft
+                LogicalExpression.ToTac context destPtr logLeft
                        
                 let skipLabel = context.CreateLabel()         
-                context <-- IfFalse(ptr, skipLabel)
+                context <-- IfFalse(destPtr, skipLabel)
 
-                LogicalExpression.ToTac context ptr logRight
+                LogicalExpression.ToTac context destPtr logRight
 
                 context <-- Labeled(skipLabel)
             
             | LogicalExpression(logLeft, Ast.OrOp, logRight) ->
                 
-                LogicalExpression.ToTac context ptr logLeft
+                LogicalExpression.ToTac context destPtr logLeft
 
                 let skipLabel1 = context.CreateLabel()
                 let skipLabel2 = context.CreateLabel()
-                context <-- IfFalse(ptr, skipLabel1)
+                context <-- IfFalse(destPtr, skipLabel1)
                 context <-- Goto(skipLabel2)
                 context <-- Labeled(skipLabel1)
-                LogicalExpression.ToTac context ptr logRight
+                LogicalExpression.ToTac context destPtr logRight
                 context <-- Labeled(skipLabel2)
 
 and Ast.Statement with
@@ -186,47 +217,65 @@ and Ast.Statement with
                 Assignment.ToTac context assignment
 
             | IfElse(lExp, ifStatement, elseStatement) ->
-                let resultPtr = TmpPtr1
+                
                 let elseLabel = context.CreateLabel()
                 let elseEndLabel = context.CreateLabel()
-
-                LogicalExpression.ToTac context resultPtr lExp
                 
-                context <-- IfFalse(resultPtr, elseLabel)
+                // if (logicalExpression)
+                context.TemporaryVariables.Acquire(fun logicalExpressionResult ->
+                    LogicalExpression.ToTac context logicalExpressionResult lExp
+                    context <-- IfFalse(logicalExpressionResult, elseLabel)
+                )
                 
+                // {
                 Statement.ToTac context ifStatement
-                
                 context <-- Goto(elseEndLabel)
+                // }
+                
+                // else {
                 context <-- Labeled(elseLabel)
-                
                 Statement.ToTac context elseStatement
-                
+                // }
+
                 context <-- Labeled(elseEndLabel)
 
             | WhileStatement(logicExp, body) ->
-                let resultPtr = TmpPtr1
                 let startLabel = context.CreateLabel()
                 let endLabel = context.CreateLabel()
 
+                // while(logicExp)
                 context <-- Labeled(startLabel)
-                LogicalExpression.ToTac context resultPtr logicExp
-                context <-- IfFalse(resultPtr, endLabel)
+                context.TemporaryVariables.Acquire(fun tmpPtr1 ->
+                    LogicalExpression.ToTac context tmpPtr1 logicExp
+                    context <-- IfFalse(tmpPtr1, endLabel)
+                )
+
+                // {
                 Statement.ToTac context body
                 context <-- Goto(startLabel)
+                // }
+
                 context <-- Labeled(endLabel)
 
             | ReturnStatement(exp) ->
-                Expression.ToTac context TmpPtr1 exp |> ignore
+                let expressionResultPtr = Expression.ToTac context Result exp
+                if (expressionResultPtr <> Result) then
+                    context <-- Assign(Result, expressionResultPtr)
                 context <-- Return
 
             | MethodInvocationStatement(identifier, arguments) ->
-                let ptrs = List.map (Element.ToTac context TmpPtr1) arguments
-                for ptr in ptrs do context <-- Push ptr
-                context <-- Call(Label(identifier.Attributes.Value.Index), ptrs.Length)
+                context.TemporaryVariables.Acquire(fun tempPtr ->
+                    for argument in arguments do
+                        let elemPtr = Element.ToTac context tempPtr argument
+                        context <-- Push elemPtr
+                )
+                context <-- Call(Label(identifier.Attributes.Value.Index), arguments.Length)
             
             | SystemOutInvocation(arguments) -> 
-                for arg in arguments do
-                    context <-- Write(Element.ToTac context TmpPtr1 arg)
+                context.TemporaryVariables.Acquire(fun tempPtr ->
+                    for arg in arguments do
+                        context <-- Write(Element.ToTac context tempPtr arg)
+                )
             
             | EmptyStatement -> ()
 
@@ -243,19 +292,27 @@ and Element with
 and Primitive with
     static member ToTac (context : FunctionContext) (tmpPtr : Ptr) this =
         match this with
+
             | VariablePrimitive(varRef) ->
                 VariableReference.ToTac context tmpPtr varRef
+
             | NumberPrimitive(n) -> 
                 context.Program.CreateConstant(NumberLiteral(n.Value))
+
             | CharPrimitive(c) -> 
                 context.Program.CreateConstant(CharLiteral(c.Value))
+
             | ParenPrimitive(exp) ->
                 Expression.ToTac context tmpPtr exp
+
             | MethodInvocationPrimitive(funcId, arguments) ->
-                List.iter (fun ptr -> context <-- Push ptr) (List.map (Element.ToTac context tmpPtr) arguments)
+                // Add the push instructions for each argument in the invocation
+                for ptr in (Seq.map (Element.ToTac context tmpPtr) arguments) do
+                    context <-- Push ptr
+                // Call the function
                 context <-- Call(Label(funcId.Attributes.Value.Index), arguments.Length)
-                if tmpPtr <> TmpPtr1 then
-                    context <-- Tac.Assign(tmpPtr, TmpPtr1)
+                // Result is in the special result address
+                context <-- Assign(tmpPtr, Result)
                 tmpPtr
 
 and TermOp with
@@ -266,26 +323,31 @@ and TermOp with
             | ModOp -> Tac.Mod
 
 and TermP with
-    static member ToTac context termPtr dest this =
+    static member ToTac (context : FunctionContext) termPtr destPtr this =
         match this with
-            | TermP(op, prim, termPOp) ->
-                let primPtr = Primitive.ToTac context dest prim
-                context <-- Inst3(dest, TermOp.ToTac op, termPtr, primPtr)
-                match termPOp with
-                    | Some(termP) ->
-                        TermP.ToTac context dest dest termP
-                    | None ->
-                        dest
+            | TermP(op, prim, termPOption) ->
+                context.TemporaryVariables.Acquire(fun tempPtr ->
+                    let primPtr = Primitive.ToTac context tempPtr prim
+                    match termPOption with
+                        | Some(termP) ->
+                            context <-- Inst3(tempPtr, TermOp.ToTac op, termPtr, primPtr)
+                            TermP.ToTac context tempPtr destPtr termP
+                        | None ->
+                            context <-- Inst3(destPtr, TermOp.ToTac op, termPtr, primPtr)
+                )
 
 and Term with
-    static member ToTac context dest this =
+    static member ToTac (context : FunctionContext) dest this =
         match this with
-            | Term(prim, termPOp) ->
+            | Term(prim, termP) ->
                 
-                match termPOp with
+                match termP with
                     | Some(termP) ->
-                        let primPtr = Primitive.ToTac context TmpPtr2 prim
-                        TermP.ToTac context primPtr dest termP
+                        context.TemporaryVariables.Acquire(fun tempPtr ->
+                            let primPtr = Primitive.ToTac context tempPtr prim
+                            TermP.ToTac context primPtr dest termP
+                            dest
+                        )
                     | None ->
                         Primitive.ToTac context dest prim
 
@@ -296,7 +358,7 @@ and ExpressionOp with
             | SubOp -> Tac.Sub
 
 and ExpressionPrime with
-    static member ToTac context term1Ptr destPtr this =
+    static member ToTac context term1Ptr destPtr this : unit =
         match this with
             | ExpressionPrime(op, term, expPOp) ->
                 let term2Ptr = Term.ToTac context destPtr term 
@@ -305,17 +367,20 @@ and ExpressionPrime with
                 match expPOp with
                     | Some(expP) ->
                         ExpressionPrime.ToTac context destPtr destPtr expP
-                    | None ->
-                        destPtr
+                    | None -> ()
 and Expression with
-    static member ToTac context (destPtr : Ptr) this =
+    static member ToTac context (destPtr : Ptr) this : Ptr =
         match this with
             | Expression(isNegated, term, rest) ->
                 // TODO: Negation
                 match rest with
                     | Some(expP) ->
-                        let termPtr = Term.ToTac context TmpPtr2 term
-                        ExpressionPrime.ToTac context termPtr destPtr expP
+                        context.TemporaryVariables.Acquire(fun termResultPtr ->
+                            let termPtr = Term.ToTac context termResultPtr term
+                            ExpressionPrime.ToTac context termPtr destPtr expP
+                            destPtr
+                        )
+
                     | None ->
                         Term.ToTac context destPtr term
 
@@ -334,8 +399,8 @@ and VariableReference with
                             Param(address)
                 match exp with
                     | Some(exp) ->
-                        let expPtr = Expression.ToTac context tmpPtr exp
-                        context <-- ArrayDeref(tmpPtr, varPtr, expPtr)
+                        let expressionPtr = Expression.ToTac context tmpPtr exp
+                        context <-- ArrayDeref(tmpPtr, varPtr, expressionPtr)
                         tmpPtr
                     | None ->
                         varPtr
@@ -345,16 +410,18 @@ and VariableDeclaration with
         match this with
             | NonArrayVariableDeclaration(id) ->
                 id.Attributes.Value.MemoryAddress <- spaceSize
-                spaceSize + 4
+                spaceSize + 4u
             | ArrayVariableDeclaration(id, _, size) ->
                 id.Attributes.Value.MemoryAddress <- spaceSize
-                size
+                spaceSize + (uint32)size * 4u
 
 and FunctionBody with
     static member ToTac (context : FunctionContext) this =
         match this with
             | FunctionBody(varDecls, stmts) ->
-                context.StackSize <- List.fold VariableDeclaration.ToTac context.StackSize varDecls
+                for varDecl in varDecls do
+                     let newSize = VariableDeclaration.ToTac context.LocalDeclarationsSize varDecl
+                     context.LocalDeclarationsSize <- newSize
                 List.iter (Statement.ToTac context) stmts
 
 and MainFunction with
@@ -362,17 +429,17 @@ and MainFunction with
         match this with
             | MainFunction(body) ->
                 let context = FunctionContext(context, Label(0))
-                functionPrologue context 0
+                functionPrologue context 0u
                 FunctionBody.ToTac context body
                 functionEpilogue context
-                context.StackSize
+                context.TotalStackSize
 
 and FunctionDefinition with
     static member ToTac (context : ProgramContext) this : FrameSize =
         match this with
             | FunctionDefinition(id, parameters, body) ->
                 let context = FunctionContext(context, Label(id.Attributes.Value.Index))
-                functionPrologue context id.Attributes.Value.Index
+                functionPrologue context ((uint32)id.Attributes.Value.Index)
                 FunctionBody.ToTac context body
                 functionEpilogue context
-                context.StackSize
+                context.TotalStackSize

@@ -120,7 +120,7 @@ type Parser(scanner : MinJScanner,
                     Definition=i;
                     Type=Primitive(typ);
                     Scope=scope;
-                    MemoryAddress=0;
+                    MemoryAddress=0u;
                 }
                 variables.Define i attributes
                 Ast.NonArrayVariableDeclaration({Token=i;Attributes=Some attributes})
@@ -142,7 +142,7 @@ type Parser(scanner : MinJScanner,
                     Definition=i;
                     Type=ArrayType(typ);
                     Scope=scope;
-                    MemoryAddress=0;
+                    MemoryAddress=0u;
                 }
                 let varId = {Token=i;Attributes= Some attributes}
                 variables.Define i attributes
@@ -216,7 +216,7 @@ type Parser(scanner : MinJScanner,
                     Definition=i;
                     Type=typ;
                     Scope=ParameterVariable;
-                    MemoryAddress=0;
+                    MemoryAddress=0u;
                 }
                 variables.Define i attributes
                 let p = Ast.Parameter({Token=i;Attributes= Some attributes})
