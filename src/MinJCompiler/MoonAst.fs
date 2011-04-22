@@ -9,18 +9,17 @@ type Directive =
     | Db of int32 list
     | Res of uint32
 
-type Register = | Register of int
-
 type Constant =
-    | Number of int32
+    | Number of uint32
     | Symbol of string
 type Operand =
-    | Register of Register 
-    | Constant of Constant * Register option
+    | Register of int32 
+    | Constant of Constant * int32 option
     | String of string
 
 type LineContent =
     | Instruction of string * Operand list
     | Directive of Directive
+    | Blank
 type Line = 
     | Line of string option * LineContent * string option

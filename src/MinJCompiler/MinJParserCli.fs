@@ -56,8 +56,10 @@ let Run inputPath =
         | CompilerException(errors) as e ->
             sw.Stop()
             // Print the errors
-            for message, location in Seq.sortBy (fun (m, l) -> l) errors do
-                printfn "%i:%i\t%s" location.Row location.Col message
+            let sortedyLocation = Seq.sortBy (fun (m, l) -> l) errors
+            listingOutput.WriteLine()
+            for message, location in sortedyLocation do
+                listingOutput.WriteLine(sprintf "%i:%i\t%s" location.Row location.Col message)
         
     // Print a message a the end with the amount of time taken.
     listingOutput.WriteLine(sprintf "Concluded in %.3f seconds\n" <| float(sw.ElapsedMilliseconds) / float(1000))

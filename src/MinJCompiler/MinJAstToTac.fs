@@ -42,7 +42,7 @@ type ProgramContext(instructions, functionCount) =
     /// Adds a constant to this context.
     member this.CreateConstant(literal) =
         literals <- literal :: literals
-        Tac.Constant(((uint32)literals.Length) - 1u)
+        Tac.Constant(((uint32)literals.Length - 1u) * 4u)
     
     /// Creates a label with a unique number.
     member this.CreateLabel() =
@@ -71,10 +71,21 @@ type FunctionContext(program : ProgramContext, label) =
 
     let tempVariablePool = TemporaryVariablePool()
 
+    let mutable endLabel = program.CreateLabel()
+
     member this.TemporaryVariables with get() = tempVariablePool
 
     /// The label for this function
     member this.Label with get() = label
+
+    member this.EndLabel 
+        with get() = endLabel 
+
+    /// The index of the stack size of this function
+    member this.Index 
+        with get() =
+            match label with
+                | Label(index) -> index;
     
     /// The stack size of this function. It is increased when
     /// local variables are encountered.
@@ -106,19 +117,20 @@ let private functionPrologue (context : FunctionContext)  index =
     context <--
         [
         Labeled(context.Label)
-        Assign(Local(4u), TopSt)
-        Inst3(TopSt, Add, TopSt, FrSz)
-        Assign(Local(8u), FrSz)
-        Assign(FrSz, Frame(index))
+        Inst3(TopSt, Add, TopSt, Frame(context.Index * 4))
+        Assign(Local(0u), RetAdd)
+        Inst3(Local(4u), Sub, TopSt, Frame(context.Index * 4))
+        Assign(Local(8u), Frame(context.Index * 4))
         ]
 
 /// Generates the instructions that are at the end of every function.
 let private functionEpilogue (context : FunctionContext) =
     context <-- 
         [
-        Assign(FrSz, Frame(8u))
-        Assign(TopSt, Local(4u))
+        Labeled(context.EndLabel)
         Assign(RetAdd, Local(0u))
+        Assign(TopSt, Local(4u))
+        Return
         ]
 
 (*
@@ -261,8 +273,8 @@ and Ast.Statement with
                 let expressionResultPtr = Expression.ToTac context Result exp
                 if (expressionResultPtr <> Result) then
                     context <-- Assign(Result, expressionResultPtr)
-                context <-- Return
-
+                context <-- Goto(context.EndLabel)
+                
             | MethodInvocationStatement(identifier, arguments) ->
                 context.TemporaryVariables.Acquire(fun tempPtr ->
                     for argument in arguments do
@@ -429,7 +441,7 @@ and MainFunction with
         match this with
             | MainFunction(body) ->
                 let context = FunctionContext(context, Label(0))
-                functionPrologue context 0u
+                functionPrologue context 0
                 FunctionBody.ToTac context body
                 functionEpilogue context
                 context.TotalStackSize
@@ -439,7 +451,11 @@ and FunctionDefinition with
         match this with
             | FunctionDefinition(id, parameters, body) ->
                 let context = FunctionContext(context, Label(id.Attributes.Value.Index))
-                functionPrologue context ((uint32)id.Attributes.Value.Index)
+                functionPrologue context (id.Attributes.Value.Index)
+                // Set memory address of parameters
+                for param in parameters do
+                    param.Attributes.MemoryAddress <- context.LocalDeclarationsSize
+                    context.LocalDeclarationsSize <- context.LocalDeclarationsSize + 4u
                 FunctionBody.ToTac context body
                 functionEpilogue context
                 context.TotalStackSize

@@ -14,12 +14,12 @@ type Ptr =
     | Param of uint32 
     /// The address of a constnat.
     | Constant of uint32
-    /// The address of the size of a frame of a function.
-    | Frame of uint32
     /// The top of the current stack.
     | TopSt 
-    /// The frame size of the current function.
-    | FrSz 
+    /// The frame size of a function
+    | Frame of int
+    /// The frame size of the current function
+    | FrSz
     /// The address to return to.
     | RetAdd
     /// The address for return values of functons

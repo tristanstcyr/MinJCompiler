@@ -3,32 +3,26 @@ open Ast
 open System.IO
 
 let private asCommaList (out : TextWriter) func (l : 'a list) =
-    func out (l.Head)
-    for k in l.Tail do
-        out.Write(",")
-        func out k
-         
-type Register with
-    static member ToStream(out : TextWriter) this =
-        match this with
-            | Register.Register r ->
-                out.Write("r")
-                out.Write(r)
+    if ( l.Length > 0) then
+        func out (l.Head)
+        for k in l.Tail do
+            out.Write(",")
+            func out k
 
 type Operand with
     static member ToStream(out : TextWriter) this =
         match this with
             | Register(r) ->
-                Register.ToStream out r
+                out.Write(sprintf "r%i" r)
             | Constant(constant, register) ->
                 match constant with
                     | Number(i) ->
-                        out.Write(constant)
+                        out.Write(i)
                     | Symbol(str) ->
                         out.Write(str)
                 match register with
                     | Some(r) ->
-                        Register.ToStream out r
+                        out.Write(sprintf "(r%i)" r)
                     | None -> ()
             | String(str) ->
                 out.Write('"')
@@ -76,6 +70,8 @@ type LineContent with
 
             | Directive(directive) ->
                 Directive.ToStream out directive
+
+            | Blank -> ()
 
 type Line with
     static member ToStream (out : TextWriter) (Line(symbol, content, comment)) =

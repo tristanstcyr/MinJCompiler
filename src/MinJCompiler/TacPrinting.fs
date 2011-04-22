@@ -30,9 +30,8 @@ type Ptr with
             | Local(i) -> sprintf "(l, %i)" i
             | Param(i) -> sprintf "(p, %i)" i
             | Constant(i) -> sprintf "(c, %i)" i
-            | Frame(i) -> sprintf "(f, %i)" i
             | TopSt -> "TopSt"
-            | FrSz -> "FrSz"
+            | Frame(i) -> sprintf "(f, %i)" i
             | RetAdd -> "RetAdd"
             | Result -> "Result"
 

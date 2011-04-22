@@ -11,40 +11,16 @@
 		Type=Terminal
 		Loc=2, 1
 
-2:     int[] field = new int[10];
-	int
+2: 	char x;
+	char
 		Type=Terminal
-		Loc=3, 5
-	[
-		Type=Terminal
-		Loc=3, 8
-	]
-		Type=Terminal
-		Loc=3, 9
-	field
+		Loc=3, 2
+	x
 		Type=Identifier
-		Loc=3, 11
-	=
-		Type=Terminal
-		Loc=3, 17
-	new
-		Type=Terminal
-		Loc=3, 19
-	int
-		Type=Terminal
-		Loc=3, 23
-	[
-		Type=Terminal
-		Loc=3, 26
-	10
-		Type=Number
-		Loc=3, 27
-	]
-		Type=Terminal
-		Loc=3, 29
+		Loc=3, 7
 	;
 		Type=Terminal
-		Loc=3, 30
+		Loc=3, 8
 
 3:     void main() 
 	void
@@ -60,450 +36,154 @@
 		Type=Terminal
 		Loc=4, 15
 
-4:     { 
+4:     {
 	{
 		Type=Terminal
 		Loc=5, 5
 
-5:         int y;
-	int
-		Type=Terminal
-		Loc=6, 9
-	y
-		Type=Identifier
-		Loc=6, 13
-	;
-		Type=Terminal
-		Loc=6, 14
-
-6: 		int i;
-	int
-		Type=Terminal
-		Loc=7, 3
-	i
-		Type=Identifier
-		Loc=7, 7
-	;
-		Type=Terminal
-		Loc=7, 8
-
-7: 		int x;
-	int
-		Type=Terminal
-		Loc=8, 3
-	x
-		Type=Identifier
-		Loc=8, 7
-	;
-		Type=Terminal
-		Loc=8, 8
-
-8: 		char z;
+5: 		char i;
 	char
 		Type=Terminal
-		Loc=9, 3
-	z
+		Loc=6, 3
+	i
 		Type=Identifier
-		Loc=9, 8
+		Loc=6, 8
 	;
 		Type=Terminal
-		Loc=9, 9
+		Loc=6, 9
 
-9: 		int[] a = new int[3];
-	int
-		Type=Terminal
-		Loc=10, 3
-	[
-		Type=Terminal
-		Loc=10, 6
-	]
-		Type=Terminal
-		Loc=10, 7
-	a
+6: 		i = foo(4);
+	i
 		Type=Identifier
-		Loc=10, 9
+		Loc=7, 3
 	=
 		Type=Terminal
-		Loc=10, 11
-	new
+		Loc=7, 5
+	foo
+		Type=Identifier
+		Loc=7, 7
+	(
 		Type=Terminal
-		Loc=10, 13
-	int
-		Type=Terminal
-		Loc=10, 17
-	[
-		Type=Terminal
-		Loc=10, 20
-	3
+		Loc=7, 10
+	4
 		Type=Number
-		Loc=10, 21
-	]
+		Loc=7, 11
+	)
 		Type=Terminal
-		Loc=10, 22
+		Loc=7, 12
 	;
 		Type=Terminal
-		Loc=10, 23
+		Loc=7, 13
 
-10:         while (y == 0)
-	while
+7: 		System.out(i, 'b', 'c', x);
+	System
 		Type=Terminal
-		Loc=11, 9
+		Loc=8, 3
+	.
+		Type=Terminal
+		Loc=8, 9
+	out
+		Type=Terminal
+		Loc=8, 10
 	(
 		Type=Terminal
+		Loc=8, 13
+	i
+		Type=Identifier
+		Loc=8, 14
+	,
+		Type=Terminal
+		Loc=8, 15
+	'b'
+		Type=CharConst
+		Loc=8, 17
+	,
+		Type=Terminal
+		Loc=8, 20
+	'c'
+		Type=CharConst
+		Loc=8, 22
+	,
+		Type=Terminal
+		Loc=8, 25
+	x
+		Type=Identifier
+		Loc=8, 27
+	)
+		Type=Terminal
+		Loc=8, 28
+	;
+		Type=Terminal
+		Loc=8, 29
+
+8:     }
+	}
+		Type=Terminal
+		Loc=9, 5
+
+9: 	
+
+10: 	char foo(int f)
+	char
+		Type=Terminal
+		Loc=11, 2
+	foo
+		Type=Identifier
+		Loc=11, 7
+	(
+		Type=Terminal
+		Loc=11, 10
+	int
+		Type=Terminal
+		Loc=11, 11
+	f
+		Type=Identifier
 		Loc=11, 15
-	y
-		Type=Identifier
+	)
+		Type=Terminal
 		Loc=11, 16
-	==
-		Type=Terminal
-		Loc=11, 18
-	0
-		Type=Number
-		Loc=11, 21
-	)
-		Type=Terminal
-		Loc=11, 22
 
-11:         {
+11: 	{
 	{
 		Type=Terminal
-		Loc=12, 9
+		Loc=12, 2
 
-12:             if (y != 1)
-	if
-		Type=Terminal
-		Loc=13, 13
-	(
-		Type=Terminal
-		Loc=13, 16
-	y
+12: 		x = 'z';
+	x
 		Type=Identifier
-		Loc=13, 17
-	!=
+		Loc=13, 3
+	=
 		Type=Terminal
-		Loc=13, 19
-	1
-		Type=Number
-		Loc=13, 22
-	)
+		Loc=13, 5
+	'z'
+		Type=CharConst
+		Loc=13, 7
+	;
 		Type=Terminal
-		Loc=13, 23
+		Loc=13, 10
 
-13:             {
-	{
+13: 		return 'n';
+	return
+		Type=Terminal
+		Loc=14, 3
+	'n'
+		Type=CharConst
+		Loc=14, 10
+	;
 		Type=Terminal
 		Loc=14, 13
 
-14:                 foo(y);
-	foo
-		Type=Identifier
-		Loc=15, 17
-	(
-		Type=Terminal
-		Loc=15, 20
-	y
-		Type=Identifier
-		Loc=15, 21
-	)
-		Type=Terminal
-		Loc=15, 22
-	;
-		Type=Terminal
-		Loc=15, 23
-
-15:             }
+14: 	}
 	}
 		Type=Terminal
-		Loc=16, 13
+		Loc=15, 2
 
-16:             else
-	else
-		Type=Terminal
-		Loc=17, 13
+15: 
 
-17:             {
-	{
-		Type=Terminal
-		Loc=18, 13
-
-18:                 if (i == 3)
-	if
-		Type=Terminal
-		Loc=19, 17
-	(
-		Type=Terminal
-		Loc=19, 20
-	i
-		Type=Identifier
-		Loc=19, 21
-	==
-		Type=Terminal
-		Loc=19, 23
-	3
-		Type=Number
-		Loc=19, 26
-	)
-		Type=Terminal
-		Loc=19, 27
-
-19:                 {
-	{
-		Type=Terminal
-		Loc=20, 17
-
-20:                     i = System.in.int();
-	i
-		Type=Identifier
-		Loc=21, 21
-	=
-		Type=Terminal
-		Loc=21, 23
-	System
-		Type=Terminal
-		Loc=21, 25
-	.
-		Type=Terminal
-		Loc=21, 31
-	in
-		Type=Terminal
-		Loc=21, 32
-	.
-		Type=Terminal
-		Loc=21, 34
-	int
-		Type=Terminal
-		Loc=21, 35
-	(
-		Type=Terminal
-		Loc=21, 38
-	)
-		Type=Terminal
-		Loc=21, 39
-	;
-		Type=Terminal
-		Loc=21, 40
-
-21:                     System.out(i);
-	System
-		Type=Terminal
-		Loc=22, 21
-	.
-		Type=Terminal
-		Loc=22, 27
-	out
-		Type=Terminal
-		Loc=22, 28
-	(
-		Type=Terminal
-		Loc=22, 31
-	i
-		Type=Identifier
-		Loc=22, 32
-	)
-		Type=Terminal
-		Loc=22, 33
-	;
-		Type=Terminal
-		Loc=22, 34
-
-22:                 }
+16: }
 	}
 		Type=Terminal
-		Loc=23, 17
+		Loc=17, 1
 
-23:                 else
-	else
-		Type=Terminal
-		Loc=24, 17
-
-24:                 {
-	{
-		Type=Terminal
-		Loc=25, 17
-
-25:                     z = 'e';
-	z
-		Type=Identifier
-		Loc=26, 21
-	=
-		Type=Terminal
-		Loc=26, 23
-	'e'
-		Type=CharConst
-		Loc=26, 25
-	;
-		Type=Terminal
-		Loc=26, 28
-
-26:                     y = 4 + 5 / 5 % 4 + 3 - 223428;
-	y
-		Type=Identifier
-		Loc=27, 21
-	=
-		Type=Terminal
-		Loc=27, 23
-	4
-		Type=Number
-		Loc=27, 25
-	+
-		Type=Terminal
-		Loc=27, 27
-	5
-		Type=Number
-		Loc=27, 29
-	/
-		Type=Terminal
-		Loc=27, 31
-	5
-		Type=Number
-		Loc=27, 33
-	%
-		Type=Terminal
-		Loc=27, 35
-	4
-		Type=Number
-		Loc=27, 37
-	+
-		Type=Terminal
-		Loc=27, 39
-	3
-		Type=Number
-		Loc=27, 41
-	-
-		Type=Terminal
-		Loc=27, 43
-	223428
-		Type=Number
-		Loc=27, 45
-	;
-		Type=Terminal
-		Loc=27, 51
-
-27:                     x = a[3 * 4 + 5];
-	x
-		Type=Identifier
-		Loc=28, 21
-	=
-		Type=Terminal
-		Loc=28, 23
-	a
-		Type=Identifier
-		Loc=28, 25
-	[
-		Type=Terminal
-		Loc=28, 26
-	3
-		Type=Number
-		Loc=28, 27
-	*
-		Type=Terminal
-		Loc=28, 29
-	4
-		Type=Number
-		Loc=28, 31
-	+
-		Type=Terminal
-		Loc=28, 33
-	5
-		Type=Number
-		Loc=28, 35
-	]
-		Type=Terminal
-		Loc=28, 36
-	;
-		Type=Terminal
-		Loc=28, 37
-
-28:                 }
-	}
-		Type=Terminal
-		Loc=29, 17
-
-29:             }
-	}
-		Type=Terminal
-		Loc=30, 13
-
-30:         }
-	}
-		Type=Terminal
-		Loc=31, 9
-
-31:     } 
-	}
-		Type=Terminal
-		Loc=32, 5
-
-32: 
-
-33:     int foo(int x)
-	int
-		Type=Terminal
-		Loc=34, 5
-	foo
-		Type=Identifier
-		Loc=34, 9
-	(
-		Type=Terminal
-		Loc=34, 12
-	int
-		Type=Terminal
-		Loc=34, 13
-	x
-		Type=Identifier
-		Loc=34, 17
-	)
-		Type=Terminal
-		Loc=34, 18
-
-34:     {
-	{
-		Type=Terminal
-		Loc=35, 5
-
-35:         System.out(x);
-	System
-		Type=Terminal
-		Loc=36, 9
-	.
-		Type=Terminal
-		Loc=36, 15
-	out
-		Type=Terminal
-		Loc=36, 16
-	(
-		Type=Terminal
-		Loc=36, 19
-	x
-		Type=Identifier
-		Loc=36, 20
-	)
-		Type=Terminal
-		Loc=36, 21
-	;
-		Type=Terminal
-		Loc=36, 22
-
-36:         return 3;
-	return
-		Type=Terminal
-		Loc=37, 9
-	3
-		Type=Number
-		Loc=37, 16
-	;
-		Type=Terminal
-		Loc=37, 17
-
-37:     }
-	}
-		Type=Terminal
-		Loc=38, 5
-
-38: }
-	}
-		Type=Terminal
-		Loc=39, 1
-
-Concluded in 0.541 seconds
+Concluded in 0.671 seconds
 

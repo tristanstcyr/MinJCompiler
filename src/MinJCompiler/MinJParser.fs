@@ -63,7 +63,7 @@ type Parser(scanner : MinJScanner,
                 | CompilerException(errors) -> 
                     None, errors
         if prg.IsNone || variables.Errors.Length > 0 || functions.Errors.Length > 0 then
-            raise <| CompilerException(Seq.concat [Seq.ofList variables.Errors; Seq.ofList functions.Errors;])
+            raise <| CompilerException(Seq.concat [Seq.ofList variables.Errors; Seq.ofList functions.Errors;errors])
         prg.Value
 
     /// "< prg > −− > class i {{< decl >} < main f > {< f unct def >}"
@@ -699,6 +699,7 @@ type Parser(scanner : MinJScanner,
         match scanner.Current with
             
             | Terminal Comma ->
+                scanner.Pop()
                 ruleLogger.Push "<v_list'> --> ,<v_list'>"
                 
                 let ast = elem :: this.ParseVList()

@@ -1,43 +1,28 @@
-L0	(l, 4), =, TopSt
-	TopSt, +, TopSt, FrSz
-	(l, 8), =, FrSz
-	FrSz, =, (f, 0)
-L2	(l, 12), ==, (l, 36), (c, 0)
-	if_false (l, 12) goto L3
-	(l, 12), !=, (l, 36), (c, 1)
-	if_false (l, 12) goto L4
-	param (l, 36)
+L0	TopSt, +, TopSt, (f, 0)
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, (f, 0)
+	(l, 8), =, (f, 0)
+	param (c, 0)
 	call L1, 1
-	goto L5
-L4	(l, 12), ==, (l, 32), (c, 2)
-	if_false (l, 12) goto L6
-	read (l, 32)
-	write (l, 32)
-	goto L7
-L6	(l, 24), =, (c, 3)
-	(l, 16), *, (c, 4), (c, 5)
-	(l, 28), +, (l, 16), (c, 6)
-	(l, 28), (l, 12), [, (l, 28)
-	(l, 24), /, (c, 8), (c, 9)
-	(l, 36), %, (l, 24), (c, 10)
-	(l, 36), +, (c, 7), (l, 36)
-	(l, 36), +, (l, 36), (c, 11)
-	(l, 36), -, (l, 36), (c, 12)
-L7L5	goto L2
-L3	FrSz, =, (f, 8)
+	(l, 12), =, Result
+	write (l, 12)
+	write (c, 4)
+	write (c, 8)
+	write (g, 0)
+L2	RetAdd, =, (l, 0)
 	TopSt, =, (l, 4)
-	RetAdd, =, (l, 0)
-L1	(l, 4), =, TopSt
-	TopSt, +, TopSt, FrSz
-	(l, 8), =, FrSz
-	FrSz, =, (f, 1)
-	write (p, 0)
-	Result, =, (c, 13)
 	return
-	FrSz, =, (f, 8)
+L1	TopSt, +, TopSt, (f, 4)
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, (f, 4)
+	(l, 8), =, (f, 4)
+	(g, 0), =, (c, 12)
+	Result, =, (c, 16)
+	goto L3
+L3	RetAdd, =, (l, 0)
 	TopSt, =, (l, 4)
-	RetAdd, =, (l, 0)
-f	44
-	12
-Size	40
+	return
+f	16
+	16
+Size	4
 ST
