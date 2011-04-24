@@ -12,14 +12,19 @@ let private tempSize = 4u
 exception TemporaryVariableReleaseException of string * Ptr
 
 type TemporaryVariablePool() =
+    let mutable startAddress = 0u
     let mutable count = 0u
     let mutable max = 0u
 
-    member this.RequiredStackSpace with get() = max
+    member this.StartAddress 
+        with get() = startAddress
+        and set(value) = startAddress <- value
+
+    member this.RequiredStackSpace with get() = max * 4u
 
     member this.Acquire(func : Ptr -> 'a) =
         count <- count + 1u
-        let result = func (Local(baseFunctionSize + (count - 1u) * tempSize))
+        let result = func (Local(startAddress + (count - 1u) * tempSize))
         count <- count - 1u
         max <- Math.Max(max, count)
         result
@@ -117,10 +122,16 @@ let private functionPrologue (context : FunctionContext)  index =
     context <--
         [
         Labeled(context.Label)
-        Inst3(TopSt, Add, TopSt, Frame(context.Index * 4))
+        // The previous frame size to the stack pointer
+        Inst3(TopSt, Add, TopSt, FrSz)
+        // Store the return address
         Assign(Local(0u), RetAdd)
-        Inst3(Local(4u), Sub, TopSt, Frame(context.Index * 4))
-        Assign(Local(8u), Frame(context.Index * 4))
+        // Store the previous stack position
+        Inst3(Local(4u), Sub, TopSt, FrSz)
+        // Store the previous frame size
+        Assign(Local(8u), FrSz)
+        // Set the frame size of the current frame
+        Assign(FrSz, Frame((uint32)(context.Index * 4)))
         ]
 
 /// Generates the instructions that are at the end of every function.
@@ -128,6 +139,7 @@ let private functionEpilogue (context : FunctionContext) =
     context <-- 
         [
         Labeled(context.EndLabel)
+        Assign(FrSz, Local(8u))
         Assign(RetAdd, Local(0u))
         Assign(TopSt, Local(4u))
         Return
@@ -156,10 +168,21 @@ and Ast.Assignment with
         context.TemporaryVariables.Acquire(fun tempPtr ->
             match this with
                 | ExpressionAssignment(varRef, exp) ->
-                    let destPtr = VariableReference.ToTac context tempPtr varRef
-                    let expressionResultPtr = Expression.ToTac context destPtr exp
-                    if (expressionResultPtr <> destPtr) then
-                        context <-- Assign(destPtr, expressionResultPtr)
+                    match varRef with
+                        | VariableReference(varId, Some(indexExpression)) ->
+                            context.TemporaryVariables.Acquire(fun indexTempPtr ->
+                                let expressionResultPtr = Expression.ToTac context tempPtr exp
+                                let indexTempPtr = Expression.ToTac context indexTempPtr indexExpression 
+                                context <-- Tac.ArrayAssign(
+                                    Local(varId.Attributes.Value.MemoryAddress),
+                                    indexTempPtr,
+                                    expressionResultPtr)
+                            )
+                        | _ ->   
+                            let destPtr = VariableReference.ToTac context tempPtr varRef
+                            let expressionResultPtr = Expression.ToTac context destPtr exp
+                            if (expressionResultPtr <> destPtr) then
+                                context <-- Assign(destPtr, expressionResultPtr)
             
                 | SystemInAssignment(varRef, _) ->
                     let varPtr = VariableReference.ToTac context tempPtr varRef
@@ -434,6 +457,7 @@ and FunctionBody with
                 for varDecl in varDecls do
                      let newSize = VariableDeclaration.ToTac context.LocalDeclarationsSize varDecl
                      context.LocalDeclarationsSize <- newSize
+                context.TemporaryVariables.StartAddress <- context.LocalDeclarationsSize
                 List.iter (Statement.ToTac context) stmts
 
 and MainFunction with

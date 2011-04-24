@@ -27,7 +27,7 @@ type Parser(scanner : MinJScanner,
                 kleeneClosure <| parser() :: rules
             else
                 rules
-        kleeneClosure []
+        List.rev <| kleeneClosure []
          
     let variables = SymbolTable<VariableAttributes, VariableIdentifier>(fun id a -> id.Attributes <- Some a)
     let functions = SymbolTable<FunctionAttributes, FunctionIdentifier>(fun id a -> id.Attributes <- Some a)

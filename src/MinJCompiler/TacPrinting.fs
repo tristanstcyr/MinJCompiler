@@ -34,6 +34,7 @@ type Ptr with
             | Frame(i) -> sprintf "(f, %i)" i
             | RetAdd -> "RetAdd"
             | Result -> "Result"
+            | FrSz -> "FrSz"
 
 type Label with
     member this.ToAssembly() =

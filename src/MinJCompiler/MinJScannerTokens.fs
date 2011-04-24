@@ -4,6 +4,7 @@ module MinJ.Tokens
 
 open Scanner
 open System
+open System.Text.RegularExpressions
 
 /// ll*
 type Identifier(str, startloc : Location) = 
@@ -32,9 +33,9 @@ type CharConst(value : char, startloc : Location) =
     /// form is invalid.
     static member Create (s : string) l =
         let noQuotes = s.Substring(1, s.Length - 2)
-        try CharConst(char(noQuotes), l) :> Token
+        try CharConst(Char.Parse(Regex.Unescape(noQuotes)), l) :> Token
         with | :? FormatException ->
-            Error("Invalid character format " + noQuotes, l) :> Token
+            Error(sprintf "Invalid character format %s" s, l) :> Token
 
     override this.ToString() = sprintf "\'%c\'" value
 

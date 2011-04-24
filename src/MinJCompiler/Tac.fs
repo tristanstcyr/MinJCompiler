@@ -17,7 +17,7 @@ type Ptr =
     /// The top of the current stack.
     | TopSt 
     /// The frame size of a function
-    | Frame of int
+    | Frame of uint32
     /// The frame size of the current function
     | FrSz
     /// The address to return to.

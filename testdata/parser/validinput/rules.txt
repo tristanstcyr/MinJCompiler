@@ -1,10 +1,14 @@
 < prg > −− > class i {{< decl >} < main f > {< f unct def >}}
- < decl > −−> < type > <decl'>
-  <type> --> char
-  <decl’> --> i;
  <main_f> −−> void main(){{< decl >} < st list > }
   < decl > −−> < type > <decl'>
-   <type> --> char
+   <type> --> int
+   <decl'> --> [] i = new <type> [ n ];
+    <type> --> int
+  < decl > −−> < type > <decl'>
+   <type> --> int
+   <decl’> --> i;
+  < decl > −−> < type > <decl'>
+   <type> --> int
    <decl’> --> i;
   <set> −−> <st> { <st> }
    <st> −−> i <st'>
@@ -15,69 +19,448 @@
       <asg_st'> --> <exp>
        <exp> --> <term><exp'>
         <term> --> <prim><term'>
-         <prim> --> i <prim'>
-          <prim'> --> (<v_list>)
-           <v_list> --> <elem><v_list'>
-            <elem> --> n
-          <v_list'> --> e
-        <term'> --> e
-       <exp'> --> e
-  <st> −−> System.out. (<v_list>);
-   <v_list> --> <elem><v_list'>
-    <elem> --> i <index>
-     <index> --> e
-   <v_list'> --> ,<v_list'>
-    <v_list> --> <elem><v_list'>
-     <elem> --> 'c'
-    <v_list'> --> ,<v_list'>
-     <v_list> --> <elem><v_list'>
-      <elem> --> 'c'
-     <v_list'> --> ,<v_list'>
-      <v_list> --> <elem><v_list'>
-       <elem> --> i <index>
-        <index> --> e
-      <v_list'> --> e
-Symbol table after parsing "main"
-{Definition = i;
- Type = Primitive CharType;
- Scope = LocalVariable;
- MemoryAddress = 0u;}
-{Definition = x;
- Type = Primitive CharType;
- Scope = GlobalVariable;
- MemoryAddress = 0u;}
-
-< funct_def > −−> < type > i ( < par list > ){{< decl >} < st list > }
- <type> --> char
- <par_list> −−> < p type > i{, < p type > i}
-  <p_type> --> <type> <p_type’>
-   <type> --> int
-   <p_type’> --> e
-  <set> −−> <st> { <st> }
-   <st> −−> i <st'>
-    <st'> −−> <asg_st>
-     <set> −−> <st> { <st> }
-      <var> −−> i <index>
-       <index> --> e
-      <asg_st'> --> <exp>
-       <exp> --> <term><exp'>
-        <term> --> <prim><term'>
-         <prim> --> 'c'
+         <prim> --> n
          <term'> --> e
         <exp'> --> e
-   <st> −−> return <exp>;
-    <exp> --> <term><exp'>
-     <term> --> <prim><term'>
-      <prim> --> 'c'
-      <term'> --> e
-     <exp'> --> e
-Symbol table after parsing foo
-{Definition = f;
+   <st> −−> while <l_exp><st>
+    <l_exp> --> <l_exp'> { || <l_exp> }
+     <l_exp’> --> <exp> { && <l_exp'> }
+      <exp> --> <term><exp'>
+       <term> --> <prim><term'>
+        <prim> --> i <prim'>
+         <prim'> --> <index>
+          <index> --> e
+        <term'> --> e
+       <exp'> --> e
+      <rel_exp> --> ( < exp >< rel op >< exp > )
+       <exp> --> <term><exp'>
+        <term> --> <prim><term'>
+         <prim> --> n
+         <term'> --> e
+        <exp'> --> e
+     <st> −−> <comp_st>
+      <comp_st> −−> { <st_list> }
+       <set> −−> <st> { <st> }
+        <st> −−> i <st'>
+         <st'> −−> <asg_st>
+          <set> −−> <st> { <st> }
+           <var> −−> i <index>
+            <index> --> [<exp>]
+             <exp> --> <term><exp'>
+              <term> --> <prim><term'>
+               <prim> --> i <prim'>
+                <prim'> --> <index>
+                 <index> --> e
+               <term'> --> e
+              <exp'> --> e
+           <asg_st'> --> <exp>
+            <exp> --> <term><exp'>
+             <term> --> <prim><term'>
+              <prim> --> i <prim'>
+               <prim'> --> <index>
+                <index> --> e
+              <term'> --> e
+             <exp'> --> e
+        <st> −−> i <st'>
+         <st'> −−> <asg_st>
+          <set> −−> <st> { <st> }
+           <var> −−> i <index>
+            <index> --> e
+           <asg_st'> --> <exp>
+            <exp> --> <term><exp'>
+             <term> --> <prim><term'>
+              <prim> --> i <prim'>
+               <prim'> --> <index>
+                <index> --> e
+              <term'> --> e
+             <exp'> --> <add_op><term><exp'>
+              <term> --> <prim><term'>
+               <prim> --> n
+               <term'> --> e
+              <exp'> --> e
+    <st> −−> i <st'>
+     <st'> −−> <asg_st>
+      <set> −−> <st> { <st> }
+       <var> −−> i <index>
+        <index> --> e
+       <asg_st'> --> <exp>
+        <exp> --> <term><exp'>
+         <term> --> <prim><term'>
+          <prim> --> n
+          <term'> --> e
+         <exp'> --> e
+    <st> −−> while <l_exp><st>
+     <l_exp> --> <l_exp'> { || <l_exp> }
+      <l_exp’> --> <exp> { && <l_exp'> }
+       <exp> --> <term><exp'>
+        <term> --> <prim><term'>
+         <prim> --> i <prim'>
+          <prim'> --> <index>
+           <index> --> e
+         <term'> --> e
+        <exp'> --> e
+       <rel_exp> --> ( < exp >< rel op >< exp > )
+        <exp> --> <term><exp'>
+         <term> --> <prim><term'>
+          <prim> --> n
+          <term'> --> e
+         <exp'> --> e
+      <st> −−> <comp_st>
+       <comp_st> −−> { <st_list> }
+        <set> −−> <st> { <st> }
+         <st> −−> i <st'>
+          <st'> −−> <asg_st>
+           <set> −−> <st> { <st> }
+            <var> −−> i <index>
+             <index> --> e
+            <asg_st'> --> <exp>
+             <exp> --> <term><exp'>
+              <term> --> <prim><term'>
+               <prim> --> i <prim'>
+                <prim'> --> <index>
+                 <index> --> [<exp>]
+                  <exp> --> <term><exp'>
+                   <term> --> <prim><term'>
+                    <prim> --> i <prim'>
+                     <prim'> --> <index>
+                      <index> --> e
+                    <term'> --> e
+                   <exp'> --> e
+               <term'> --> e
+              <exp'> --> e
+         <st> −−> i <st'>
+          <st'> −−> (v_list)
+           <v_list> --> <elem><v_list'>
+            <elem> --> i <index>
+             <index> --> e
+           <v_list'> --> e
+         <st> −−> System.out. (<v_list>);
+          <v_list> --> <elem><v_list'>
+           <elem> --> 'c'
+          <v_list'> --> e
+         <st> −−> i <st'>
+          <st'> −−> <asg_st>
+           <set> −−> <st> { <st> }
+            <var> −−> i <index>
+             <index> --> e
+            <asg_st'> --> <exp>
+             <exp> --> <term><exp'>
+              <term> --> <prim><term'>
+               <prim> --> i <prim'>
+                <prim'> --> <index>
+                 <index> --> e
+               <term'> --> e
+              <exp'> --> <add_op><term><exp'>
+               <term> --> <prim><term'>
+                <prim> --> n
+                <term'> --> e
+               <exp'> --> e
+Symbol table after parsing "main"
+{Definition = array;
+ Type = ArrayType IntType;
+ Scope = LocalVariable;
+ MemoryAddress = 0u;}
+{Definition = i;
+ Type = Primitive IntType;
+ Scope = LocalVariable;
+ MemoryAddress = 0u;}
+{Definition = n;
+ Type = Primitive IntType;
+ Scope = LocalVariable;
+ MemoryAddress = 0u;}
+
+   < funct_def > −−> < type > i ( < par list > ){{< decl >} < st list > }
+    <type> --> int
+    <par_list> −−> < p type > i{, < p type > i}
+     <p_type> --> <type> <p_type’>
+      <type> --> int
+      <p_type’> --> e
+     <set> −−> <st> { <st> }
+      <st> −−> if <lexp> <stmt> else <stmt>
+       <l_exp> --> <l_exp'> { || <l_exp> }
+        <l_exp’> --> <exp> { && <l_exp'> }
+         <exp> --> <term><exp'>
+          <term> --> <prim><term'>
+           <prim> --> i <prim'>
+            <prim'> --> <index>
+             <index> --> e
+           <term'> --> e
+          <exp'> --> e
+         <rel_exp> --> ( < exp >< rel op >< exp > )
+          <exp> --> <term><exp'>
+           <term> --> <prim><term'>
+            <prim> --> n
+            <term'> --> e
+           <exp'> --> e
+        <st> −−> System.out. (<v_list>);
+         <v_list> --> <elem><v_list'>
+          <elem> --> 'c'
+         <v_list'> --> e
+        <st> −−> i <st'>
+         <st'> −−> (v_list)
+          <v_list> --> <elem><v_list'>
+           <elem> --> i <index>
+            <index> --> e
+          <v_list'> --> e
+       <st> −−> return <exp>;
+        <exp> --> <term><exp'>
+         <term> --> <prim><term'>
+          <prim> --> n
+          <term'> --> e
+         <exp'> --> e
+Symbol table after parsing printNumber
+{Definition = number;
  Type = Primitive IntType;
  Scope = ParameterVariable;
  MemoryAddress = 0u;}
-{Definition = x;
- Type = Primitive CharType;
- Scope = GlobalVariable;
+
+     < funct_def > −−> < type > i ( < par list > ){{< decl >} < st list > }
+      <type> --> int
+      <par_list> −−> < p type > i{, < p type > i}
+       <p_type> --> <type> <p_type’>
+        <type> --> int
+        <p_type’> --> e
+       < decl > −−> < type > <decl'>
+        <type> --> int
+        <decl’> --> i;
+       < decl > −−> < type > <decl'>
+        <type> --> int
+        <decl’> --> i;
+       <set> −−> <st> { <st> }
+        <st> −−> if <lexp> <stmt> else <stmt>
+         <l_exp> --> <l_exp'> { || <l_exp> }
+          <l_exp’> --> <exp> { && <l_exp'> }
+           <exp> --> <term><exp'>
+            <term> --> <prim><term'>
+             <prim> --> i <prim'>
+              <prim'> --> <index>
+               <index> --> e
+             <term'> --> e
+            <exp'> --> e
+           <rel_exp> --> ( < exp >< rel op >< exp > )
+            <exp> --> <term><exp'>
+             <term> --> <prim><term'>
+              <prim> --> n
+              <term'> --> e
+             <exp'> --> e
+          <st> −−> <comp_st>
+           <comp_st> −−> { <st_list> }
+            <set> −−> <st> { <st> }
+             <st> −−> i <st'>
+              <st'> −−> <asg_st>
+               <set> −−> <st> { <st> }
+                <var> −−> i <index>
+                 <index> --> e
+                <asg_st'> --> <exp>
+                 <exp> --> <term><exp'>
+                  <term> --> <prim><term'>
+                   <prim> --> i <prim'>
+                    <prim'> --> <index>
+                     <index> --> e
+                   <term'> --> <mult_op><prim><term'>
+                    <prim> --> n
+                    <term'> --> e
+                  <exp'> --> e
+             <st> −−> i <st'>
+              <st'> −−> <asg_st>
+               <set> −−> <st> { <st> }
+                <var> −−> i <index>
+                 <index> --> e
+                <asg_st'> --> <exp>
+                 <exp> --> <term><exp'>
+                  <term> --> <prim><term'>
+                   <prim> --> i <prim'>
+                    <prim'> --> <index>
+                     <index> --> e
+                   <term'> --> <mult_op><prim><term'>
+                    <prim> --> n
+                    <term'> --> e
+                  <exp'> --> e
+             <st> −−> i <st'>
+              <st'> −−> (v_list)
+               <v_list> --> <elem><v_list'>
+                <elem> --> i <index>
+                 <index> --> e
+               <v_list'> --> e
+             <st> −−> i <st'>
+              <st'> −−> <asg_st>
+               <set> −−> <st> { <st> }
+                <var> −−> i <index>
+                 <index> --> e
+                <asg_st'> --> <exp>
+                 <exp> --> <term><exp'>
+                  <term> --> <prim><term'>
+                   <prim> --> i <prim'>
+                    <prim'> --> <index>
+                     <index> --> e
+                   <term'> --> e
+                  <exp'> --> <add_op><term><exp'>
+                   <term> --> <prim><term'>
+                    <prim> --> n
+                    <term'> --> e
+                   <exp'> --> e
+             <st> −−> System.out. (<v_list>);
+              <v_list> --> <elem><v_list'>
+               <elem> --> i <index>
+                <index> --> e
+              <v_list'> --> e
+          <st> −−> ;
+         <st> −−> return <exp>;
+          <exp> --> <term><exp'>
+           <term> --> <prim><term'>
+            <prim> --> n
+            <term'> --> e
+           <exp'> --> e
+Symbol table after parsing rec_printNumber
+{Definition = number;
+ Type = Primitive IntType;
+ Scope = ParameterVariable;
+ MemoryAddress = 0u;}
+{Definition = rest;
+ Type = Primitive IntType;
+ Scope = LocalVariable;
+ MemoryAddress = 0u;}
+{Definition = div;
+ Type = Primitive IntType;
+ Scope = LocalVariable;
+ MemoryAddress = 0u;}
+
+       < funct_def > −−> < type > i ( < par list > ){{< decl >} < st list > }
+        <type> --> int
+        <par_list> −−> < p type > i{, < p type > i}
+         <p_type> --> <type> <p_type’>
+          <type> --> int
+          <p_type’> --> e
+         < decl > −−> < type > <decl'>
+          <type> --> int
+          <decl’> --> i;
+         < decl > −−> < type > <decl'>
+          <type> --> int
+          <decl’> --> i;
+         <set> −−> <st> { <st> }
+          <st> −−> if <lexp> <stmt> else <stmt>
+           <l_exp> --> <l_exp'> { || <l_exp> }
+            <l_exp’> --> <exp> { && <l_exp'> }
+             <exp> --> <term><exp'>
+              <term> --> <prim><term'>
+               <prim> --> i <prim'>
+                <prim'> --> <index>
+                 <index> --> e
+               <term'> --> e
+              <exp'> --> e
+             <rel_exp> --> ( < exp >< rel op >< exp > )
+              <exp> --> <term><exp'>
+               <term> --> <prim><term'>
+                <prim> --> n
+                <term'> --> e
+               <exp'> --> e
+            <st> −−> <comp_st>
+             <comp_st> −−> { <st_list> }
+              <set> −−> <st> { <st> }
+               <st> −−> return <exp>;
+                <exp> --> <term><exp'>
+                 <term> --> <prim><term'>
+                  <prim> --> i <prim'>
+                   <prim'> --> <index>
+                    <index> --> e
+                  <term'> --> e
+                 <exp'> --> e
+            <st> −−> <comp_st>
+             <comp_st> −−> { <st_list> }
+              <set> −−> <st> { <st> }
+               <st> −−> if <lexp> <stmt> else <stmt>
+                <l_exp> --> <l_exp'> { || <l_exp> }
+                 <l_exp’> --> <exp> { && <l_exp'> }
+                  <exp> --> <term><exp'>
+                   <term> --> <prim><term'>
+                    <prim> --> i <prim'>
+                     <prim'> --> <index>
+                      <index> --> e
+                    <term'> --> e
+                   <exp'> --> e
+                  <rel_exp> --> ( < exp >< rel op >< exp > )
+                   <exp> --> <term><exp'>
+                    <term> --> <prim><term'>
+                     <prim> --> n
+                     <term'> --> e
+                    <exp'> --> e
+                 <st> −−> <comp_st>
+                  <comp_st> −−> { <st_list> }
+                   <set> −−> <st> { <st> }
+                    <st> −−> return <exp>;
+                     <exp> --> <term><exp'>
+                      <term> --> <prim><term'>
+                       <prim> --> n
+                       <term'> --> e
+                      <exp'> --> e
+                 <st> −−> <comp_st>
+                  <comp_st> −−> { <st_list> }
+                   <set> −−> <st> { <st> }
+                    <st> −−> i <st'>
+                     <st'> −−> <asg_st>
+                      <set> −−> <st> { <st> }
+                       <var> −−> i <index>
+                        <index> --> e
+                       <asg_st'> --> <exp>
+                        <exp> --> <term><exp'>
+                         <term> --> <prim><term'>
+                          <prim> --> i <prim'>
+                           <prim'> --> <index>
+                            <index> --> e
+                          <term'> --> e
+                         <exp'> --> <add_op><term><exp'>
+                          <term> --> <prim><term'>
+                           <prim> --> n
+                           <term'> --> e
+                          <exp'> --> e
+                    <st> −−> i <st'>
+                     <st'> −−> <asg_st>
+                      <set> −−> <st> { <st> }
+                       <var> −−> i <index>
+                        <index> --> e
+                       <asg_st'> --> <exp>
+                        <exp> --> <term><exp'>
+                         <term> --> <prim><term'>
+                          <prim> --> i <prim'>
+                           <prim'> --> <index>
+                            <index> --> e
+                          <term'> --> e
+                         <exp'> --> <add_op><term><exp'>
+                          <term> --> <prim><term'>
+                           <prim> --> n
+                           <term'> --> e
+                          <exp'> --> e
+                    <st> −−> return <exp>;
+                     <exp> --> <term><exp'>
+                      <term> --> <prim><term'>
+                       <prim> --> i <prim'>
+                        <prim'> --> (<v_list>)
+                         <v_list> --> <elem><v_list'>
+                          <elem> --> i <index>
+                           <index> --> e
+                         <v_list'> --> e
+                       <term'> --> e
+                      <exp'> --> <add_op><term><exp'>
+                       <term> --> <prim><term'>
+                        <prim> --> i <prim'>
+                         <prim'> --> (<v_list>)
+                          <v_list> --> <elem><v_list'>
+                           <elem> --> i <index>
+                            <index> --> e
+                          <v_list'> --> e
+                        <term'> --> e
+                       <exp'> --> e
+Symbol table after parsing fib
+{Definition = i;
+ Type = Primitive IntType;
+ Scope = ParameterVariable;
+ MemoryAddress = 0u;}
+{Definition = a;
+ Type = Primitive IntType;
+ Scope = LocalVariable;
+ MemoryAddress = 0u;}
+{Definition = b;
+ Type = Primitive IntType;
+ Scope = LocalVariable;
  MemoryAddress = 0u;}
 

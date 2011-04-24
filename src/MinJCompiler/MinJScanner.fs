@@ -53,7 +53,7 @@ type MinJScanner(scanner : IEnumerator<Token>) =
     member this.checkError() =
         match scanner.Current with
             | :? Error as error -> 
-                raise <| CompilerException(["An error occured during tokenization ", error.StartLocation])
+                raise <| CompilerException([error.ToString(), error.StartLocation])
             | _ -> ()
             
     /// Moves the scanner.stream to the next token no matter what

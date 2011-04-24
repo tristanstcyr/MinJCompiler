@@ -10,11 +10,11 @@ type Directive =
     | Res of uint32
 
 type Constant =
-    | Number of uint32
+    | Number of int16
     | Symbol of string
 type Operand =
-    | Register of int32 
-    | Constant of Constant * int32 option
+    | Register of int 
+    | Constant of Constant * int option
     | String of string
 
 type LineContent =
