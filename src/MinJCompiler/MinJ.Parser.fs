@@ -4,23 +4,19 @@ open System
 open System.IO
 open System.Collections.Generic
 
-open Compiler
-open Scanner
 open MinJ.Scanner
-open MinJ.Tokens
-open MinJ
-open MinJ.Ast
+open Compiler
 
 /// The MinJ Parser.
 /// <param name="scanner">The scanner that provides the tokens</param>
 /// <param name="debugOutput">A stream for logging debug information such as the content of the symbol table</param>
 /// <param name="ruleLogger">The helper object for logging the grammar used to parse</param>
-type Parser(scanner : MinJScanner, 
+type Parser(scanner : IEnumerator<Token>, 
             debugOutput : StreamWriter,
-            ruleLogger : RuleLogger) =
-  
-    /// Runs a parsing function as long as the lookahead
-    /// returns true.
+            ruleLogger : IRuleLogger) =
+
+    /// Runs a parsing function as long as the lookahead returns true.
+    /// Returns the list of generated Ast nodes in order they were encountered
     let kleeneClosure lookahead parser =
         let rec kleeneClosure rules =
             if lookahead() then
@@ -29,41 +25,44 @@ type Parser(scanner : MinJScanner,
                 rules
         List.rev <| kleeneClosure []
          
+    /// A symbol table of encountered variable identifiers
     let variables = SymbolTable<VariableAttributes, VariableIdentifier>(fun id a -> id.Attributes <- Some a)
+    /// A symbol table of encountered variable identifiers
     let functions = SymbolTable<FunctionAttributes, FunctionIdentifier>(fun id a -> id.Attributes <- Some a)
 
+    /// Raises a CompileException with a message saying that the current token was unexpected.
     let raiseUnexpected() =
         match scanner.Current with
-            | :? End -> raise <| CompilerException(["Unexpected end ", scanner.Current.StartLocation])
-            | _ -> raise <| CompilerException([sprintf "Unexpected token \"%A\"" scanner.Current, scanner.Current.StartLocation])
+            | :? End -> 
+                raise <| CompilerException(["The end of the file was encountered unexpectedly. Did you forget a closing bracket?", scanner.Current.StartLocation])
+            | _ -> 
+                raise <| CompilerException([sprintf "Unexpected token \"%A\"." scanner.Current, scanner.Current.StartLocation])
 
+    /// Prints debuging information about a function while parsing
     let printFunctionDebug funcId =
         // Output function debug information
         debugOutput.WriteLine(sprintf "Symbol table after parsing %A" funcId)
         variables.PrintDefinedSymbols debugOutput
         debugOutput.WriteLine()
 
-    /// Initializes the parser. This is no in the constructor to avoid throwing
-    /// an exception if the scanner doesn't have any tokens or an error.
-    member this.Init() =
-        (* Initiate the scanner *)
-        scanner.MoveNext() |> ignore
-        (* Check if the first token is an error *)
-        scanner.checkError()
-
-    /// Parses.
-    /// Returns the abstract syntax tree
-    /// Throws 
+    /// Starts parsing the input characters provided by the scanner.
+    /// Returns the abstract syntax tree.
+    /// This should only be called once.
     member this.Parse() =
         let prg, errors = 
             try
-                this.Init()
-                Some(this.ParsePrg()), Seq.empty
+                // Setup the scanner
+                scanner.MoveNext() |> ignore
+                checkError scanner
+                // Parse
+                Some(this.ParsePrg()), []
             with
                 | CompilerException(errors) -> 
                     None, errors
+
+        /// Combine and raise a CompilerException if any errors were encountered while parsing
         if prg.IsNone || variables.Errors.Length > 0 || functions.Errors.Length > 0 then
-            raise <| CompilerException(Seq.concat [Seq.ofList variables.Errors; Seq.ofList functions.Errors;errors])
+            raise <| CompilerException(variables.Errors @ functions.Errors @ errors)
         prg.Value
 
     /// "< prg > −− > class i {{< decl >} < main f > {< f unct def >}"
@@ -75,14 +74,14 @@ type Parser(scanner : MinJScanner,
         functions.PushScope()
 
         // Parse
-        scanner.PopTerminal Class
-        let i = scanner.PopIdentifier()
-        scanner.PopTerminal OCurly
-        let decls = kleeneClosure (scanner.LookaheadTerminals [IntT;CharT]) (fun () -> this.ParseDecl GlobalVariable)
+        popTerminal scanner Class
+        let i = popIdentifier scanner
+        popTerminal scanner OCurly
+        let decls = kleeneClosure (lookaheadTerminals scanner [IntT;CharT]) (fun () -> this.ParseDecl GlobalVariable)
         let mainF = this.ParseMainF()
-        let funcDefs = kleeneClosure (scanner.LookaheadTerminals [IntT;CharT]) this.ParseFunctDef
-        scanner.PopTerminal CCurly
-        scanner.PopEnd()
+        let funcDefs = kleeneClosure (lookaheadTerminals scanner [IntT;CharT]) this.ParseFunctDef
+        popTerminal scanner CCurly
+        popEnd scanner
 
         ruleLogger.Pop()
 
@@ -111,8 +110,8 @@ type Parser(scanner : MinJScanner,
             | Identifier i ->
                 ruleLogger.Push "<decl’> --> i;"
                 
-                scanner.Pop()
-                scanner.PopTerminal SemiCol
+                pop scanner
+                popTerminal scanner SemiCol
 
                 ruleLogger.Pop()
 
@@ -128,13 +127,13 @@ type Parser(scanner : MinJScanner,
             | _ ->
                 ruleLogger.Push "<decl'> --> [] i = new <type> [ n ];"
 
-                scanner.PopTerminals [OSquare;CSquare]    
-                let i = scanner.PopIdentifier()
-                scanner.PopTerminals [Assign;New]
+                popTerminals scanner [OSquare;CSquare]    
+                let i = popIdentifier scanner
+                popTerminals scanner [Assign;New]
                 let typ2 = this.ParseType()
-                scanner.PopTerminal OSquare
-                let n = scanner.PopNumber()
-                scanner.PopTerminals [CSquare;SemiCol]
+                popTerminal scanner OSquare
+                let n = popNumber scanner
+                popTerminals scanner [CSquare;SemiCol]
                 
                 ruleLogger.Pop()
 
@@ -154,10 +153,10 @@ type Parser(scanner : MinJScanner,
 
         variables.PushScope()
 
-        scanner.PopTerminals [VoidT;Main;OParen;CParen;OCurly]
-        let decls = kleeneClosure (scanner.LookaheadTerminals [IntT;CharT]) (fun () -> this.ParseDecl(LocalVariable))
+        popTerminals scanner [VoidT;Main;OParen;CParen;OCurly]
+        let decls = kleeneClosure (lookaheadTerminals scanner [IntT;CharT]) (fun () -> this.ParseDecl(LocalVariable))
         let stList = this.ParseStList()
-        scanner.PopTerminal CCurly
+        popTerminal scanner CCurly
         
         ruleLogger.Pop()
 
@@ -173,8 +172,8 @@ type Parser(scanner : MinJScanner,
         variables.PushScope()
 
         let typ = this.ParseType()
-        let i = scanner.PopIdentifier()
-        scanner.PopTerminal OParen
+        let i = popIdentifier scanner
+        popTerminal scanner OParen
         let parList = this.ParseParList()
         let parameterTypes = List.map (fun (p : Parameter) -> p.Attributes.Type, p.Attributes.Definition :> Token) parList
 
@@ -186,10 +185,10 @@ type Parser(scanner : MinJScanner,
          }
         functions.Define i attributes
                 
-        scanner.PopTerminals [CParen;OCurly]
-        let decls = kleeneClosure (scanner.LookaheadTerminals [IntT;CharT]) (fun () -> this.ParseDecl LocalVariable)
+        popTerminals scanner [CParen;OCurly]
+        let decls = kleeneClosure (lookaheadTerminals scanner [IntT;CharT]) (fun () -> this.ParseDecl LocalVariable)
         let stList = this.ParseStList()
-        scanner.PopTerminal CCurly
+        popTerminal scanner CCurly
 
         ruleLogger.Pop()
 
@@ -210,7 +209,7 @@ type Parser(scanner : MinJScanner,
                 ruleLogger.Push "<par_list> −−> < p type > i{, < p type > i}"
 
                 let typ = this.ParsePType()
-                let i = scanner.PopIdentifier()
+                let i = popIdentifier scanner
                 
                 let attributes = {
                     Definition=i;
@@ -223,7 +222,7 @@ type Parser(scanner : MinJScanner,
 
                 match scanner.Current with
                     | Terminal Comma -> 
-                        scanner.Pop();
+                        pop scanner
                         p :: this.ParseParList()
                     | _ -> [p]
     
@@ -244,8 +243,8 @@ type Parser(scanner : MinJScanner,
                 ruleLogger.Push "<p_type’> --> []"
                 ruleLogger.Pop()
 
-                scanner.Pop()
-                scanner.PopTerminal CSquare
+                pop scanner
+                popTerminal scanner CSquare
                 ArrayType(typ)
             
             | _ ->
@@ -261,11 +260,11 @@ type Parser(scanner : MinJScanner,
             match scanner.Current with
                 | Terminal IntT -> 
                     ruleLogger.Push "<type> --> int"
-                    scanner.Pop()
+                    pop scanner
                     Ast.IntType
                 | Terminal CharT ->
                     ruleLogger.Push "<type> --> char"
-                    scanner.Pop()
+                    pop scanner
                     Ast.CharType
                 | _ ->
                     raise <| CompilerException(
@@ -292,7 +291,7 @@ type Parser(scanner : MinJScanner,
             | Identifier i ->
                 ruleLogger.Push  "<st> −−> i <st'>"
 
-                scanner.Pop()
+                pop scanner
                 let stP = this.ParseStP i
 
                 ruleLogger.Pop()
@@ -302,10 +301,10 @@ type Parser(scanner : MinJScanner,
             | Terminal If ->
                 ruleLogger.Push  "<st> −−> if <lexp> <stmt> else <stmt>"   
 
-                scanner.Pop()
+                pop scanner
                 let lExp = this.ParseLExp()
                 let stIf = this.ParseSt()
-                scanner.PopTerminal Else
+                popTerminal scanner Else
                 let stElse = this.ParseSt()
 
                 ruleLogger.Pop()
@@ -314,7 +313,7 @@ type Parser(scanner : MinJScanner,
             
             | Terminal While ->
                 ruleLogger.Push "<st> −−> while <l_exp><st>"   
-                scanner.Pop()
+                pop scanner
                 let lExp = this.ParseLExp()
                 let body = this.ParseSt()
 
@@ -325,9 +324,9 @@ type Parser(scanner : MinJScanner,
             | Terminal Return ->
                 ruleLogger.Push "<st> −−> return <exp>;"
                 
-                scanner.Pop()
+                pop scanner
                 let exp = this.ParseExp()
-                scanner.PopTerminal SemiCol
+                popTerminal scanner SemiCol
 
                 ruleLogger.Pop()
 
@@ -336,10 +335,10 @@ type Parser(scanner : MinJScanner,
             | Terminal System ->
                 ruleLogger.Push  "<st> −−> System.out. (<v_list>);"
 
-                scanner.Pop()
-                scanner.PopTerminals [Period;Out;OParen]
+                pop scanner
+                popTerminals scanner [Period;Out;OParen]
                 let vList = this.ParseVList()
-                scanner.PopTerminals [CParen;SemiCol]
+                popTerminals scanner [CParen;SemiCol]
 
                 ruleLogger.Pop()
 
@@ -348,7 +347,7 @@ type Parser(scanner : MinJScanner,
             | Terminal SemiCol ->
                 ruleLogger.Push "<st> −−> ;"
                 
-                scanner.Pop()
+                pop scanner
 
                 ruleLogger.Pop()
 
@@ -372,9 +371,9 @@ type Parser(scanner : MinJScanner,
             | _ ->
                 ruleLogger.Push "<st'> −−> (v_list)"
 
-                scanner.PopTerminal OParen
+                popTerminal scanner OParen
                 let vList = this.ParseVList()
-                scanner.PopTerminals [CParen;SemiCol]
+                popTerminals scanner [CParen;SemiCol]
                 
                 ruleLogger.Pop()
 
@@ -386,9 +385,9 @@ type Parser(scanner : MinJScanner,
     member this.ParseCompSt() =
         ruleLogger.Push "<comp_st> −−> { <st_list> }"
         
-        scanner.PopTerminal OCurly
+        popTerminal scanner OCurly
         let stList = this.ParseStList()
-        scanner.PopTerminal CCurly
+        popTerminal scanner CCurly
         
         ruleLogger.Pop()
         
@@ -399,7 +398,7 @@ type Parser(scanner : MinJScanner,
         ruleLogger.Push "<set> −−> <st> { <st> }"
         let st = this.ParseSt()
         let rest = kleeneClosure (fun () ->  
-            (scanner.terminals [OParen;If;Else;While;Return;System;SemiCol]).IsSome 
+            (terminals scanner [OParen;If;Else;While;Return;System;SemiCol]).IsSome 
                 || scanner.Current :? Identifier) this.ParseSt
         
         ruleLogger.Pop()
@@ -410,9 +409,9 @@ type Parser(scanner : MinJScanner,
     member this.ParseAsgSt (i : Identifier) =
         ruleLogger.Push "<set> −−> <st> { <st> }"
         let var = this.ParseVar i
-        scanner.PopTerminal Assign
+        popTerminal scanner Assign
         let asgStP = this.ParseAsgStP var
-        scanner.PopTerminal SemiCol
+        popTerminal scanner SemiCol
 
         ruleLogger.Pop()
 
@@ -420,7 +419,7 @@ type Parser(scanner : MinJScanner,
 
     /// "<var> −−> i <index>"
     member this.ParseVar() =
-        this.ParseVar(scanner.PopIdentifier())
+        this.ParseVar(popIdentifier scanner)
 
     member this.ParseVar i =
         ruleLogger.Push "<var> −−> i <index>"
@@ -439,10 +438,10 @@ type Parser(scanner : MinJScanner,
             | Terminal System ->
                 ruleLogger.Push "<asg_st'> --> System.in.<type>()"
 
-                scanner.Pop()
-                scanner.PopTerminals [Period;In;Period]
+                pop scanner
+                popTerminals scanner [Period;In;Period]
                 let typ = this.ParseType()
-                scanner.PopTerminals [OParen;CParen]
+                popTerminals scanner [OParen;CParen]
 
                 ruleLogger.Pop()
 
@@ -463,9 +462,9 @@ type Parser(scanner : MinJScanner,
             | Terminal OSquare ->
                 ruleLogger.Push "<index> --> [<exp>]"
 
-                scanner.Pop()
+                pop scanner
                 let exp = this.ParseExp()
-                scanner.PopTerminal CSquare
+                popTerminal scanner CSquare
 
                 ruleLogger.Pop()
 
@@ -482,7 +481,7 @@ type Parser(scanner : MinJScanner,
         let logExpLeft = this.ParseAnd()
         match scanner.Current with
             | Terminal Or ->
-                scanner.Pop()
+                pop scanner
                 let logExpRight = this.ParseLExp()
                 Ast.LogicalExpression(logExpLeft, Ast.OrOp, logExpRight)
             | _ ->
@@ -493,7 +492,7 @@ type Parser(scanner : MinJScanner,
         let logLeft = Ast.SingletonLogicalExpression(this.ParseRelExp())
         match scanner.Current with
             | Terminal And ->
-                scanner.Pop()
+                pop scanner
                 let logRight = this.ParseAnd()
                 ruleLogger.Pop()
                 Ast.LogicalExpression(logLeft, Ast.AndOp, logRight)
@@ -503,7 +502,7 @@ type Parser(scanner : MinJScanner,
 
     /// "<rel_exp> --> ( < exp >< rel op >< exp > )"
     member this.ParseRelExp() : Ast.RelativeExpression =
-        scanner.PopTerminal OParen
+        popTerminal scanner OParen
         let expLeft = this.ParseExp()
 
         ruleLogger.Push "<rel_exp> --> ( < exp >< rel op >< exp > )"
@@ -518,10 +517,10 @@ type Parser(scanner : MinJScanner,
                 | Terminal NotEqual -> Ast.NotEq
                 | _ -> raiseUnexpected()
         
-        scanner.Pop()
+        pop scanner
         let expRight = this.ParseExp()
 
-        scanner.PopTerminal CParen
+        popTerminal scanner CParen
 
         ruleLogger.Pop()
 
@@ -545,7 +544,7 @@ type Parser(scanner : MinJScanner,
             | Terminal Sub ->
                 ruleLogger.Push "<exp> --> -<term><exp'>"
 
-                scanner.Pop()
+                pop scanner
                 let neg = Ast.Expression(true, this.ParseTerm(), this.ParseExpP())
 
                 ruleLogger.Pop()
@@ -562,7 +561,7 @@ type Parser(scanner : MinJScanner,
             | Terminal Sub as token ->
                 ruleLogger.Push "<exp'> --> <add_op><term><exp'>"
 
-                scanner.Pop()
+                pop scanner
                 let term = this.ParseTerm()
                 let expP = this.ParseExpP()
                 
@@ -609,7 +608,7 @@ type Parser(scanner : MinJScanner,
         let ast = 
             match operator with
                 | Some(op) ->
-                    scanner.Pop()
+                    pop scanner
                     let prim = this.ParsePrim()
                     let termP = this.ParseTermP()
                     Some <| Ast.TermP(op, prim, termP)
@@ -625,7 +624,7 @@ type Parser(scanner : MinJScanner,
             | Identifier i ->
                 ruleLogger.Push "<prim> --> i <prim'>"
                 
-                scanner.Pop()
+                pop scanner
                 let ast = this.ParsePrimP i
 
                 ruleLogger.Pop()
@@ -636,22 +635,22 @@ type Parser(scanner : MinJScanner,
                 ruleLogger.Push "<prim> --> n"
                 ruleLogger.Pop()
 
-                scanner.Pop()
+                pop scanner
                 Ast.NumberPrimitive n
             
             | CharConst cc ->
                 ruleLogger.Push "<prim> --> 'c'"
                 ruleLogger.Pop()
 
-                scanner.Pop()
+                pop scanner
                 Ast.CharPrimitive cc
             
             | Terminal OParen ->
                 ruleLogger.Push "<prim> --> (<exp>)"
 
-                scanner.Pop()
+                pop scanner
                 let exp = this.ParseExp()
-                scanner.PopTerminal CParen
+                popTerminal scanner CParen
 
                 ruleLogger.Pop()
 
@@ -667,9 +666,9 @@ type Parser(scanner : MinJScanner,
             | Terminal OParen ->
                 ruleLogger.Push "<prim'> --> (<v_list>)"
 
-                scanner.Pop()
+                pop scanner
                 let vList = this.ParseVList()
-                scanner.PopTerminal CParen
+                popTerminal scanner CParen
 
                 ruleLogger.Pop()
 
@@ -699,7 +698,7 @@ type Parser(scanner : MinJScanner,
         match scanner.Current with
             
             | Terminal Comma ->
-                scanner.Pop()
+                pop scanner
                 ruleLogger.Push "<v_list'> --> ,<v_list'>"
                 
                 let ast = elem :: this.ParseVList()
@@ -720,7 +719,7 @@ type Parser(scanner : MinJScanner,
             | Identifier i ->
                 ruleLogger.Push "<elem> --> i <index>"
 
-                scanner.Pop()
+                pop scanner
                 
                 let index = this.ParseIndex()
 
@@ -735,7 +734,7 @@ type Parser(scanner : MinJScanner,
                 ruleLogger.Push "<elem> --> 'c'"
                 ruleLogger.Pop()
 
-                scanner.Pop()
+                pop scanner
                 Ast.CharConstElement cc
 
             | Number n ->
@@ -743,8 +742,11 @@ type Parser(scanner : MinJScanner,
                 ruleLogger.Pop()
                 
                 ruleLogger.Pop()
-                scanner.Pop()
+                pop scanner
                 Ast.NumberElement n
 
             | _ ->
                 raiseUnexpected()
+
+let parse listingWriter debugOutput ruleLogger charSeq =
+    (new Parser(scan charSeq listingWriter, debugOutput, ruleLogger)).Parse()

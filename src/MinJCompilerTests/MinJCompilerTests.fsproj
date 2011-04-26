@@ -43,11 +43,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="TestFramework.fs" />
-    <Compile Include="ScannerTests.fs" />
-    <Compile Include="ParserTests.fs" />
-    <Compile Include="ParserIdentifierResolutionTests.fs" />
-    <Compile Include="SemanticVerificationTests.fs" />
-    <Compile Include="ThreeAddressCodeTranslationTests.fs" />
+    <Compile Include="MinJ.Tests.Utils.fs" />
+    <Compile Include="MinJ.Scanner.Tests.fs" />
+    <Compile Include="MinJ.Parser.Tests.Syntax.fs" />
+    <Compile Include="MinJ.Parser.Tests.Resolution.fs" />
+    <Compile Include="MinJ.Semantics.Tests.fs" />
+    <Compile Include="MinJ.ToTac.Tests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

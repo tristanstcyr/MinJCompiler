@@ -1,8 +1,33 @@
-﻿namespace Scanner
+﻿namespace Compiler
 
-open Tokens
 open System.IO
 open System.Text
+
+/// Type for printing the listing of a program
+/// this is mostly used by the scanner 
+type IListingWriter = 
+    
+    abstract member AdvanceLine : unit -> unit  
+    /// Adds a character on a line
+    abstract member AddChar : char -> unit
+
+    /// Adds a token that was found on the current line
+    abstract member AddToken : Token -> unit
+
+    /// Forces the current line to be writter
+    /// This needs to be called in case line information
+    /// might still be in memory
+    abstract member End : unit -> unit
+
+/// A listing writer that does nothing.
+/// This is used to disable outputting of the listing
+/// without altering the scanner code.
+type NullListingWriter() = 
+    interface IListingWriter with
+        member this.AdvanceLine() = ()
+        member this.AddChar(c : char) = ()
+        member this.AddToken(token : Token) = ()
+        member this.End() = ()
 
 /// Type for printing the listing of a program
 /// this is mostly used by the scanner 

@@ -1,4 +1,6 @@
-﻿module Moon.Ast
+﻿/// The abstract syntax tree of the moon language
+[<AutoOpen>]
+module Moon.Ast
 
 type DwK = DwKInt of int32 | DwKStr of string
 type Directive = 

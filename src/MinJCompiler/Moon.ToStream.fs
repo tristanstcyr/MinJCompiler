@@ -1,5 +1,5 @@
 ﻿module Moon.ToStream
-open Ast
+
 open System.IO
 
 let private asCommaList (out : TextWriter) func (l : 'a list) =

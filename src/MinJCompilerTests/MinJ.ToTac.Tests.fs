@@ -1,23 +1,14 @@
-﻿module MinJ.ThreeAddressCodeTranslationTests
+﻿module MinJ.ToTac.Tests
 
 open TestFramework
-open Scanner
+open MinJ.Tests.Utils
 open Compiler
-open Tac
+open Compiler.Tac
 open MinJ
-open MinJ.Scanner
-open MinJ.Parser
-open MinJ.Ast
-open MinJ.Ast.ToTac
+open MinJ.ToTac
+
 open System.IO
 open System
-
-/// Helpers function for creating a MinJ parser from a string.
-let p str =
-    let memStream = new StreamWriter(new MemoryStream())
-    let parser = new Parser(createMinJScanner str <| NullListingWriter(), memStream, RuleLogger(memStream))
-    parser.Init()
-    parser
 
 /// <summary>
 /// Translates a MinJ snippet to three address code
@@ -35,6 +26,8 @@ let testInMain ast toTac expected =
     Assert "Programs are not equal" (instructions = expected)
 
 let useTmpPtr address func cont ast = func cont (Local(address)) ast
+
+let p = makeParser
 
 type ThreeAddressCodeTranslationTests() =
 
@@ -183,9 +176,3 @@ type ThreeAddressCodeTranslationTests() =
                 Inst3(Local(16u), Tac.Add, Constant(2u), Constant(3u))
                 Inst3(Local(16u), Tac.Mul, Local(12u), Local(16u))
             ]
-        
-/// Runs all tests for the MinJ lexer
-let RunAllTests() = 
-    RunAllTests typeof<ThreeAddressCodeTranslationTests>
-    Console.WriteLine("\nAll tests have been run")
-    ignore(Console.Read())

@@ -1,4 +1,7 @@
 ﻿module Main
-open MinJ.ThreeAddressCodeTranslationTests
+open TestFramework
+open MinJ.ToTac.Tests
+open System
 
-RunAllTests()
+RunAllTests(typeof<ThreeAddressCodeTranslationTests>)
+ignore(Console.Read())

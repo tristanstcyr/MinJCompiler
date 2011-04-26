@@ -1,50 +1,14 @@
-﻿/// A language agnostic scanner.
-[<AutoOpen>]
-module Scanner.Scanner
+﻿namespace Compiler
+
 open System.Collections.Generic
-open System.IO
-open Tokens
-
-/// Essentially a function that takes a char and gives
-/// the next state or no state if there's no match
-type Transition = char -> State option  
-
-/// Produces a token given a string. Different states may have different producers
-and TokenProducer = string -> Location -> Token
-
-/// Represents a state in the scanner process
-and State(isDefiningToken : bool, tokenProducer : TokenProducer option, transition : Transition) =
-   
-   /// A transition that goes nowhere regardless of the character
-    static member private NullTransition x = None
-
-    /// True if this state produces a token
-    member this.IsFinal with get() = tokenProducer.IsSome
-
-    /// True if this state participates in the definition of a token
-    member this.IsDefiningToken with get() = isDefiningToken
-    
-    /// Returns the next state in function of the character or None
-    member this.NextState c = transition c
-    
-    /// Produces a token given the token's string value and its location
-    member this.ProduceToken(s, l) = 
-        if tokenProducer.IsNone then
-            raise(System.Exception("State is not final an cannot produce a token"))
-        tokenProducer.Value s l
-
-    new(isDefiningToken, transition) = State(isDefiningToken, None, transition)
-    new(isDefiningToken, producer : TokenProducer) = State(isDefiningToken, Some producer, State.NullTransition)
-    new(isDefiningToken, producer : TokenProducer, transition) = State(isDefiningToken, Some producer, transition)
-    new(isDefiningToken) = State(isDefiningToken, None, State.NullTransition)
 
 /// Function that takes a sequence of chars and a state machine
 /// and returns a sequence of Tokens *)
-type Scanner(rootState: State, characters : IEnumerable<char>, listing : IListingWriter) =
+type Scanner(rootState: State, characters : char seq, listing : IListingWriter) =
     
     (* Some mutable variables *)
-    let mutable location = ref OriginLocation
-    let mutable tokenStart = ref OriginLocation
+    let mutable location = ref Location.origin
+    let mutable tokenStart = ref Location.origin
     let mutable currentToken = ref []
     (* Setup the enumerator. Manipulating this enumerator creates some side-effects. *)
     let charsEnum = characters.GetEnumerator()
@@ -63,10 +27,10 @@ type Scanner(rootState: State, characters : IEnumerable<char>, listing : IListin
         location := match c with
                     | '\n' -> 
                         listing.AdvanceLine()
-                        AdvanceRow !location
+                        location.Value.advanceRow
                     | _ ->
                         listing.AddChar(c)
-                        AdvanceCol !location
+                        location.Value.advanceCol
     
     let tokens =
         if not <| charsEnum.MoveNext() then
@@ -154,20 +118,8 @@ type Scanner(rootState: State, characters : IEnumerable<char>, listing : IListin
     /// Enumeration is delegated to this IEnumerator
     let tokensEnum = tokens.GetEnumerator()
 
-    interface System.Collections.IEnumerator with
-        member this.MoveNext() = tokensEnum.MoveNext()
-        member this.Reset() = tokensEnum.Reset()
-        member this.Current with get() = tokensEnum.Current :> obj
-    interface IEnumerator<Token> with
-        member this.Current with get() = tokensEnum.Current
-        member this.Dispose() = tokensEnum.Dispose()
-        
+    member private this.Tokens with get() = tokensEnum
 
-open System.IO
-/// Opens a file into a sequence of chars.
-/// This is where some of the magic of loading characters on demand happens.
-let ToCharSeq path = seq {
-    use reader = new StreamReader(File.OpenRead(path))
-    while not reader.EndOfStream do
-        yield char(reader.Read())
-} 
+    static member Scan rootState characters listing =
+        let scanner = Scanner(rootState, characters, listing)
+        scanner.Tokens

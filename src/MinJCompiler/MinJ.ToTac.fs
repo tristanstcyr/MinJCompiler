@@ -1,8 +1,10 @@
 ﻿/// For translating a MinJ AST to three address code ASTs.
-module MinJ.Ast.ToTac
+module MinJ.ToTac
 
 open MinJ
-open Tac
+open Compiler
+open Compiler.Tac
+
 open System
 open System.Collections.Generic
 
@@ -16,11 +18,11 @@ type TemporaryVariablePool() =
     let mutable count = 0u
     let mutable max = 0u
 
+    member this.RequiredStackSpace with get() = max * 4u
+
     member this.StartAddress 
         with get() = startAddress
         and set(value) = startAddress <- value
-
-    member this.RequiredStackSpace with get() = max * 4u
 
     member this.Acquire(func : Ptr -> 'a) =
         count <- count + 1u
@@ -39,6 +41,7 @@ type ProgramContext(instructions, functionCount) =
     /// to generate a unique label everytime.
     let mutable labelCount = functionCount - 1;
      
+     /// Constructs a ProgramContext with no instructions
     new(functionCount) = ProgramContext(new List<Instruction>(), functionCount)
 
     /// Instructions generated during translation.
@@ -52,7 +55,7 @@ type ProgramContext(instructions, functionCount) =
     /// Creates a label with a unique number.
     member this.CreateLabel() =
         labelCount <- labelCount + 1
-        Label labelCount
+        Tac.Label labelCount
 
     /// The literals encountered while converting
     /// a program to three address code.
@@ -72,17 +75,23 @@ type ProgramContext(instructions, functionCount) =
 /// It is passed to "ToTac" functions that translate AST node found inside functions.
 type FunctionContext(program : ProgramContext, label) =
 
+    /// Stores the size required to store the parameters and local variables.
+    /// This value is incremented when declarations are discovered.
     let mutable localDeclarationsSize = 12u;
 
     let tempVariablePool = TemporaryVariablePool()
 
     let mutable endLabel = program.CreateLabel()
 
+    /// A pool of reusable temporary variables.
     member this.TemporaryVariables with get() = tempVariablePool
 
-    /// The label for this function
+    /// The label for this function.
     member this.Label with get() = label
 
+    /// A label at the end of the function.
+    /// A jump is done to this label when a return statement
+    /// is encountered.
     member this.EndLabel 
         with get() = endLabel 
 
@@ -90,7 +99,7 @@ type FunctionContext(program : ProgramContext, label) =
     member this.Index 
         with get() =
             match label with
-                | Label(index) -> index;
+                | Tac.Label(index) -> index;
     
     /// The stack size of this function. It is increased when
     /// local variables are encountered.
@@ -98,6 +107,7 @@ type FunctionContext(program : ProgramContext, label) =
         with get() = localDeclarationsSize 
         and set v = localDeclarationsSize <- v
 
+    /// The total size on the stack required for this function.
     member this.TotalStackSize 
         with get() = localDeclarationsSize + tempVariablePool.RequiredStackSpace
 
@@ -111,6 +121,7 @@ type FunctionContext(program : ProgramContext, label) =
     /// instruction to this context.
     static member (<--) (context : FunctionContext, instruction) =
         context.Program.Instructions.Add(instruction)
+
     /// Convenient operator for adding several three address code
     /// instruction to this context.
     static member (<--) (context : FunctionContext, instructions) =
@@ -121,6 +132,7 @@ type FunctionContext(program : ProgramContext, label) =
 let private functionPrologue (context : FunctionContext)  index =
     context <--
         [
+        // The start label of the funtion
         Labeled(context.Label)
         // The previous frame size to the stack pointer
         Inst3(TopSt, Add, TopSt, FrSz)
@@ -139,6 +151,7 @@ let private functionEpilogue (context : FunctionContext) =
     context <-- 
         [
         Labeled(context.EndLabel)
+        // Restore the environment of the previous function
         Assign(FrSz, Local(8u))
         Assign(RetAdd, Local(0u))
         Assign(TopSt, Local(4u))
@@ -152,14 +165,35 @@ let private functionEpilogue (context : FunctionContext) =
 *)
 
 type Ast.Program with
-    member this.ToTac() =
+    static member ToTac this =
         match this with
             | Ast.Program(varDecls, main, funcDecls) ->
                 let context = ProgramContext(funcDecls.Length + 1)
-                let globalSpace = List.fold VariableDeclaration.ToTac 0u varDecls
+                //let globalSpace = List.fold VariableDeclaration.ToTac 0u varDecls
+                
+                let zeroConstant = context.CreateConstant(NumberLiteral(0))
+                context <-- Entry
+                context <-- Assign(FrSz, zeroConstant)
+                let globalSpace = ref 0u
+                for varDecl in varDecls do
+                    match varDecl with
+                        | NonArrayVariableDeclaration(id) ->
+                            id.Attributes.Value.MemoryAddress <- !globalSpace
+                            globalSpace := !globalSpace + 4u
+                        | ArrayVariableDeclaration(id, _, size) ->
+                            id.Attributes.Value.MemoryAddress <- !globalSpace
+                            let addressConstant = context.CreateConstant(NumberLiteral((int32)id.Attributes.Value.MemoryAddress + 4))
+                            context <-- Inst3(Global(id.Attributes.Value.MemoryAddress), Add, Globals, addressConstant)
+                            globalSpace := !globalSpace + 4u * (uint32)(size + 1)
+
+                // Call main
+                context <-- Call(Label(0), 0)
+                context <-- Halt
+
                 let mainSize = MainFunction.ToTac context main
                 let frameSizes = mainSize :: List.map (FunctionDefinition.ToTac context) funcDecls
-                Tac.Program(context.Instructions, frameSizes, List.rev context.Literals, globalSpace)
+
+                Tac.Program(context.Instructions, frameSizes, List.rev context.Literals, !globalSpace)
 
 
 and Ast.Assignment with
@@ -170,9 +204,10 @@ and Ast.Assignment with
                 | ExpressionAssignment(varRef, exp) ->
                     match varRef with
                         | VariableReference(varId, Some(indexExpression)) ->
+                            // This is an array assignment
                             context.TemporaryVariables.Acquire(fun indexTempPtr ->
                                 let expressionResultPtr = Expression.ToTac context tempPtr exp
-                                let indexTempPtr = Expression.ToTac context indexTempPtr indexExpression 
+                                let indexTempPtr = Expression.ToTac context indexTempPtr indexExpression
                                 context <-- Tac.ArrayAssign(
                                     Local(varId.Attributes.Value.MemoryAddress),
                                     indexTempPtr,
@@ -375,7 +410,6 @@ and Term with
     static member ToTac (context : FunctionContext) dest this =
         match this with
             | Term(prim, termP) ->
-                
                 match termP with
                     | Some(termP) ->
                         context.TemporaryVariables.Acquire(fun tempPtr ->
@@ -407,58 +441,62 @@ and Expression with
     static member ToTac context (destPtr : Ptr) this : Ptr =
         match this with
             | Expression(isNegated, term, rest) ->
-                // TODO: Negation
-                match rest with
-                    | Some(expP) ->
-                        context.TemporaryVariables.Acquire(fun termResultPtr ->
-                            let termPtr = Term.ToTac context termResultPtr term
-                            ExpressionPrime.ToTac context termPtr destPtr expP
-                            destPtr
-                        )
+                let exprResultPtr = 
+                    match rest with
+                        | Some(expP) ->
+                            context.TemporaryVariables.Acquire(fun termResultPtr ->
+                                let termPtr = Term.ToTac context termResultPtr term
+                                ExpressionPrime.ToTac context termPtr destPtr expP
+                                destPtr
+                            )
 
-                    | None ->
-                        Term.ToTac context destPtr term
+                        | None ->
+                            Term.ToTac context destPtr term
+                if isNegated then
+                    let literal = context.Program.CreateConstant(NumberLiteral(0))
+                    context <-- Inst3(destPtr, Sub, literal, exprResultPtr)
+                    destPtr
+                else
+                    exprResultPtr
 
 and VariableReference with
     static member ToTac context (tmpPtr : Ptr) this =
+        let ptrToVariable var =
+            let address = var.Attributes.Value.MemoryAddress
+            match var.Attributes.Value.Scope with
+                | GlobalVariable -> Global(address)
+                | LocalVariable -> Local(address)
+                | ParameterVariable -> Param(address)
+
         match this with
             | VariableReference(varId, exp) ->
-                let address = varId.Attributes.Value.MemoryAddress
-                let varPtr = 
-                    match varId.Attributes.Value.Scope with
-                        | GlobalVariable ->
-                            Global(address)
-                        | LocalVariable ->
-                            Local(address)
-                        | ParameterVariable ->
-                            Param(address)
+                
                 match exp with
                     | Some(exp) ->
+                        let varPtr = ptrToVariable varId
                         let expressionPtr = Expression.ToTac context tmpPtr exp
                         context <-- ArrayDeref(tmpPtr, varPtr, expressionPtr)
                         tmpPtr
                     | None ->
-                        varPtr
-                
-and VariableDeclaration with
-    static member ToTac spaceSize this =
-        match this with
-            | NonArrayVariableDeclaration(id) ->
-                id.Attributes.Value.MemoryAddress <- spaceSize
-                spaceSize + 4u
-            | ArrayVariableDeclaration(id, _, size) ->
-                id.Attributes.Value.MemoryAddress <- spaceSize
-                spaceSize + (uint32)size * 4u
+                        ptrToVariable varId
 
 and FunctionBody with
     static member ToTac (context : FunctionContext) this =
         match this with
             | FunctionBody(varDecls, stmts) ->
                 for varDecl in varDecls do
-                     let newSize = VariableDeclaration.ToTac context.LocalDeclarationsSize varDecl
-                     context.LocalDeclarationsSize <- newSize
+                    match varDecl with
+                        | NonArrayVariableDeclaration(id) ->
+                            id.Attributes.Value.MemoryAddress <- context.LocalDeclarationsSize
+                            context.LocalDeclarationsSize <- context.LocalDeclarationsSize + 4u
+                        | ArrayVariableDeclaration(id, _, size) ->
+                            id.Attributes.Value.MemoryAddress <- context.LocalDeclarationsSize
+                            let addressConstant = context.Program.CreateConstant(NumberLiteral((int32)id.Attributes.Value.MemoryAddress + 4))
+                            context <-- Inst3(Local(id.Attributes.Value.MemoryAddress), Add, TopSt, addressConstant)
+                            context.LocalDeclarationsSize <- context.LocalDeclarationsSize + 4u * (uint32)(size + 1)
                 context.TemporaryVariables.StartAddress <- context.LocalDeclarationsSize
-                List.iter (Statement.ToTac context) stmts
+                for stmt in stmts do
+                    Statement.ToTac context stmt
 
 and MainFunction with
     static member ToTac context this : FrameSize =

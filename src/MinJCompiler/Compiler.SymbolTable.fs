@@ -1,11 +1,7 @@
-﻿namespace MinJ
+﻿namespace Compiler
 
-open System.IO
-
-open Compiler
-open Scanner.Tokens
-open MinJ.Tokens
 open System.Collections.Generic
+open System.IO
 
 /// <summary>Symbol table for MinJ</summary>
 /// <param name="resolver">Function to be called when a symbol reference is solved</param>

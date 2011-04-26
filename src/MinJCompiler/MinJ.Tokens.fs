@@ -1,28 +1,24 @@
-﻿[<AutoOpen>]
-/// Defines all tokens for the MinJ language
+﻿/// Defines all tokens for the MinJ language
+[<AutoOpen>]
 module MinJ.Tokens
 
-open Scanner
+open Compiler
 open System
 open System.Text.RegularExpressions
 
-/// ll*
-type Identifier(str, startloc : Location) = 
-    inherit Token(startloc)
-
-    override this.ToString() = str
-
-    member this.Value with get() = str
-
 /// [0-9]*
-type Number(value : Int64, startloc : Location) =
+type Number(value : int32, startloc : Location) =
     inherit Token(startloc)
     member this.Value with get() = value
     /// Creates a CharConst or an error token if the number overflows
     static member Create (s : string) l =
-        try Number(int64(s), l) :> Token
+        try Number(int32(s), l) :> Token
         with | :? OverflowException -> 
-            Error(sprintf "Number constants cannot exceed %d" Int64.MaxValue, l) :> Token
+            let message = 
+                sprintf <| "Number constants must be between %d and %d." 
+                        <| Int32.MinValue
+                        <| Int32.MaxValue
+            Error(message, l) :> Token
     override this.ToString() = value.ToString()
 
 /// 'c'
@@ -33,9 +29,14 @@ type CharConst(value : char, startloc : Location) =
     /// form is invalid.
     static member Create (s : string) l =
         let noQuotes = s.Substring(1, s.Length - 2)
-        try CharConst(Char.Parse(Regex.Unescape(noQuotes)), l) :> Token
+        try 
+            let c = Char.Parse(Regex.Unescape(noQuotes))
+            if (int32)c > 255 then 
+                Error(sprintf "Only ASCII characters can be used as character constants.", l) :> Token
+            else
+                CharConst(c, l) :> Token
         with | :? FormatException ->
-            Error(sprintf "Invalid character format %s" s, l) :> Token
+            Error(sprintf "Invalid character format %s." s, l) :> Token
 
     override this.ToString() = sprintf "\'%c\'" value
 

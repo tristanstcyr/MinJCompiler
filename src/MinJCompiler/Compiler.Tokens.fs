@@ -1,18 +1,4 @@
-﻿[<AutoOpen>]
-module Scanner.Tokens
-
-/// Defines a location in a file
-type Location = {
-    /// The line number
-    Row: int;
-    Col: int;
-}
-
-(* Some helpers for Location *)
-/// The beginning of a file
-let OriginLocation = {Row=1;Col=1;}
-let AdvanceRow l = {Row = l.Row + 1; Col = 1}
-let AdvanceCol l = {l with Col = l.Col + 1}
+﻿namespace Compiler
 
 (* Lets define some base token types that are useful for any language *)
 /// Base of all tokens
@@ -26,3 +12,11 @@ type End(loc : Location) = inherit Token(loc)
 type Error(message, startloc : Location) =
     inherit Token(startloc)
     override this.ToString() = message
+
+/// ll*
+type Identifier(str, startloc : Location) = 
+    inherit Token(startloc)
+
+    override this.ToString() = str
+
+    member this.Value with get() = str

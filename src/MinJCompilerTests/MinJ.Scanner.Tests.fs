@@ -1,16 +1,17 @@
 ﻿/// All tests for the MinJ scanner
-module ScannerTests
+module MinJ.Scanner.Tests
 
-open Scanner
+open TestFramework
+open Compiler
 open MinJ
+
 open System
 open System.Diagnostics
-open TestFramework
 open System.IO
 open System.Collections.Generic
 
 /// Some mock location
-let l = OriginLocation
+let l = Location.origin
 
 /// Compares two tokens
 let Compare (result : Token) (expected : Token) = 
@@ -21,8 +22,7 @@ let Compare (result : Token) (expected : Token) =
         let message = sprintf "Tokens were of different type: got \"%s\" expected \"%s\"" (result.GetType().Name) (expected.GetType().Name)
         raise <| AssertionException(message)
 
-let tokenize input =
-    createMinJScanner input <| NullListingWriter()
+let tokenize input = scan input <| NullListingWriter()
 
 /// Verifies only the types of the tokens generated
 let CheckTokenType input expected =
@@ -85,9 +85,9 @@ type ScannerTests() =
     static member TestIdentifierIsTokenizedNoSpaces = CheckTokens "hello" [Identifier("hello", l)]
     static member TestTwoIdentifiersAreTokenized = CheckTokens " he llo " [Identifier("he", l); Identifier("llo", l)]
     
-    static member TestSingleDigitNumber = CheckTokens "3" [Number(3L, l)]
+    static member TestSingleDigitNumber = CheckTokens "3" [Number(3, l)]
 
-    static member TestMultiDigitNumber = CheckTokens "3345Hello" [Number(3345L, l); Identifier("Hello", l)]
+    static member TestMultiDigitNumber = CheckTokens "3345Hello" [Number(3345, l); Identifier("Hello", l)]
     
     static member TestConstantChar = CheckTokens "'c'=='b'" [CharConst('c', l);CreateIdentifierOrToken "==" l;CharConst('b', l)]
     
@@ -141,9 +141,3 @@ type ScannerTests() =
         let seconds = float32(sw.Elapsed.Milliseconds) / 1000.0f
         printfn "or %f chars / second" (float32((!input).Length) / seconds)
         printfn "or %f tokens / second" (float32(!count) / seconds)
-
-/// Runs all tests for the MinJ lexer
-let RunAllTests() = 
-    RunAllTests typeof<ScannerTests>
-    Console.WriteLine("\nAll tests have been run")
-    ignore(Console.Read())

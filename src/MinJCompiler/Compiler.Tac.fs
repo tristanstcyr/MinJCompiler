@@ -1,4 +1,4 @@
-﻿namespace Tac
+﻿namespace Compiler.Tac
 
 (* Abstract syntax tree of Three Address Code *)
 
@@ -24,6 +24,8 @@ type Ptr =
     | RetAdd
     /// The address for return values of functons
     | Result
+    /// Address where the globals start
+    | Globals
 
 type Operator = 
     | Add | Sub | Mul | Div | Mod
@@ -35,17 +37,18 @@ type Label = | Label of int
 /// A literal in the program. These are stored as constants.
 type Literal =
     | CharLiteral of char
-    | NumberLiteral of int64
+    | NumberLiteral of int32
 
 /// An instruction in a three addres code program.
 type Instruction =
+    | Entry
     /// Assignment of a 32-bit value at a location
     /// to another location. The first pointer is
     /// the destination, the second pointer is the source.
     | Assign of Ptr * Ptr
     /// Dereferencing on an array. 
     /// The first pointer is the destination.
-    /// The second pointer is the array address.
+    /// The second pointer points to a ptr that is array address start
     /// The third pointer point to an index value.
     | ArrayDeref of Ptr * Ptr * Ptr
     /// Assigns a value to an element in a vector.
@@ -76,6 +79,7 @@ type Instruction =
     | Goto of Label
     /// Returns from the current function.
     | Return
+    | Halt
 
 type GlobalsSize = uint32
 type FrameSize = uint32

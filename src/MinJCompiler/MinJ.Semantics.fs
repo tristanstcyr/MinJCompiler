@@ -1,8 +1,8 @@
-﻿module MinJ.Ast.SemanticVerification
+﻿module MinJ.Semantics
 
 open Compiler
-open Scanner.Tokens
-open MinJ.Ast
+open MinJ
+
 open System.IO
 open System
 open System.Collections.Generic
@@ -24,8 +24,12 @@ type SemanticVerifier() =
     /// Helper function for checking lists for types.
     /// This is used for comparing types of function call arguments.
     let checkTypeLists (types1 : (MinJType * Token) list) (types2 : (MinJType * Token) list) =
-        for a, b in List.zip types1 types2 do
-            checkTypes a b
+        if types1.Length <> types2.Length then
+            let (typ, token) = types1.Head
+            errors.Add("Wrong number of arguments", token.StartLocation)
+        else
+            for a, b in List.zip types1 types2 do
+                checkTypes a b
 
     member this.Errors with get() = errors
 
@@ -197,5 +201,5 @@ let verify (prg : Program) =
     let verifier = SemanticVerifier()
     verifier.Verify prg
     if (verifier.Errors.Count > 0) then
-        raise <| CompilerException(verifier.Errors)
+        raise <| CompilerException(List.ofSeq verifier.Errors)
     prg

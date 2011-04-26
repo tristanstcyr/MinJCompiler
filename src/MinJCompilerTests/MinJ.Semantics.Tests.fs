@@ -1,20 +1,19 @@
 ﻿module MinJ.ParserTypeCheckingTests
 
 open TestFramework
-open Scanner
+
 open Compiler
-open MinJ.Scanner
+open MinJ
 open MinJ.Parser
-open MinJ.Ast
+
 open System.IO
 open System
 
 let p str expectError = 
     let memStream = new StreamWriter(new MemoryStream())
-    let parser = new Parser(createMinJScanner str <| NullListingWriter(), memStream, RuleLogger(memStream))
-    let prg = parser.Parse()
+    let prg = parse (NullListingWriter()) memStream (RuleLogger(memStream)) str
     try
-        SemanticVerification.verify prg |> ignore
+        Semantics.verify prg |> ignore
         if expectError then
             Fail "Expected an error but got none"
     with
@@ -44,9 +43,3 @@ type ParserIdentifierResolutionTests() =
 
     static member TestNotAllWhilePathsReturn() =
         p "class X { void main() {;} int foo() { while (3 == 4) { return 3;} } }" true
-
-/// Runs all tests for the MinJ lexer
-let RunAllTests() = 
-    RunAllTests typeof<ParserIdentifierResolutionTests>
-    Console.WriteLine("\nAll tests have been run")
-    ignore(Console.Read())

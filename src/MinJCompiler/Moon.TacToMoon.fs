@@ -1,9 +1,9 @@
-﻿module Tac.ToMoon
+﻿module Compiler.Tac.ToMoon
+
 open Moon.Ast
 open Compiler
-open Tac.Printing
+
 open System
-open Scanner.Tokens
 
 // Register definitions
 let TopStackRegister = 1
@@ -41,7 +41,7 @@ let defineFrameSizes frameSizes = seq {
 
 let uint32ToInt16 number =
     if number > (uint32)Int16.MaxValue then
-        raise <| CompilerException([("An operand was out of bounds while compiling to Moon", OriginLocation)])
+        raise <| CompilerException([("An operand was out of bounds while compiling to Moon", Location.origin)])
     (int16)number
 
 let defineConstant label literal =
@@ -104,6 +104,9 @@ let loadInRegister destRegister src = seq {
         | Tac.FrSz ->
             yield Line(None, Instruction("add", [Register(destRegister);Register(0);Register(FrameSizeRegister)]), 
                 Some(sprintf "Put the current frame's size value into r%i" destRegister))
+        | Tac.Globals ->
+            yield Line(None, Instruction("add", [Register(destRegister); Register(0); Register(GlobalVarsAddressRegister)]), 
+                None)
 }
 
 let storeRegister dest src = seq {
@@ -123,8 +126,8 @@ let storeRegister dest src = seq {
             yield Line(None, Instruction("add", [Register(ResultRegister); Register(0); Register(src)]), None)
         | Tac.FrSz ->
             yield Line(None, Instruction("add", [Register(FrameSizeRegister);Register(0);Register(src)]), None)
-        | Tac.Constant(_) | Tac.Frame(_) ->
-            raise <| CompilerException([("Attempted to set constant.", Scanner.Tokens.OriginLocation)])
+        | Tac.Constant(_) | Tac.Frame(_) | Tac.Globals ->
+            raise <| CompilerException([("Attempted to set constant.", Location.origin)])
 }
 
 let GetVariableAddress ptr =
@@ -132,17 +135,17 @@ let GetVariableAddress ptr =
         | Global(address) | Local(address) | Param(address) ->
             address
         | _ ->
-            raise <| CompilerException([("Expected a variable", OriginLocation)])
+            raise <| CompilerException([("Expected a variable", Location.origin)])
 
-let GetArrayEntryAddress arrayPtr indexPtr register = seq {
-    yield! loadInRegister AccRegister1 indexPtr
-    yield Line(None, Instruction("sl", [Register(register);Constant(Number(2s), None)]), 
+let GetArrayEntryAddress arrayAddressPtr indexPtr destRegister helpRegister = seq {
+    // address of array into helpRegister
+    yield! loadInRegister helpRegister arrayAddressPtr
+    // 
+    yield! loadInRegister destRegister indexPtr
+    yield Line(None, Instruction("sl", [Register(destRegister);Constant(Number(2s), None)]), 
         Some "Get the offset by multiplying by the word size")
-    let arrayAddress = GetVariableAddress arrayPtr
-    yield Line(None, Instruction("addi", [Register(register);Register(register);Constant(Number(uint32ToInt16 arrayAddress), None)]), 
+    yield Line(None, Instruction("add", [Register(destRegister);Register(destRegister);Register(helpRegister);]), 
         Some "Add the address of the array to the offset")
-    yield Line(None, Instruction("add", [Register(register);Register(register);Register(TopStackRegister)]),
-        Some "Add the top of the stack address")
 }
 
 type Tac.Operator with
@@ -168,12 +171,12 @@ type Tac.Instruction with
         match instruction with 
             
             | Assign(dest, src) as a ->
-                yield Line(None, Blank, Some (a.ToAssembly()))
+                yield Line(None, Blank, Some (a.ToString()))
                 yield! loadInRegister AccRegister1 src
                 yield! storeRegister dest AccRegister1
             
             | Tac.Call(Label(i), paramCount) as c ->
-                yield Line(None, Blank, Some (c.ToAssembly()))
+                yield Line(None, Blank, Some (c.ToString()))
                 yield Line(None,
                     Instruction("add", [Register(ParameterPassingRegister);Register(0);Register(0)]),
                     Some "Clear the prameter passing register")
@@ -184,7 +187,7 @@ type Tac.Instruction with
             
             | Tac.Inst3(dest, op, operand1, operand2) as i3 ->
                 let operation = Tac.Operator.ToMoonOperation op
-                yield Line(None, Blank, Some (i3.ToAssembly()))
+                yield Line(None, Blank, Some (i3.ToString()))
                 yield! loadInRegister AccRegister1 operand1
                 yield! loadInRegister AccRegister2 operand2
                 yield Line(None, 
@@ -196,45 +199,45 @@ type Tac.Instruction with
                 yield Line(Some(sprintf "L%i" i), Blank, None)
             
             | Tac.Goto(Label(label)) as g ->
-                yield Line(None, Instruction("j", [Constant(Symbol(sprintf "L%i" label), None)]), Some(g.ToAssembly()))
+                yield Line(None, Instruction("j", [Constant(Symbol(sprintf "L%i" label), None)]), Some(g.ToString()))
             
             | Tac.Return as r ->
-                yield Line(None, Instruction("jr", [Register(ReturnAddressRegister)]), Some(r.ToAssembly()))
+                yield Line(None, Instruction("jr", [Register(ReturnAddressRegister)]), Some(r.ToString()))
             
             | Tac.Write(src) as w ->
-                yield Line(None, Blank, Some (w.ToAssembly()))
+                yield Line(None, Blank, Some (w.ToString()))
                 yield! loadInRegister AccRegister1 src
                 yield Line(None, Instruction("putc", [Register(AccRegister1)]), None)
 
             | Tac.Read(dest) as tacInstruction ->
-                yield Line(None, Blank, Some(tacInstruction.ToAssembly()))
+                yield Line(None, Blank, Some(tacInstruction.ToString()))
                 yield Line(None, Instruction("getc", [Register(AccRegister1)]), None)
                 yield! storeRegister dest AccRegister1
 
             | Tac.IfFalse(ptr, Label(i)) as tacInstruction ->
-                yield Line(None, Blank, Some (tacInstruction.ToAssembly()))
+                yield Line(None, Blank, Some (tacInstruction.ToString()))
                 yield! loadInRegister AccRegister1 ptr
                 yield Line(None, Instruction("bz", [Register(AccRegister1);Constant(Symbol(sprintf "L%i" i), None)]), None)
             
             | Tac.ArrayDeref(dest, arrayPtr, indexPtr) as tacInstruction ->
-                yield Line(None, Blank, Some (tacInstruction.ToAssembly()))
-                yield! GetArrayEntryAddress arrayPtr indexPtr AccRegister1
+                yield Line(None, Blank, Some (tacInstruction.ToString()))
+                yield! GetArrayEntryAddress arrayPtr indexPtr AccRegister1 AccRegister2
                 // Read what's there
                 yield Line(None, Instruction("lw", [Register(AccRegister1);Constant(Number(0s), Some AccRegister1)]),
                     Some "Read the value at the index");
                 // Store it at dest
                 yield! storeRegister dest AccRegister1
 
-            | Tac.ArrayAssign(arrayPtr, indexPtr, srcPtr) as tacInstruction ->
-                yield Line(None, Blank, Some (tacInstruction.ToAssembly()))
-                yield! GetArrayEntryAddress arrayPtr indexPtr AccRegister1
+            | Tac.ArrayAssign(arrayPtrPtr, indexPtr, srcPtr) as tacInstruction ->
+                yield Line(None, Blank, Some (tacInstruction.ToString()))
+                yield! GetArrayEntryAddress arrayPtrPtr indexPtr AccRegister1 AccRegister2
                 yield! loadInRegister AccRegister2 srcPtr
                 yield Line(None, Instruction("sw", [Constant(Number(0s), Some AccRegister1);Register(AccRegister2)]),
                     Some "Set value in array")
             
-            | Push(ptr) as tacInstruction ->
+            | Tac.Push(ptr) as tacInstruction ->
                 
-                yield Line(None, Blank, Some (tacInstruction.ToAssembly()))
+                yield Line(None, Blank, Some (tacInstruction.ToString()))
                 // Add the current stack size to the stack pointer
                 yield Line(None, Instruction("add", [Register(AccRegister1);Register(TopStackRegister);Register(FrameSizeRegister)]), 
                     Some "Find the start of the next frame by adding the top of the stack to the current frame's size")
@@ -248,6 +251,18 @@ type Tac.Instruction with
                     Some "Store the argument on the stack");
                 yield Line(None, Instruction("addi", [Register(ParameterPassingRegister); Register(ParameterPassingRegister);Constant(Number(4s), None)]),
                     Some "Add 4 to the parameter passing register")
+
+            | Tac.Entry as tacInstruction ->
+                // Define where the program starts and some initializations
+                yield Line(None, Blank, Some(tacInstruction.ToString()))
+                yield Line(None, Instruction("entry", []), None)
+                yield Line(None, 
+                    Instruction("addi", [Register(TopStackRegister);Register(0);Constant(Symbol(StackLabel), None)]), 
+                    Some "Initialize top stack address")
+
+            | Tac.Halt as tacInstruction ->
+                yield Line(None, Blank, Some(tacInstruction.ToString()))
+                yield Line(None, Instruction("hlt", []), None)
     }
 
 type Tac.Program with
@@ -274,20 +289,6 @@ type Tac.Program with
                 for message in messages do
                     yield Line(None, Blank, Some message)
 
-                // Define where the program starts and some initializations
-                yield Line(None, Directive(Entry), Some "Start here")
-                yield Line(None, 
-                    Instruction("addi", [Register(TopStackRegister);Register(0);Constant(Symbol(StackLabel), None)]), 
-                    Some "Initialize top stack address")
-                yield Line(None,
-                    Instruction("add", [Register(FrameSizeRegister);Register(0);Register(0)]),
-                    Some "Initialize current frame size to zero")
-                yield Line(None,
-                    Instruction("add", [Register(ParameterPassingRegister);Register(0);Register(0)]),
-                    Some "Clear the prameter passing register")
-                yield Line(None, Instruction("jl", [Register(ReturnAddressRegister);Constant(Symbol("L0"), None)]), None)
-                yield Line(None, Instruction("hlt", []), None)
-                
                 // Translate the Tac Instructions
                 for instruction in instructions do
                     yield! Instruction.ToMoon instruction

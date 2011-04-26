@@ -1,13 +1,14 @@
-﻿namespace MinJ.Ast
+﻿[<AutoOpen>]
+module MinJ.Ast
+
+open Compiler
+open MinJ
 
 (* 
    Abstract syntax tree of the MinJ grammar. 
    These nodes do not map 1:1 with the grammar rules to simplify compilation 
    and type checking later one 
 *)
-
-open MinJ.Tokens
-open Scanner
 
 /// Primitive types.
 type PrimitiveType = IntType | CharType

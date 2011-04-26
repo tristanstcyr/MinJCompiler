@@ -2,7 +2,8 @@
 
 #nowarn "40"
 
-open Scanner
+open Compiler
+open MinJ
 
 /// All types of characters that can be encountered.
 type private CharType = 
@@ -28,7 +29,7 @@ type private CharType =
 
 /// The MinJ lexer state machine. See documentation for a graphic
 /// representation of the machine. Looking at just the code might not make thing really clear.
-let createMinJStateMachine() =
+let Create() =
         
     /// Function that returns the chracter type of a character in constant time.
     let getCharType = 
