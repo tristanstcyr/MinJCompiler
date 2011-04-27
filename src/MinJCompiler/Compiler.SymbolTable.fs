@@ -1,7 +1,14 @@
-﻿namespace Compiler
+﻿[<AutoOpen>]
+module Compiler.SymbolTable
 
 open System.Collections.Generic
 open System.IO
+
+module private Errors =
+    let SymbolAlreadyDefined (idToken : Identifier) =
+        (sprintf "%s has already been defined" idToken.Value), idToken.StartLocation
+    let SymbolReferencedButNotDeclared (idToken : Identifier) =
+        (sprintf "\"%s\" referenced but not declared" idToken.Value), idToken.StartLocation
 
 /// <summary>Symbol table for MinJ</summary>
 /// <param name="resolver">Function to be called when a symbol reference is solved</param>
@@ -15,7 +22,7 @@ type SymbolTable<'AttributeType, 'IdentifierType>(resolver) =
     let mutable referenced : (Identifier * 'IdentifierType) list = []
 
     /// Convenience method for adding errors in the errors list
-    member private this.AddError message location =
+    member private this.AddError (message, location) =
         errors <- (message, location) :: errors
 
     member this.CountDefined() = List.sum <| List.map (fun (d : Dictionary<_,_>) -> d.Count) defined
@@ -26,7 +33,7 @@ type SymbolTable<'AttributeType, 'IdentifierType>(resolver) =
         let scope = defined.Head
         // Add to the current scope if it doesn't already exist
         if scope.ContainsKey(idToken.Value) then
-            this.AddError (sprintf "%s has already been defined" idToken.Value) idToken.StartLocation
+            this.AddError(Errors.SymbolAlreadyDefined idToken)
         else
             scope.Add(idToken.Value, a)
 
@@ -60,7 +67,7 @@ type SymbolTable<'AttributeType, 'IdentifierType>(resolver) =
                 | Some(a) ->
                     resolver astNode a
                 | None ->
-                     this.AddError (sprintf "\"%s\" referenced but not declared" name) id.StartLocation
+                    this.AddError (Errors.SymbolReferencedButNotDeclared id)
         referenced <- []
         defined <- defined.Tail
 

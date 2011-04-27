@@ -1,15 +1,44 @@
 ﻿module MinJ.ParserCli
 
-open MinJ
-open MinJ.ToTac
 open Compiler
 open Compiler.Tac
 open Compiler.Tac.ToMoon
 open Moon
+open MinJ
+open MinJ.ToTac
+open MinJ.Scanner
 
 open System
 open System.IO
 open System.Diagnostics
+
+let openOutputFiles (directory : DirectoryInfo) =
+    let dirName = directory.FullName
+    (new StreamWriter(File.OpenWrite(dirName + @"\rules.txt")),
+     new StreamWriter(File.OpenWrite(dirName + @"\listing.txt")),
+     new StreamWriter(File.OpenWrite(dirName + @"\tac.txt")),
+     new StreamWriter(File.OpenWrite(dirName + @"\moon.m")))
+
+let openOutputStream (directory : DirectoryInfo) filename =
+    let path = directory.FullName + @"\" + filename
+    if File.Exists path then File.Delete path
+    new StreamWriter(File.OpenWrite(path))
+
+let time (output : TextWriter) what func =
+    let sw = new Stopwatch()
+    sw.Start()
+    let result = func()
+    output.WriteLine(sprintf "%s in %.3f" what (float(sw.ElapsedMilliseconds) / float(1000)))
+    result
+
+let countTokensThen onDone tokens = seq {
+    let count = ref 0
+    for token in tokens do
+        count := !count + 1
+        yield token
+    onDone !count
+}
+    
 
 /// Entry point with command line params parsed
 let Run inputPath =
@@ -20,54 +49,50 @@ let Run inputPath =
     if not file.Exists then
         printfn "Input file not found"
     else
-        // Create output files paths. These are in the same 
-        // directory as the the input file.
-        let rulesPath = file.Directory.FullName + @"\rules.txt"
-        let listingPath = file.Directory.FullName + @"\listing.txt"
-        let tacPath = file.Directory.FullName + @"\tac.txt"
-        let moonPath = file.Directory.FullName + @"\moon.m"
-    
-        // Delete the files if they already exist
-        for filePath in [rulesPath;listingPath;tacPath;moonPath] do
-            if File.Exists filePath then
-                File.Delete filePath
-    
-        // Open streams for writing to the output files.
-        use listingOutput = new StreamWriter(File.OpenWrite(listingPath))
-        use rulesOutput = new StreamWriter(File.OpenWrite(rulesPath))
-        use tacOutput = new StreamWriter(File.OpenWrite(tacPath))
-        use moonOutput = new StreamWriter(File.OpenWrite(moonPath))
+        // Create output files paths
+        let openOutputStream = openOutputStream file.Directory
+        use rulesOutput = openOutputStream @"rules.txt"
+        use listingOutput = openOutputStream @"listing.txt"
+        use tacOutput = openOutputStream @"tac.txt"
+        use moonOutput = openOutputStream @"moon.m"
 
         let listingWriter = ListingWriter(listingOutput)
         let ruleLogger = RuleLogger(rulesOutput)
     
-        (* Start a timer and do the work *)
+        let time what func a = time listingOutput what (fun() -> func a)
+        let printTokenCount count =
+             listingOutput.WriteLine(sprintf "%i tokens" count)
+
+        // Start a timer and do the work 
         let sw = new Stopwatch()
         sw.Start()
         try
-            // Translate to Three Address Code
-            let tacPrg = 
-                openAsCharSeq inputPath 
-                |> Parser.parse listingWriter rulesOutput ruleLogger
-                |> Semantics.verify 
-                |> Program.ToTac
-
-            // Output the TAC to a file
-            Program.ToStream tacOutput tacPrg
-            // Translate the TAC to Moon and output to file
-            Program.ToMoon tacPrg |> Moon.ToStream.write moonOutput
+            (openAsCharSeq inputPath) 
+                |> tokenize listingWriter
+                |> countTokensThen printTokenCount
+                |> time "Lexing and parsing " (Parser.parse rulesOutput ruleLogger)
+                |> time "Semantic analysis" Semantics.verify
+                |> time "Intermediate code generation" Program.ToTac
+                |> Program.ToStream tacOutput
+                |> Program.ToMoon
+                |> time "Target code generation" (Moon.ToStream.write moonOutput) 
             sw.Stop()
+            
         with
             // A CompilerException might occure at any stage of the compilation process.
             // The CompileException type is composed of multiple exceptions that have been
             // accumulated throughout the compilation process.
             | CompilerException(errors) as e ->
+                let location(m, l) = l
                 sw.Stop()
                 // Print the errors
-                let sortedyLocation = Seq.sortBy (fun (m, l) -> l) errors
+                let sortedyLocation = List.sortBy location errors
                 listingOutput.WriteLine()
                 for message, location in sortedyLocation do
                     listingOutput.WriteLine(sprintf "%i:%i\t%s" location.Row location.Col message)
+            | CompilerInternalException(message) as e ->
+                listingOutput.WriteLine(sprintf "An internal error occured:%s" e.Message)
+                listingOutput.WriteLine(e.StackTrace)
         
         // Print a message a the end with the amount of time taken.
         listingOutput.WriteLine(sprintf "Concluded in %.3f seconds\n" <| float(sw.ElapsedMilliseconds) / float(1000))

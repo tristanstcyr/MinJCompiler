@@ -7,13 +7,13 @@ type Instruction with
     static member ToStream (writer : TextWriter) instruction =
         match instruction with
             | Labeled(lbl) ->
-                writer.Write(lbl.ToString())
+                writer.Write(Label.ToString lbl)
             | _  ->
                 writer.Write("\t")
-                writer.WriteLine(instruction.ToString())
+                writer.WriteLine(Instruction.ToString instruction)
 
 type Program with
-    static member ToStream (writer : TextWriter) (Program(instructions, frameSizes, constants, globalSize)) =
+    static member ToStream (writer : TextWriter) (Program(instructions, frameSizes, constants, globalSize) as program) =
         Seq.iter (Instruction.ToStream writer) instructions
         writer.Write('f')
         for frameSize in frameSizes do
@@ -21,3 +21,4 @@ type Program with
             writer.WriteLine(frameSize)
         writer.WriteLine(sprintf "Size\t%i" globalSize)
         writer.WriteLine("ST")
+        program

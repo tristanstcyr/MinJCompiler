@@ -1,0 +1,96 @@
+class InputTest 
+{ 
+    void main() 
+    {
+		testNumberInput(3);
+		testCharInput('c');
+    }
+
+	int testNumberInput(int number)
+	{
+		int input;
+		System.out('I','n','p','u','t', ' ');
+		printNumber(number);
+		System.out('\n');
+		input = System.in.int();
+		equalsInt(input, number);
+		return 0;
+	}
+	
+	int testCharInput(char c)
+	{
+		char input;
+		System.out('I','n','p','u','t', ' ');
+		System.out(c);
+		System.out('\n');
+		input = System.in.char();
+		equalsChar(input, c);
+		return 0;
+	}
+	
+	int equalsInt(int actual, int expected)
+	{
+		if (actual == expected)
+		{
+			System.out('P','A','S','S','\n');
+		}
+		else
+		{
+			System.out('F','A','I','L','-', '>',' ');
+			printNumber(actual);
+			System.out(' ', ':',' ');
+			printNumber(expected);
+			System.out('\n');
+		}
+		
+		return 0;
+	}
+	
+	int equalsChar(char actual, char expected)
+	{
+		if (actual == expected)
+		{
+			System.out('P','A','S','S','\n');
+		}
+		else
+		{
+			System.out('F','A','I','L','-', '>',' ');
+			System.out(actual);
+			System.out(' ', ':',' ');
+			System.out(expected);
+			System.out('\n');
+		}
+		
+		return 0;
+	}
+	
+	int printNumber(int number)
+	{
+		if (number == 0)
+			System.out('0');
+		else
+			if (number < 0)
+			{
+				System.out('-');
+				number = -number;
+			} else ;
+			rec_printNumber(number);
+		return 0;
+	}
+	
+	int rec_printNumber(int number)
+	{
+		int rest;
+		int div;
+		if (number != 0)
+		{
+			rest = number % 10;
+			div = number / 10;
+			rec_printNumber(div);
+			rest = rest + 48;
+			System.out(rest);
+		}
+		else ;
+		return 0;
+	}
+}

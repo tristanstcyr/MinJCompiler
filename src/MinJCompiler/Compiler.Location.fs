@@ -1,6 +1,6 @@
 ﻿namespace Compiler
 
-/// Defines a location in a file
+/// Defines a location in a source file
 type Location = {
     /// The line number
     Row: int;

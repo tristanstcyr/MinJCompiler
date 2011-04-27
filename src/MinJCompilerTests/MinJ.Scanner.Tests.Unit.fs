@@ -1,5 +1,5 @@
 ﻿/// All tests for the MinJ scanner
-module MinJ.Scanner.Tests
+module MinJ.Scanner.Tests.Unit
 
 open TestFramework
 open Compiler
@@ -22,11 +22,11 @@ let Compare (result : Token) (expected : Token) =
         let message = sprintf "Tokens were of different type: got \"%s\" expected \"%s\"" (result.GetType().Name) (expected.GetType().Name)
         raise <| AssertionException(message)
 
-let tokenize input = scan input <| NullListingWriter()
+let tokenize = Scanner.tokenize (NullListingWriter())
 
 /// Verifies only the types of the tokens generated
 let CheckTokenType input expected =
-    use tokens = tokenize input
+    use tokens = (tokenize input).GetEnumerator()
     for expected in expected do
         if not <| tokens.MoveNext() then
             Fail "Less tokens than expected"
@@ -35,7 +35,7 @@ let CheckTokenType input expected =
 
 /// Verifies the types and values of generated tokens
 let CheckTokens  input (expected : Token list) = 
-    use tokens = tokenize input
+    use tokens = (tokenize input).GetEnumerator()
     for expected in expected do
         if not <| tokens.MoveNext() then
             Fail "Less tokens than expected"
@@ -78,7 +78,7 @@ let largeText =
     {"
 
 /// Contains the tests for the MinJ scanner, see the documentation for details.
-type ScannerTests() =
+type UnitTests() =
     
     static member TestIdentifierIsTokenizedWithSpaces = CheckTokens " hello " [Identifier("hello", l)]
 
@@ -120,24 +120,8 @@ type ScannerTests() =
     static member TestCommentEnd = CheckTokens "//\nIdentifier" [Identifier("Identifier", l)]
  
     static member TestLargeText =
-        let tokens = (tokenize largeText)
+        let tokens = (tokenize largeText).GetEnumerator()
         while tokens.MoveNext() do
             match tokens.Current with
                 | :? Error as e ->  Fail <| "Found error token " + e.ToString()
                 | _ -> ()
-
-    static member PerfTest =
-        let input = ref largeText
-        for i in [1..10] do
-            input := !input + !input
-        let sw = Stopwatch()
-        sw.Start()
-        let tokens = (tokenize !input)
-        let count = ref 0
-        while tokens.MoveNext() do
-            count := !count + 1
-        sw.Stop()
-        printfn "%i tokens scanned in %i ms" !count sw.Elapsed.Milliseconds
-        let seconds = float32(sw.Elapsed.Milliseconds) / 1000.0f
-        printfn "or %f chars / second" (float32((!input).Length) / seconds)
-        printfn "or %f tokens / second" (float32(!count) / seconds)

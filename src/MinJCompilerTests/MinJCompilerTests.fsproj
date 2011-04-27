@@ -44,7 +44,8 @@
   <ItemGroup>
     <Compile Include="TestFramework.fs" />
     <Compile Include="MinJ.Tests.Utils.fs" />
-    <Compile Include="MinJ.Scanner.Tests.fs" />
+    <Compile Include="MinJ.Scanner.Tests.Unit.fs" />
+    <Compile Include="MinJ.Scanner.Tests.Performance.fs" />
     <Compile Include="MinJ.Parser.Tests.Syntax.fs" />
     <Compile Include="MinJ.Parser.Tests.Resolution.fs" />
     <Compile Include="MinJ.Semantics.Tests.fs" />

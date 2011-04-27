@@ -23,7 +23,7 @@
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <DocumentationFile>bin\Debug\MinJCompiler.XML</DocumentationFile>
-    <StartArguments>..\..\..\..\testdata\compiling\math\input.txt</StartArguments>
+    <StartArguments>..\..\..\..\testdata\compiling\performance\small.txt</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
@@ -34,15 +34,15 @@
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <DocumentationFile>bin\Release\MinJCompiler.XML</DocumentationFile>
-    <StartArguments>..\..\..\..\testdata\parser\validinput\input.txt</StartArguments>
+    <StartArguments>..\..\..\..\testdata\compiling\performance\large.txt</StartArguments>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <ItemGroup>
     <Compile Include="Compiler.Utils.fs" />
     <Compile Include="Compiler.Location.fs" />
-    <Compile Include="Compiler.Tokens.fs" />
     <Compile Include="Compiler.CompilerException.fs" />
+    <Compile Include="Compiler.Tokens.fs" />
     <Compile Include="Compiler.ListingWriter.fs" />
     <Compile Include="Compiler.StateMachine.fs" />
     <Compile Include="Compiler.Scanner.fs" />
@@ -59,6 +59,7 @@
     <Compile Include="MinJ.Scanner.fs" />
     <Compile Include="MinJ.Ast.fs" />
     <Compile Include="MinJ.Parser.fs" />
+    <Compile Include="MinJ.BasicFunctions.fs" />
     <Compile Include="MinJ.Semantics.fs" />
     <Compile Include="MinJ.ToTac.fs" />
     <Compile Include="MinJ.ParserCli.fs" />

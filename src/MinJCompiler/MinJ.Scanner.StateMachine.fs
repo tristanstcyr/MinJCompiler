@@ -3,6 +3,7 @@
 #nowarn "40"
 
 open Compiler
+open Compiler.StateMachine
 open MinJ
 
 /// All types of characters that can be encountered.

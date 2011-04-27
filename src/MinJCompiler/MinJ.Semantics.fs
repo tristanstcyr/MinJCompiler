@@ -7,6 +7,26 @@ open System.IO
 open System
 open System.Collections.Generic
 
+module Errors =
+    
+    let UnexpectedType actual expected (location : Location) =
+        "Unexpected type", location
+    
+    let WrongNumberOfArguments actualCount expectedCount (location : Location) =
+        sprintf "Wrong number of argument. Expected %i but is %i" actualCount expectedCount, location
+    
+    let VariableNotAnArray (token : Identifier) =
+        sprintf "Variable \"%s\" is not an array." token.Value, token.StartLocation
+    
+    let MathWithNonIntegerOperands (token : Token) =
+        sprintf "Math operators may only be used on values of type \"int\"", token.StartLocation
+    
+    let MainCannotHaveReturn (location : Location) =
+        sprintf "The main function cannot have a return statement.", location
+    
+    let NotAllPathsReturn (funcId : FunctionIdentifier) =
+        sprintf "Not all paths return a value for function %s" funcId.Token.Value, funcId.Token.StartLocation
+
 /// Instances of this type are used for doing semantic verification 
 /// on MinJ AST nodes.
 /// The class does not have any state except for a collection of 
@@ -19,14 +39,14 @@ type SemanticVerifier() =
     /// Helper function for checking two types
     let checkTypes (typ1 : MinJType, id1 : Token) (typ2 : MinJType, id2 : Token) = 
         if typ1 <> typ2 then
-            errors.Add("Unexpected type", id1.StartLocation)
+            errors.Add(Errors.UnexpectedType typ1 typ2 id1.StartLocation)
 
     /// Helper function for checking lists for types.
     /// This is used for comparing types of function call arguments.
     let checkTypeLists (types1 : (MinJType * Token) list) (types2 : (MinJType * Token) list) =
         if types1.Length <> types2.Length then
             let (typ, token) = types1.Head
-            errors.Add("Wrong number of arguments", token.StartLocation)
+            errors.Add(Errors.WrongNumberOfArguments types1.Length types2.Length token.StartLocation)
         else
             for a, b in List.zip types1 types2 do
                 checkTypes a b
@@ -42,7 +62,7 @@ type SemanticVerifier() =
                     | ArrayType(typ) as arrayType ->
                         Primitive(typ), varId.Token :> Token
                     | typ ->
-                        errors.Add("Expected array type", varId.Token.StartLocation)
+                        errors.Add(Errors.VariableNotAnArray varId.Token)
                         typ, varId.Token :> Token
 
     member this.Verify ast = 
@@ -57,7 +77,7 @@ type SemanticVerifier() =
     member this.Verify (TermP(operator, primitive, rest)) =
         let primType, (token : Token) = this.Verify primitive
         if primType <> Primitive(IntType) then
-            errors.Add("* / % operators may only be used on values of type \"int\"", token.StartLocation)
+            errors.Add(Errors.MathWithNonIntegerOperands token)
         match rest with
             | Some(termP) ->
                 let rest = this.Verify termP
@@ -71,7 +91,7 @@ type SemanticVerifier() =
         match termP with
             | Some(termP) ->
                 if primType <> Primitive(IntType) then
-                    errors.Add("* / % operators may only be used on values of type \"int\"", token.StartLocation)
+                    errors.Add(Errors.MathWithNonIntegerOperands token)
                 this.Verify(termP)
             | None -> 
                 primType, token
@@ -86,7 +106,7 @@ type SemanticVerifier() =
     member this.Verify(Expression(bool, term, rest)) =
         let termType, token = this.Verify term
         if bool && termType <> Primitive(IntType) then
-            errors.Add("Only expressions of type int can be negated", token.StartLocation)
+            errors.Add(Errors.MathWithNonIntegerOperands token)
         if rest.IsSome then
             let restType = this.Verify rest.Value
             checkTypes (termType, token) restType
@@ -132,7 +152,7 @@ type SemanticVerifier() =
                 let assignedType, token = this.Verify assigned
                 let expected = Primitive(inType)
                 if assignedType <> expected then
-                    errors.Add("Incompatible type used with System.in", token.StartLocation)
+                    errors.Add(Errors.UnexpectedType assignedType expected token.StartLocation)
 
     member this.Verify(ast, funcId : FunctionIdentifier option) =
         match ast with
@@ -163,7 +183,7 @@ type SemanticVerifier() =
                         let funcType = funcId.Attributes.Value.ReturnType, funcId.Token :> Token
                         checkTypes (expType, expToken) funcType
                     | _ ->
-                        errors.Add("The main function cannot have a return statement.", expToken.StartLocation)
+                        errors.Add(Errors.MainCannotHaveReturn expToken.StartLocation)
                 true
 
             | MethodInvocationStatement(identifier, arguments) ->
@@ -187,7 +207,7 @@ type SemanticVerifier() =
     
     member this.Verify (FunctionDefinition(funcId, _, body)) =
         if not <| this.Verify(body, Some funcId) then
-            errors.Add("Not all paths return a value", funcId.Token.StartLocation)
+            errors.Add(Errors.NotAllPathsReturn funcId)
     
     member this.Verify (Program(decls, mainF, funcDefs)) =
         this.Verify mainF

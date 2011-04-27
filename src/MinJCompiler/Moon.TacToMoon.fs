@@ -5,23 +5,29 @@ open Compiler
 
 open System
 
-// Register definitions
-let TopStackRegister = 1
-let GlobalVarsAddressRegister = 2
-let AccRegister1 = 3
-let AccRegister2 = 4
-let AccRegister3 = 5
-let FrameSizeRegister = 10
-let ParameterPassingRegister = 11
-let HelperRegister = 13
-let ResultRegister = 14
-let ReturnAddressRegister = 15
+module Registers =
+    let TopStack = 1
+    let GlobalVarsAddress = 2
+    let Acc1 = 3
+    let Acc2 = 4
+    let Acc3 = 5
+    let FrameSize = 10
+    let ParameterPassing = 11
+    let Helper = 13
+    let Result = 14
+    let ReturnAddress = 15
 
-// Labels
-let FrameSizesLabel = "fz"
-let ConstantsLabel = "cs"
-let GlobalsLabel = "gb"
-let StackLabel = "st"
+module Labels =
+    let FrameSizes = "fz"
+    let Constants = "cs"
+    let Globals = "gb"
+    let Stack = "st"
+
+module InternalErrors =
+    let OperandOutOfBounds =
+        "An operand was out of bounds while compiling to Moon."
+    let AttemptedToSetConstant =
+        "Attempted to set constant."
 
 let StackSize = 10000u
 
@@ -34,14 +40,14 @@ let defineFrameSize label size =
     Line(label, Directive(Dw([DwKInt((int32)size)])), None)
 
 let defineFrameSizes frameSizes = seq {
-    yield defineFrameSize (Some FrameSizesLabel) (List.head frameSizes)
+    yield defineFrameSize (Some Labels.FrameSizes) (List.head frameSizes)
     for size in List.tail frameSizes do
         yield defineFrameSize None size
 }
 
 let uint32ToInt16 number =
     if number > (uint32)Int16.MaxValue then
-        raise <| CompilerException([("An operand was out of bounds while compiling to Moon", Location.origin)])
+        raise <| CompilerInternalException(InternalErrors.OperandOutOfBounds)
     (int16)number
 
 let defineConstant label literal =
@@ -53,13 +59,13 @@ let defineConstant label literal =
 
 let defineConstants literals = seq {
     if (List.length literals > 0) then
-        yield defineConstant (Some ConstantsLabel) (List.head literals)
+        yield defineConstant (Some Labels.Constants) (List.head literals)
         for literal in List.tail literals do
             yield defineConstant None literal
 }
 
 let defineGlobalSection size = 
-    Line(Some GlobalsLabel, Directive(Res size), None)
+    Line(Some Labels.Globals, Directive(Res size), None)
 
 let setTo register number = seq {
     yield Line(None, Instruction("addi", [Register(register); Register(0); Constant(Number(number), None)]), None)
@@ -74,68 +80,61 @@ let loadInRegister destRegister src = seq {
     match src with
         
         | Tac.Global(address) ->
-            yield! loadOffsetFromLabel destRegister (uint32ToInt16 address) GlobalsLabel
+            yield! loadOffsetFromLabel destRegister (uint32ToInt16 address) Labels.Globals
         
         | Tac.Constant(address) ->
-            yield! loadOffsetFromLabel destRegister (uint32ToInt16 address) ConstantsLabel
+            yield! loadOffsetFromLabel destRegister (uint32ToInt16 address) Labels.Constants
         
         | Tac.Local(address) | Tac.Param(address) ->
             
             // Add ParameterStart + address to the register
-            yield Line(None, Instruction("addi", [Register(destRegister); Register(TopStackRegister); Constant(Number(uint32ToInt16 address), None)]), None)
+            yield Line(None, Instruction("addi", [Register(destRegister); Register(Registers.TopStack); Constant(Number(uint32ToInt16 address), None)]), None)
             // Load where at the address at the register
             yield Line(None, Instruction("lw", [Register(destRegister); Constant(Number(0s), Some(destRegister))]), None)
         
         | Tac.TopSt ->
-            yield Line(None, Instruction("add", [Register(destRegister); Register(0); Register(TopStackRegister)]), 
+            yield Line(None, Instruction("add", [Register(destRegister); Register(0); Register(Registers.TopStack)]), 
                 Some(sprintf "Put the address of the top of the stack in r%i" destRegister))
         
         | Tac.Frame(address) ->
-            yield! loadOffsetFromLabel destRegister (uint32ToInt16 address) FrameSizesLabel
+            yield! loadOffsetFromLabel destRegister (uint32ToInt16 address) Labels.FrameSizes
         
         | Tac.RetAdd ->
-            yield Line(None, Instruction("add", [Register(destRegister); Register(0); Register(ReturnAddressRegister)]), 
+            yield Line(None, Instruction("add", [Register(destRegister); Register(0); Register(Registers.ReturnAddress)]), 
                 Some(sprintf "Put the return address into r%i" destRegister))
         
         | Tac.Result ->
-            yield Line(None, Instruction("add", [Register(destRegister);Register(0);Register(ResultRegister)]), 
+            yield Line(None, Instruction("add", [Register(destRegister);Register(0);Register(Registers.Result)]), 
                 Some(sprintf "Put the returned value into r%i" destRegister))
         
         | Tac.FrSz ->
-            yield Line(None, Instruction("add", [Register(destRegister);Register(0);Register(FrameSizeRegister)]), 
+            yield Line(None, Instruction("add", [Register(destRegister);Register(0);Register(Registers.FrameSize)]), 
                 Some(sprintf "Put the current frame's size value into r%i" destRegister))
         | Tac.Globals ->
-            yield Line(None, Instruction("add", [Register(destRegister); Register(0); Register(GlobalVarsAddressRegister)]), 
+            yield Line(None, Instruction("add", [Register(destRegister); Register(0); Register(Registers.GlobalVarsAddress)]), 
                 None)
 }
 
 let storeRegister dest src = seq {
     match dest with
         | Tac.Global(address) ->
-            yield! setTo HelperRegister (uint32ToInt16 address)
-            yield Line(None, Instruction("sw", [Constant(Symbol(GlobalsLabel), Some(HelperRegister)); Register(src)]), None)
+            yield! setTo Registers.Helper (uint32ToInt16 address)
+            yield Line(None, Instruction("sw", [Constant(Symbol(Labels.Globals), Some(Registers.Helper)); Register(src)]), None)
         | Tac.Local(address) | Tac.Param(address) ->
             // Add ParameterStart + address to the register
-            yield Line(None, Instruction("addi", [Register(HelperRegister); Register(TopStackRegister); Constant(Number(uint32ToInt16 address), None)]), None)
-            yield Line(None, Instruction("sw", [Constant(Number(0s), Some(HelperRegister));Register(src)]), None)
+            yield Line(None, Instruction("addi", [Register(Registers.Helper); Register(Registers.TopStack); Constant(Number(uint32ToInt16 address), None)]), None)
+            yield Line(None, Instruction("sw", [Constant(Number(0s), Some(Registers.Helper));Register(src)]), None)
         | Tac.TopSt ->
-            yield Line(None, Instruction("add", [Register(TopStackRegister);Register(0);Register(src)]), None)
+            yield Line(None, Instruction("add", [Register(Registers.TopStack);Register(0);Register(src)]), None)
         | Tac.RetAdd ->
-            yield Line(None, Instruction("add", [Register(ReturnAddressRegister); Register(0); Register(src)]), None)
+            yield Line(None, Instruction("add", [Register(Registers.ReturnAddress); Register(0); Register(src)]), None)
         | Tac.Result ->
-            yield Line(None, Instruction("add", [Register(ResultRegister); Register(0); Register(src)]), None)
+            yield Line(None, Instruction("add", [Register(Registers.Result); Register(0); Register(src)]), None)
         | Tac.FrSz ->
-            yield Line(None, Instruction("add", [Register(FrameSizeRegister);Register(0);Register(src)]), None)
+            yield Line(None, Instruction("add", [Register(Registers.FrameSize);Register(0);Register(src)]), None)
         | Tac.Constant(_) | Tac.Frame(_) | Tac.Globals ->
-            raise <| CompilerException([("Attempted to set constant.", Location.origin)])
+            raise <| CompilerInternalException(InternalErrors.AttemptedToSetConstant)
 }
-
-let GetVariableAddress ptr =
-    match ptr with
-        | Global(address) | Local(address) | Param(address) ->
-            address
-        | _ ->
-            raise <| CompilerException([("Expected a variable", Location.origin)])
 
 let GetArrayEntryAddress arrayAddressPtr indexPtr destRegister helpRegister = seq {
     // address of array into helpRegister
@@ -172,28 +171,28 @@ type Tac.Instruction with
             
             | Assign(dest, src) as a ->
                 yield Line(None, Blank, Some (a.ToString()))
-                yield! loadInRegister AccRegister1 src
-                yield! storeRegister dest AccRegister1
+                yield! loadInRegister Registers.Acc1 src
+                yield! storeRegister dest Registers.Acc1
             
             | Tac.Call(Label(i), paramCount) as c ->
                 yield Line(None, Blank, Some (c.ToString()))
                 yield Line(None,
-                    Instruction("add", [Register(ParameterPassingRegister);Register(0);Register(0)]),
+                    Instruction("add", [Register(Registers.ParameterPassing);Register(0);Register(0)]),
                     Some "Clear the prameter passing register")
                 yield Line(
                     None, 
-                    Instruction("jl", [Register(ReturnAddressRegister);Constant(Symbol(sprintf "L%i" i), None)]), 
+                    Instruction("jl", [Register(Registers.ReturnAddress);Constant(Symbol(sprintf "L%i" i), None)]), 
                     None)
             
             | Tac.Inst3(dest, op, operand1, operand2) as i3 ->
                 let operation = Tac.Operator.ToMoonOperation op
                 yield Line(None, Blank, Some (i3.ToString()))
-                yield! loadInRegister AccRegister1 operand1
-                yield! loadInRegister AccRegister2 operand2
+                yield! loadInRegister Registers.Acc1 operand1
+                yield! loadInRegister Registers.Acc2 operand2
                 yield Line(None, 
-                    Instruction(operation, [Register(AccRegister1);Register(AccRegister1);Register(AccRegister2)]), 
+                    Instruction(operation, [Register(Registers.Acc1);Register(Registers.Acc1);Register(Registers.Acc2)]), 
                     None)
-                yield! storeRegister dest AccRegister1
+                yield! storeRegister dest Registers.Acc1
                 
             | Tac.Labeled(Label(i)) ->
                 yield Line(Some(sprintf "L%i" i), Blank, None)
@@ -202,54 +201,54 @@ type Tac.Instruction with
                 yield Line(None, Instruction("j", [Constant(Symbol(sprintf "L%i" label), None)]), Some(g.ToString()))
             
             | Tac.Return as r ->
-                yield Line(None, Instruction("jr", [Register(ReturnAddressRegister)]), Some(r.ToString()))
+                yield Line(None, Instruction("jr", [Register(Registers.ReturnAddress)]), Some(r.ToString()))
             
             | Tac.Write(src) as w ->
                 yield Line(None, Blank, Some (w.ToString()))
-                yield! loadInRegister AccRegister1 src
-                yield Line(None, Instruction("putc", [Register(AccRegister1)]), None)
+                yield! loadInRegister Registers.Acc1 src
+                yield Line(None, Instruction("putc", [Register(Registers.Acc1)]), None)
 
             | Tac.Read(dest) as tacInstruction ->
                 yield Line(None, Blank, Some(tacInstruction.ToString()))
-                yield Line(None, Instruction("getc", [Register(AccRegister1)]), None)
-                yield! storeRegister dest AccRegister1
+                yield Line(None, Instruction("getc", [Register(Registers.Acc1)]), None)
+                yield! storeRegister dest Registers.Acc1
 
             | Tac.IfFalse(ptr, Label(i)) as tacInstruction ->
                 yield Line(None, Blank, Some (tacInstruction.ToString()))
-                yield! loadInRegister AccRegister1 ptr
-                yield Line(None, Instruction("bz", [Register(AccRegister1);Constant(Symbol(sprintf "L%i" i), None)]), None)
+                yield! loadInRegister Registers.Acc1 ptr
+                yield Line(None, Instruction("bz", [Register(Registers.Acc1);Constant(Symbol(sprintf "L%i" i), None)]), None)
             
             | Tac.ArrayDeref(dest, arrayPtr, indexPtr) as tacInstruction ->
                 yield Line(None, Blank, Some (tacInstruction.ToString()))
-                yield! GetArrayEntryAddress arrayPtr indexPtr AccRegister1 AccRegister2
+                yield! GetArrayEntryAddress arrayPtr indexPtr Registers.Acc1 Registers.Acc2
                 // Read what's there
-                yield Line(None, Instruction("lw", [Register(AccRegister1);Constant(Number(0s), Some AccRegister1)]),
+                yield Line(None, Instruction("lw", [Register(Registers.Acc1);Constant(Number(0s), Some Registers.Acc1)]),
                     Some "Read the value at the index");
                 // Store it at dest
-                yield! storeRegister dest AccRegister1
+                yield! storeRegister dest Registers.Acc1
 
             | Tac.ArrayAssign(arrayPtrPtr, indexPtr, srcPtr) as tacInstruction ->
                 yield Line(None, Blank, Some (tacInstruction.ToString()))
-                yield! GetArrayEntryAddress arrayPtrPtr indexPtr AccRegister1 AccRegister2
-                yield! loadInRegister AccRegister2 srcPtr
-                yield Line(None, Instruction("sw", [Constant(Number(0s), Some AccRegister1);Register(AccRegister2)]),
+                yield! GetArrayEntryAddress arrayPtrPtr indexPtr Registers.Acc1 Registers.Acc2
+                yield! loadInRegister Registers.Acc2 srcPtr
+                yield Line(None, Instruction("sw", [Constant(Number(0s), Some Registers.Acc1);Register(Registers.Acc2)]),
                     Some "Set value in array")
             
             | Tac.Push(ptr) as tacInstruction ->
                 
                 yield Line(None, Blank, Some (tacInstruction.ToString()))
                 // Add the current stack size to the stack pointer
-                yield Line(None, Instruction("add", [Register(AccRegister1);Register(TopStackRegister);Register(FrameSizeRegister)]), 
+                yield Line(None, Instruction("add", [Register(Registers.Acc1);Register(Registers.TopStack);Register(Registers.FrameSize)]), 
                     Some "Find the start of the next frame by adding the top of the stack to the current frame's size")
-                yield Line(None, Instruction("addi", [Register(AccRegister1);Register(AccRegister1);Constant(Number(12s), None)]), 
+                yield Line(None, Instruction("addi", [Register(Registers.Acc1);Register(Registers.Acc1);Constant(Number(12s), None)]), 
                     Some "Add 12 for the head of the of the next frame")
-                yield Line(None, Instruction("add", [Register(AccRegister1); Register(AccRegister1);Register(ParameterPassingRegister)]),
+                yield Line(None, Instruction("add", [Register(Registers.Acc1); Register(Registers.Acc1);Register(Registers.ParameterPassing)]),
                     Some "Add the parameter passing register's offset to that")
                 // Read the value at ptr
-                yield! loadInRegister AccRegister2 ptr
-                yield Line(None, Instruction("sw", [Constant(Number(0s), Some AccRegister1); Register(AccRegister2)]),
+                yield! loadInRegister Registers.Acc2 ptr
+                yield Line(None, Instruction("sw", [Constant(Number(0s), Some Registers.Acc1); Register(Registers.Acc2)]),
                     Some "Store the argument on the stack");
-                yield Line(None, Instruction("addi", [Register(ParameterPassingRegister); Register(ParameterPassingRegister);Constant(Number(4s), None)]),
+                yield Line(None, Instruction("addi", [Register(Registers.ParameterPassing); Register(Registers.ParameterPassing);Constant(Number(4s), None)]),
                     Some "Add 4 to the parameter passing register")
 
             | Tac.Entry as tacInstruction ->
@@ -257,7 +256,7 @@ type Tac.Instruction with
                 yield Line(None, Blank, Some(tacInstruction.ToString()))
                 yield Line(None, Instruction("entry", []), None)
                 yield Line(None, 
-                    Instruction("addi", [Register(TopStackRegister);Register(0);Constant(Symbol(StackLabel), None)]), 
+                    Instruction("addi", [Register(Registers.TopStack);Register(0);Constant(Symbol(Labels.Stack), None)]), 
                     Some "Initialize top stack address")
 
             | Tac.Halt as tacInstruction ->
@@ -273,16 +272,15 @@ type Tac.Program with
                 // Print some helpful information
                 let messages = 
                     [
-                        sprintf "Top of stack: r%i" TopStackRegister
-                        sprintf "Global vars: r%i" GlobalVarsAddressRegister
-                        sprintf "Accumulator 1: r%i" AccRegister1
-                        sprintf "Accumulator 2: r%i" AccRegister2
-                        sprintf "Accumulator 3: r%i" AccRegister3
-                        sprintf "Current Frame size: r%i" FrameSizeRegister
-                        sprintf "Parameter passing: r%i" ParameterPassingRegister
-                        sprintf "helper: r%i" HelperRegister
-                        sprintf "Return value: r%i" ResultRegister
-                        sprintf "Return address: r%i" ReturnAddressRegister
+                        sprintf "Top of stack: r%i" Registers.TopStack
+                        sprintf "Global vars: r%i" Registers.GlobalVarsAddress
+                        sprintf "Accumulator 1: r%i" Registers.Acc1
+                        sprintf "Accumulator 2: r%i" Registers.Acc2
+                        sprintf "Current Frame size: r%i" Registers.FrameSize
+                        sprintf "Parameter passing: r%i" Registers.ParameterPassing
+                        sprintf "helper: r%i" Registers.Helper
+                        sprintf "Return value: r%i" Registers.Result
+                        sprintf "Return address: r%i" Registers.ReturnAddress
                         sprintf " "
                     ]
 
@@ -297,6 +295,6 @@ type Tac.Program with
                 yield! defineFrameSizes frameSizes
                 yield! defineConstants constants
                 yield defineGlobalSection globalSize
-                yield Line(Some StackLabel, Directive(Res(StackSize)), Some "The stack")
+                yield Line(Some Labels.Stack, Directive(Res(StackSize)), Some "The stack")
      }
                   

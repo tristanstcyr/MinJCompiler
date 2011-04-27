@@ -6,3 +6,4 @@ type CompilationError = string * Location
 /// Thrown when one or more compilation errors have occured that prevent
 /// the compilation process for continuing.
 exception CompilerException of CompilationError list
+exception CompilerInternalException of string

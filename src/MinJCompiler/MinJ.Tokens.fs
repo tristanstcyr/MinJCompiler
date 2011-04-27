@@ -6,6 +6,16 @@ open Compiler
 open System
 open System.Text.RegularExpressions
 
+module Errors =
+    let NumberConstantOverflow = 
+        sprintf <| "Number constants must be between %d and %d." 
+                <| Int32.MinValue
+                <| Int32.MaxValue
+    let OnlyASCIIChararacters = 
+        "Only ASCII characters can be used as character constants."
+    let InvalidCharacterFormat s =
+        sprintf "Invalid character format %s." s
+
 /// [0-9]*
 type Number(value : int32, startloc : Location) =
     inherit Token(startloc)
@@ -14,11 +24,7 @@ type Number(value : int32, startloc : Location) =
     static member Create (s : string) l =
         try Number(int32(s), l) :> Token
         with | :? OverflowException -> 
-            let message = 
-                sprintf <| "Number constants must be between %d and %d." 
-                        <| Int32.MinValue
-                        <| Int32.MaxValue
-            Error(message, l) :> Token
+            Error(Errors.NumberConstantOverflow, l) :> Token
     override this.ToString() = value.ToString()
 
 /// 'c'
@@ -32,11 +38,11 @@ type CharConst(value : char, startloc : Location) =
         try 
             let c = Char.Parse(Regex.Unescape(noQuotes))
             if (int32)c > 255 then 
-                Error(sprintf "Only ASCII characters can be used as character constants.", l) :> Token
+                Error(Errors.OnlyASCIIChararacters, l) :> Token
             else
                 CharConst(c, l) :> Token
         with | :? FormatException ->
-            Error(sprintf "Invalid character format %s." s, l) :> Token
+            Error(Errors.InvalidCharacterFormat s, l) :> Token
 
     override this.ToString() = sprintf "\'%c\'" value
 
@@ -120,9 +126,10 @@ let CreateIdentifierOrToken t l =
 
 (* Some active patterns for matching tokens *)
 let (|Terminal|_|) tt (token : Token) =
-        match token with
-            | :? Terminal as t when t.Type = tt -> Some(Terminal)
-            | _ -> None
+    match token with
+        | :? Terminal as t when t.Type = tt -> Some(Terminal)
+        | _ -> None
+
 let (|CharConst|_|) (token : Token) =
     match token with
         | :? CharConst as cc -> Some(cc)

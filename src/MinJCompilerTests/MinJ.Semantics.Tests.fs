@@ -11,7 +11,7 @@ open System
 
 let p str expectError = 
     let memStream = new StreamWriter(new MemoryStream())
-    let prg = parse (NullListingWriter()) memStream (RuleLogger(memStream)) str
+    let prg = parse memStream (RuleLogger(memStream)) (MinJ.Scanner.tokenize (NullListingWriter()) str)
     try
         Semantics.verify prg |> ignore
         if expectError then

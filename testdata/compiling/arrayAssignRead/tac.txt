@@ -1,0 +1,32 @@
+	start
+	FrSz, =, (c, 0)
+	call L0, 0
+	halt
+L0	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 0)
+	(l, 12), +, TopSt, (c, 4)
+	(l, 60), =, (c, 8)
+	(l, 56), =, (c, 12)
+L2	(l, 68), <, (l, 56), (l, 60)
+	if_false (l, 68) goto L3
+	(l, 12), [, (l, 56), (l, 56)
+	(l, 56), +, (l, 56), (c, 16)
+	goto L2
+L3	(l, 56), =, (c, 20)
+L4	(l, 68), <, (l, 56), (l, 60)
+	if_false (l, 68) goto L5
+	(l, 72), (l, 12), [, (l, 56)
+	(l, 64), +, (l, 72), (c, 24)
+	write (l, 64)
+	(l, 56), +, (l, 56), (c, 28)
+	goto L4
+L5L1	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+f	76
+Size	0
+ST

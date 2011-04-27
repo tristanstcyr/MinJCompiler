@@ -1,6 +1,14 @@
-﻿namespace Compiler
+﻿[<AutoOpen>]
+module Compiler.Scanner
 
+open Compiler.StateMachine
 open System.Collections.Generic
+
+module Errors =
+    let UnexpectedCharacter character location = 
+        Error(sprintf "Unexpected character %c" character, location) :> Token
+    let UnexpectedEof location =
+        Error("Unexpected end of file", location) :> Token
 
 /// Function that takes a sequence of chars and a state machine
 /// and returns a sequence of Tokens *)
@@ -60,7 +68,7 @@ type Scanner(rootState: State, characters : char seq, listing : IListingWriter) 
                     
                     else
                         (* It's not final, we've got only part of a token or an invalid character *)
-                        yield Error("Unexpected character " + c.ToString(), !location) :> Token
+                        yield Errors.UnexpectedCharacter c !location
                     
                 else (* We can move to the next state *)
                         
@@ -101,7 +109,7 @@ type Scanner(rootState: State, characters : char seq, listing : IListingWriter) 
                                 yield MakeToken nextState
                                 yield End(!location) :> Token
                             else
-                                yield Error("Unexpected end of file", !location) :> Token
+                                yield Errors.UnexpectedEof !location
                     
                     else
 
@@ -114,12 +122,8 @@ type Scanner(rootState: State, characters : char seq, listing : IListingWriter) 
 
             (* Start with the root case *)
             Seq.map (fun t -> listing.AddToken(t); t) <| Scan rootState
-    
-    /// Enumeration is delegated to this IEnumerator
-    let tokensEnum = tokens.GetEnumerator()
 
-    member private this.Tokens with get() = tokensEnum
+    member this.Tokens with get() = tokens
 
-    static member Scan rootState characters listing =
-        let scanner = Scanner(rootState, characters, listing)
-        scanner.Tokens
+let tokenize rootState characters listing = 
+    (new Scanner(rootState, characters, listing)).Tokens

@@ -1,0 +1,119 @@
+	start
+	FrSz, =, (c, 0)
+	call L0, 0
+	halt
+L0	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 0)
+	(l, 12), +, TopSt, (c, 4)
+	(l, 416), =, (c, 8)
+	param (l, 12)
+	param (l, 416)
+	call L3, 2
+	param (l, 12)
+	param (l, 416)
+	call L4, 2
+	(l, 424), =, Result
+	(l, 420), ==, (l, 424), (c, 12)
+	if_false (l, 420) goto L6
+	write (c, 16)
+	write (c, 20)
+	write (c, 24)
+	write (c, 28)
+	write (c, 32)
+	goto L7
+L6	write (c, 36)
+	write (c, 40)
+	write (c, 44)
+	write (c, 48)
+	write (c, 52)
+L7L5	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+L1	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 4)
+	(l, 16), ==, (p, 12), (c, 56)
+	if_false (l, 16) goto L9
+	write (c, 60)
+	goto L10
+L9	param (p, 12)
+	call L2, 1
+L10	Result, =, (c, 64)
+	goto L8
+L8	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+L2	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 8)
+	(l, 24), !=, (p, 12), (c, 68)
+	if_false (l, 24) goto L12
+	(l, 16), %, (p, 12), (c, 72)
+	(l, 20), /, (p, 12), (c, 76)
+	param (l, 20)
+	call L2, 1
+	(l, 16), +, (l, 16), (c, 80)
+	write (l, 16)
+	goto L13
+L12L13	Result, =, (c, 84)
+	goto L11
+L11	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+L3	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 12)
+	(l, 20), =, (c, 88)
+L15	(l, 24), <, (l, 20), (p, 16)
+	if_false (l, 24) goto L16
+	(l, 12), [, (l, 20), (l, 20)
+	(l, 20), +, (l, 20), (c, 92)
+	goto L15
+L16	Result, =, (c, 96)
+	goto L14
+L14	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+L4	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 16)
+	(l, 20), =, (c, 100)
+	(l, 28), =, (c, 104)
+L18	(l, 32), <, (l, 20), (p, 16)
+	if_false (l, 32) goto L19
+	(l, 36), (p, 12), [, (l, 20)
+	(l, 32), !=, (l, 36), (l, 20)
+	if_false (l, 32) goto L20
+	(l, 28), =, (c, 108)
+	goto L21
+L20L21	(l, 20), +, (l, 20), (c, 112)
+	goto L18
+L19	write (c, 116)
+	Result, =, (l, 28)
+	goto L17
+L17	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+f	428
+	24
+	32
+	32
+	40
+Size	0
+ST

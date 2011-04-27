@@ -1,0 +1,152 @@
+	start
+	FrSz, =, (c, 0)
+	call L0, 0
+	halt
+L0	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 0)
+	param (c, 4)
+	call L1, 1
+	param (c, 8)
+	call L2, 1
+	param (c, 12)
+	call L3, 1
+L7	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+L1	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 4)
+	(l, 16), /, (c, 20), (c, 24)
+	(l, 16), +, (c, 16), (l, 16)
+	param (l, 16)
+	param (c, 28)
+	call L4, 2
+	Result, =, Result
+	goto L8
+L8	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+L2	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 8)
+	(l, 24), +, (c, 32), (c, 36)
+	(l, 16), /, (l, 24), (c, 40)
+	param (l, 16)
+	param (c, 44)
+	call L4, 2
+	Result, =, Result
+	goto L9
+L9	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+L3	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 12)
+	(l, 16), -, (c, 52), (c, 48)
+	(l, 20), -, (c, 56), (c, 60)
+	param (l, 16)
+	param (l, 20)
+	call L4, 2
+	Result, =, Result
+	goto L10
+L10	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+L4	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 16)
+	(l, 20), ==, (p, 12), (p, 16)
+	if_false (l, 20) goto L12
+	write (c, 64)
+	write (c, 68)
+	write (c, 72)
+	write (c, 76)
+	write (c, 80)
+	goto L13
+L12	write (c, 84)
+	write (c, 88)
+	write (c, 92)
+	write (c, 96)
+	write (c, 100)
+	write (c, 104)
+	write (c, 108)
+	param (p, 12)
+	call L5, 1
+	write (c, 112)
+	write (c, 116)
+	write (c, 120)
+	param (p, 16)
+	call L5, 1
+	write (c, 124)
+L13	Result, =, (c, 128)
+	goto L11
+L11	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+L5	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 20)
+	(l, 16), ==, (p, 12), (c, 132)
+	if_false (l, 16) goto L15
+	write (c, 136)
+	goto L16
+L15	(l, 16), <, (p, 12), (c, 140)
+	if_false (l, 16) goto L17
+	write (c, 144)
+	(p, 12), -, (c, 148), (p, 12)
+	goto L18
+L17L18L16	param (p, 12)
+	call L6, 1
+	Result, =, (c, 152)
+	goto L14
+L14	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+L6	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 24)
+	(l, 24), !=, (p, 12), (c, 156)
+	if_false (l, 24) goto L20
+	(l, 16), %, (p, 12), (c, 160)
+	(l, 20), /, (p, 12), (c, 164)
+	param (l, 20)
+	call L6, 1
+	(l, 16), +, (l, 16), (c, 168)
+	write (l, 16)
+	goto L21
+L20L21	Result, =, (c, 172)
+	goto L19
+L19	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+f	12
+	32
+	28
+	28
+	28
+	24
+	32
+Size	0
+ST

@@ -6,13 +6,17 @@ open Compiler
 open System.Collections.Generic
 open System
 
+module Errors =
+    let UnexpectedToken (token : Token) =
+        sprintf "Syntax error. Unexpected token \"%A\"." token, token.StartLocation
+    
+    let FromErrorToken (error: Error) =
+        error.ToString(), error.StartLocation
+
 type Tokens = IEnumerator<Token>
 
-let scan chars listingWriter : Tokens =
-    Compiler.Scanner.Scan 
-        <| MinJ.ScannerStateMachine.Create()
-        <| chars
-        <| listingWriter
+/// Tokenizes characters for MinJ parsing
+let tokenize listing chars = tokenize (MinJ.ScannerStateMachine.Create()) chars listing
 
 let terminal (tokens : Tokens) ttyp = 
     match tokens.Current with
@@ -44,15 +48,13 @@ let private orRaise (this : Tokens) result =
     match result with
         | Some(d) -> d
         | None ->
-            let head = this.Current
-            raise <| CompilerException(
-                [sprintf "Unexpected token \"%A\"" head, head.StartLocation])
+            raise <| CompilerException([Errors.UnexpectedToken this.Current])
 
 /// Raises an exception if the current token is an Error.
 let checkError (this : Tokens) =
     match this.Current with
         | :? Error as error -> 
-            raise <| CompilerException([error.ToString(), error.StartLocation])
+            raise <| CompilerException([Errors.FromErrorToken error])
         | _ -> ()
 
 
@@ -67,12 +69,13 @@ let popEnd (tokens : Tokens) =
     match tokens.Current with
         | :? End ->
             pop tokens
-        | _ ->
-            raise <| CompilerException(["Unexpected token ", tokens.Current.StartLocation])
+        | _ as token ->
+            raise <| CompilerException([Errors.UnexpectedToken token])
 
 /// Pops a terminal of a specific type or raises an exception
 let popTerminal (tokens : Tokens) tt =
-    terminal tokens tt |> orRaise tokens
+    let result = terminal tokens tt
+    result |> orRaise tokens
     pop tokens
 
 /// Pops all terminals in a list or raises an exception

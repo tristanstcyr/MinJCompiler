@@ -9,16 +9,28 @@ open System
 open System.Collections.Generic
 
 let private baseFunctionSize = 12u
-let private tempSize = 4u
+let private TempSize = 4u
 
-exception TemporaryVariableReleaseException of string * Ptr
-
+/// Manages the acquisition and release of temporary variables in a function.
 type TemporaryVariablePool() =
+    
+    /// The address relative to the stack pointer where 
+    /// the temporary variables are stored. This is used
+    /// assigning addressed to temporary variables. It is set
+    /// once the number of parameters for a function is known.
     let mutable startAddress = 0u
+    
+    /// The number of temporary variables acquired a particular
+    /// time. This is used to assign to a temporary variable,
+    /// the lowest unused temporary variable address. 
     let mutable count = 0u
+    
+    /// The maximum number of temporary variables that need 
+    /// will be used at the same time.
     let mutable max = 0u
 
-    member this.RequiredStackSpace with get() = max * 4u
+
+    member this.RequiredStackSpace with get() = max * TempSize
 
     member this.StartAddress 
         with get() = startAddress
@@ -26,7 +38,7 @@ type TemporaryVariablePool() =
 
     member this.Acquire(func : Ptr -> 'a) =
         count <- count + 1u
-        let result = func (Local(startAddress + (count - 1u) * tempSize))
+        let result = func (Local(startAddress + (count - 1u) * TempSize))
         count <- count - 1u
         max <- Math.Max(max, count)
         result
@@ -165,35 +177,33 @@ let private functionEpilogue (context : FunctionContext) =
 *)
 
 type Ast.Program with
-    static member ToTac this =
-        match this with
-            | Ast.Program(varDecls, main, funcDecls) ->
-                let context = ProgramContext(funcDecls.Length + 1)
-                //let globalSpace = List.fold VariableDeclaration.ToTac 0u varDecls
+    static member ToTac (Ast.Program(varDecls, main, funcDecls)) =
+        let context = ProgramContext(funcDecls.Length + 1)
+        //let globalSpace = List.fold VariableDeclaration.ToTac 0u varDecls
                 
-                let zeroConstant = context.CreateConstant(NumberLiteral(0))
-                context <-- Entry
-                context <-- Assign(FrSz, zeroConstant)
-                let globalSpace = ref 0u
-                for varDecl in varDecls do
-                    match varDecl with
-                        | NonArrayVariableDeclaration(id) ->
-                            id.Attributes.Value.MemoryAddress <- !globalSpace
-                            globalSpace := !globalSpace + 4u
-                        | ArrayVariableDeclaration(id, _, size) ->
-                            id.Attributes.Value.MemoryAddress <- !globalSpace
-                            let addressConstant = context.CreateConstant(NumberLiteral((int32)id.Attributes.Value.MemoryAddress + 4))
-                            context <-- Inst3(Global(id.Attributes.Value.MemoryAddress), Add, Globals, addressConstant)
-                            globalSpace := !globalSpace + 4u * (uint32)(size + 1)
+        let zeroConstant = context.CreateConstant(NumberLiteral(0))
+        context <-- Entry
+        context <-- Assign(FrSz, zeroConstant)
+        let globalSpace = ref 0u
+        for varDecl in varDecls do
+            match varDecl with
+                | NonArrayVariableDeclaration(id) ->
+                    id.Attributes.Value.MemoryAddress <- !globalSpace
+                    globalSpace := !globalSpace + 4u
+                | ArrayVariableDeclaration(id, _, size) ->
+                    id.Attributes.Value.MemoryAddress <- !globalSpace
+                    let addressConstant = context.CreateConstant(NumberLiteral((int32)id.Attributes.Value.MemoryAddress + 4))
+                    context <-- Inst3(Global(id.Attributes.Value.MemoryAddress), Add, Globals, addressConstant)
+                    globalSpace := !globalSpace + 4u * (uint32)(size + 1)
 
-                // Call main
-                context <-- Call(Label(0), 0)
-                context <-- Halt
+        // Call main
+        context <-- Call(Label(0), 0)
+        context <-- Halt
 
-                let mainSize = MainFunction.ToTac context main
-                let frameSizes = mainSize :: List.map (FunctionDefinition.ToTac context) funcDecls
+        let mainSize = MainFunction.ToTac context main
+        let frameSizes = mainSize :: List.map (FunctionDefinition.ToTac context) funcDecls
 
-                Tac.Program(context.Instructions, frameSizes, List.rev context.Literals, !globalSpace)
+        Tac.Program(context.Instructions, frameSizes, List.rev context.Literals, !globalSpace)
 
 
 and Ast.Assignment with
@@ -219,9 +229,47 @@ and Ast.Assignment with
                             if (expressionResultPtr <> destPtr) then
                                 context <-- Assign(destPtr, expressionResultPtr)
             
-                | SystemInAssignment(varRef, _) ->
+                | SystemInAssignment(varRef, typ) ->
                     let varPtr = VariableReference.ToTac context tempPtr varRef
-                    context <-- Read(varPtr)
+                    match typ with
+                        | IntType ->
+                            let zero = context.Program.CreateConstant(NumberLiteral(0))
+                            let ten = context.Program.CreateConstant(NumberLiteral(10))
+                            let numStart = context.Program.CreateConstant(NumberLiteral(48))
+                            
+                            let getNext = context.Program.CreateLabel()
+                            let takeInput = context.Program.CreateLabel()
+                            let endInput = context.Program.CreateLabel()
+
+                            context <-- Inst3(varPtr, Add, zero, zero)
+                            context.TemporaryVariables.Acquire(fun temp1 ->
+                                context.TemporaryVariables.Acquire(fun temp2 ->
+                                    context <-- 
+                                        [
+                                            Inst3(varPtr, Add, zero, zero)
+                                            // while ((temp1 = Read()) != 10)
+                                            Labeled(getNext)
+                                            Read(temp1)
+                                            Inst3(temp2, Eq, ten, temp1)
+                                            IfFalse(temp2, takeInput)
+                                            Goto(endInput)
+                                            // {
+                                            Labeled(takeInput)
+                                            //      temp1 -= 30
+                                            Inst3(temp1, Sub, temp1, numStart)
+                                            //      varPtr *= 10
+                                            Inst3(varPtr, Mul, varPtr, ten)
+                                            //      varPtr += temp1
+                                            Inst3(varPtr, Add, varPtr, temp1)
+                                            Goto(getNext)
+                                            // }
+                                            Labeled(endInput)
+                                        ]
+                                )
+                            )
+                            
+                        | CharType ->
+                            context <-- Read(varPtr)
         )
 
 and Ast.RelOperator with
@@ -334,17 +382,18 @@ and Ast.Statement with
                 context <-- Goto(context.EndLabel)
                 
             | MethodInvocationStatement(identifier, arguments) ->
-                context.TemporaryVariables.Acquire(fun tempPtr ->
+                context.TemporaryVariables.Acquire <| fun tempPtr ->
                     for argument in arguments do
                         let elemPtr = Element.ToTac context tempPtr argument
                         context <-- Push elemPtr
-                )
                 context <-- Call(Label(identifier.Attributes.Value.Index), arguments.Length)
             
             | SystemOutInvocation(arguments) -> 
                 context.TemporaryVariables.Acquire(fun tempPtr ->
                     for arg in arguments do
-                        context <-- Write(Element.ToTac context tempPtr arg)
+                        let elemPtr = Element.ToTac context tempPtr arg
+                        context <-- Write(elemPtr)
+                                
                 )
             
             | EmptyStatement -> ()
@@ -358,6 +407,20 @@ and Element with
                 context.Program.CreateConstant(NumberLiteral(n.Value))
             | CharConstElement(c) ->
                 context.Program.CreateConstant(CharLiteral(c.Value))
+    member this.Type 
+        with get() =
+            match this with
+                | VariableElement(VariableReference(id, _)) ->
+                    match id.Attributes.Value.Type with
+                        | Primitive(t) -> t
+                        | ArrayType(_) ->
+                            raise <| CompilerInternalException(
+                                "System.out used with array type caught during TAC translation."+
+                                "This should have been caught during semantic analysis")
+                | NumberElement(n) ->
+                    IntType
+                | CharConstElement(c) ->
+                    CharType
 
 and Primitive with
     static member ToTac (context : FunctionContext) (tmpPtr : Ptr) this =
@@ -499,14 +562,12 @@ and FunctionBody with
                     Statement.ToTac context stmt
 
 and MainFunction with
-    static member ToTac context this : FrameSize =
-        match this with
-            | MainFunction(body) ->
-                let context = FunctionContext(context, Label(0))
-                functionPrologue context 0
-                FunctionBody.ToTac context body
-                functionEpilogue context
-                context.TotalStackSize
+    static member ToTac context (MainFunction(body)) : FrameSize =
+        let context = FunctionContext(context, Label(0))
+        functionPrologue context 0
+        FunctionBody.ToTac context body
+        functionEpilogue context
+        context.TotalStackSize
 
 and FunctionDefinition with
     static member ToTac (context : ProgramContext) this : FrameSize =

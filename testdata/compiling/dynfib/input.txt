@@ -1,0 +1,62 @@
+class Example 
+{ 
+    void main() 
+    {
+		int result;
+		result = dynfib(50);
+		System.out('F','i','b','(','5','0',')','=', '"');
+		result = 12586269025;
+		printNumber(result);
+		System.out('"','\n');
+		if (result == 12586269025)
+		{
+			System.out('P','A','S','S','\n');
+		}
+		else
+		{
+			System.out('F','A','I','L','\n');
+		}
+    }
+	
+	int dynfib(int target)
+	{
+		int[] data = new int[200];
+		int i;
+		
+		data[0] = 0;
+		data[1] = 1;
+		i = 2;
+		while(i <= target)
+		{
+			data[i] = data[i-1] + data[i-2];
+			i = i + 1;
+		}
+		return data[target];
+	}
+	
+	int printNumber(int number)
+	{
+		if (number == 0)
+			System.out('0');
+		else
+			rec_printNumber(number);
+		return 0;
+	}
+	
+	int rec_printNumber(int number)
+	{
+		int rest;
+		int div;
+		if (number != 0)
+		{
+			rest = number % 10;
+			div = number / 10;
+			rec_printNumber(div);
+			rest = rest + 48;
+			System.out(rest);
+		}
+		else ;
+		return 0;
+	}
+}
+

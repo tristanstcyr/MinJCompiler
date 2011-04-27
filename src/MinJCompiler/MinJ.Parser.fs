@@ -4,16 +4,27 @@ open System
 open System.IO
 open System.Collections.Generic
 
-open MinJ.Scanner
 open Compiler
+open MinJ.Scanner
+
+module Errors =
+    let UnexpectedEof (token : Token) =
+        "Syntax error. The end of the file was encountered unexpectedly. Did you forget a closing bracket?", token.StartLocation
 
 /// The MinJ Parser.
 /// <param name="scanner">The scanner that provides the tokens</param>
 /// <param name="debugOutput">A stream for logging debug information such as the content of the symbol table</param>
 /// <param name="ruleLogger">The helper object for logging the grammar used to parse</param>
-type Parser(scanner : IEnumerator<Token>, 
+type Parser(tokens : IEnumerable<Token>, 
             debugOutput : StreamWriter,
-            ruleLogger : IRuleLogger) =
+            ruleLogger : IRuleLogger) =     
+    
+    let scanner = tokens.GetEnumerator()
+
+    /// A symbol table of encountered variable identifiers
+    let variables = SymbolTable<VariableAttributes, VariableIdentifier>(fun id a -> id.Attributes <- Some a)
+    /// A symbol table of encountered variable identifiers
+    let functions = SymbolTable<FunctionAttributes, FunctionIdentifier>(fun id a -> id.Attributes <- Some a)
 
     /// Runs a parsing function as long as the lookahead returns true.
     /// Returns the list of generated Ast nodes in order they were encountered
@@ -24,19 +35,14 @@ type Parser(scanner : IEnumerator<Token>,
             else
                 rules
         List.rev <| kleeneClosure []
-         
-    /// A symbol table of encountered variable identifiers
-    let variables = SymbolTable<VariableAttributes, VariableIdentifier>(fun id a -> id.Attributes <- Some a)
-    /// A symbol table of encountered variable identifiers
-    let functions = SymbolTable<FunctionAttributes, FunctionIdentifier>(fun id a -> id.Attributes <- Some a)
 
     /// Raises a CompileException with a message saying that the current token was unexpected.
     let raiseUnexpected() =
         match scanner.Current with
-            | :? End -> 
-                raise <| CompilerException(["The end of the file was encountered unexpectedly. Did you forget a closing bracket?", scanner.Current.StartLocation])
-            | _ -> 
-                raise <| CompilerException([sprintf "Unexpected token \"%A\"." scanner.Current, scanner.Current.StartLocation])
+            | :? End as token -> 
+                raise <| CompilerException([Errors.UnexpectedEof token])
+            | _  as token -> 
+                raise <| CompilerException([Errors.UnexpectedToken scanner.Current])
 
     /// Prints debuging information about a function while parsing
     let printFunctionDebug funcId =
@@ -44,6 +50,7 @@ type Parser(scanner : IEnumerator<Token>,
         debugOutput.WriteLine(sprintf "Symbol table after parsing %A" funcId)
         variables.PrintDefinedSymbols debugOutput
         debugOutput.WriteLine()
+
 
     /// Starts parsing the input characters provided by the scanner.
     /// Returns the abstract syntax tree.
@@ -72,6 +79,7 @@ type Parser(scanner : IEnumerator<Token>,
         // Create a news scope for variables and functions
         variables.PushScope()
         functions.PushScope()
+
 
         // Parse
         popTerminal scanner Class
@@ -266,11 +274,8 @@ type Parser(scanner : IEnumerator<Token>,
                     ruleLogger.Push "<type> --> char"
                     pop scanner
                     Ast.CharType
-                | _ ->
-                    raise <| CompilerException(
-                        [
-                        sprintf "Unexpected token \"%A\"" scanner.Current, 
-                        scanner.Current.StartLocation])
+                | _ as token ->
+                    raise <| CompilerException([Errors.UnexpectedToken token])
 
         ruleLogger.Pop()
 
@@ -557,7 +562,7 @@ type Parser(scanner : IEnumerator<Token>,
     /// "<exp'> --> <add_op><term><exp'> | e"
     member this.ParseExpP() =
         match scanner.Current with
-            | Terminal Add 
+            | Terminal Add
             | Terminal Sub as token ->
                 ruleLogger.Push "<exp'> --> <add_op><term><exp'>"
 
@@ -572,7 +577,8 @@ type Parser(scanner : IEnumerator<Token>,
                         Some <| Ast.ExpressionPrime(AddOp, term, expP)
                     | Terminal Sub -> 
                         Some <| Ast.ExpressionPrime(SubOp, term, expP)
-                    | _ -> raise <| Exception("Programming error")
+                    | _ -> 
+                        raise <| CompilerInternalException("Expected a Add or Sub at this point in the code")
             | _ ->
                 ruleLogger.Push "<exp'> --> e"
                 ruleLogger.Pop()
@@ -748,5 +754,4 @@ type Parser(scanner : IEnumerator<Token>,
             | _ ->
                 raiseUnexpected()
 
-let parse listingWriter debugOutput ruleLogger charSeq =
-    (new Parser(scan charSeq listingWriter, debugOutput, ruleLogger)).Parse()
+let parse debugOutput ruleLogger tokens = (new Parser(tokens, debugOutput, ruleLogger)).Parse()

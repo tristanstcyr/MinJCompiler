@@ -1,4 +1,4 @@
-﻿namespace Compiler
+﻿module Compiler.StateMachine
 
 /// Essentially a function that takes a char and gives
 /// the next state or no state if there's no match
@@ -25,7 +25,7 @@ and State(isDefiningToken : bool, tokenProducer : TokenProducer option, transiti
     /// Produces a token given the token's string value and its location
     member this.ProduceToken(s, l) = 
         if tokenProducer.IsNone then
-            raise(System.Exception("State is not final an cannot produce a token"))
+            raise(CompilerInternalException("State is not final an cannot produce a token"))
         tokenProducer.Value s l
 
     new(isDefiningToken, transition) = State(isDefiningToken, None, transition)
