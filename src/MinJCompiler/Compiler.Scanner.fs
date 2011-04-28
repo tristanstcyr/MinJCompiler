@@ -1,4 +1,6 @@
-﻿[<AutoOpen>]
+﻿/// Contains functionality for tokenizing a stream of characters
+/// to tokens for any language.
+[<AutoOpen>]
 module Compiler.Scanner
 
 open Compiler.StateMachine

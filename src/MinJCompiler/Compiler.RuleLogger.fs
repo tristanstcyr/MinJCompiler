@@ -2,6 +2,7 @@
 
 open System.IO
 
+/// Logs rules used for parsing.
 type IRuleLogger =
     abstract member Push : string -> unit
     abstract member Pop : unit -> unit

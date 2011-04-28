@@ -1,4 +1,6 @@
-﻿module Compiler.StateMachine
+﻿/// Contain classes for defining a state machine for generating
+/// tokens for any language.
+module Compiler.StateMachine
 
 /// Essentially a function that takes a char and gives
 /// the next state or no state if there's no match

@@ -1,19 +1,43 @@
 class Example 
 { 
-    int[] field = new int[10];
+    int[] duplicateField = new int[10];
+	int[] duplicateField = new int[100]; // error here
+	
+	int bar;
+	int sameNameAsField; 
+	int fieldHasIntType;
+	
     void main() 
     { 
-        int y;
-	int y;
-	int i;
-	int z;
-	int[] a = new int[3];
+		char fieldHasIntType;
+        
+		int duplicateParam;
+		int duplicateParam; // error here
+		
+		int i;
+		int z;
+		int[] a = new int[3];
+		
+		// No error here. Functions and variables
+		// are stored in different symbol tables.
+		int bor;
+		
+		// No error here. Shows that the
+		// fieldHasIntType local variable with
+		// type "int" shadows the field with
+		// type "char"
+		fieldHasIntType = 'a';
+		
         while (y == 0)
         {
-            if (y != 1)
+            if (i!= 1)
             {
-                foo(y);
-		bar(y);
+                foo(i);
+				
+				// Error here. Although bor is a field name
+				// no bor function was defined.
+				bor(i);
+				
                 return 3;
             }
             else
@@ -25,17 +49,37 @@ class Example
                 }
                 else
                 {
-                    z = 'é';
+                    z = 'e';
                     y = 4 + 5 / 5 % 4 + 3 - 223428;
-                    x = a[3 * 4 + 5];
+					
+                    // Error here. neverDefined
+					// was never defined.
+					neverDefined = a[3 * 4 + 5];
                 }
             }
         }
     } 
 
-    int foo(int x)
+	// Error here.
+    int foo(int duplicateParam, int duplicateParam) 
     {
         System.out(x);
+		return 0;
     }
+	
+	int foo2(int paramName)
+	{
+		// Error here. Local variables use the same symbol
+		// table as parameters
+		int paramName;
+		return 0;
+	}
+	
+	// No error here. Variables and functions
+	// use different symbol tables.
+	int sameNameAsField() 
+	{
+		return 0;
+	}
 }
 

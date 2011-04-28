@@ -11,7 +11,7 @@
 		Type=Terminal
 		Loc=2, 1
 
-2:     int[] field = new int[10];
+2:     int[] duplicateField = new int[10];
 	int
 		Type=Terminal
 		Loc=3, 5
@@ -21,509 +21,781 @@
 	]
 		Type=Terminal
 		Loc=3, 9
-	field
+	duplicateField
 		Type=Identifier
 		Loc=3, 11
 	=
 		Type=Terminal
-		Loc=3, 17
+		Loc=3, 26
 	new
 		Type=Terminal
-		Loc=3, 19
+		Loc=3, 28
 	int
 		Type=Terminal
-		Loc=3, 23
+		Loc=3, 32
 	[
 		Type=Terminal
-		Loc=3, 26
+		Loc=3, 35
 	10
 		Type=Number
-		Loc=3, 27
+		Loc=3, 36
 	]
 		Type=Terminal
-		Loc=3, 29
+		Loc=3, 38
 	;
 		Type=Terminal
-		Loc=3, 30
+		Loc=3, 39
 
-3:     void main() 
-	void
+3: 	int[] duplicateField = new int[100]; // error here
+	int
 		Type=Terminal
 		Loc=4, 5
-	main
-		Type=Terminal
-		Loc=4, 10
-	(
-		Type=Terminal
-		Loc=4, 14
-	)
-		Type=Terminal
-		Loc=4, 15
-
-4:     { 
-	{
-		Type=Terminal
-		Loc=5, 5
-
-5:         int y;
-	int
-		Type=Terminal
-		Loc=6, 9
-	y
-		Type=Identifier
-		Loc=6, 13
-	;
-		Type=Terminal
-		Loc=6, 14
-
-6: 	int y;
-	int
-		Type=Terminal
-		Loc=7, 2
-	y
-		Type=Identifier
-		Loc=7, 6
-	;
-		Type=Terminal
-		Loc=7, 7
-
-7: 	int i;
-	int
-		Type=Terminal
-		Loc=8, 2
-	i
-		Type=Identifier
-		Loc=8, 6
-	;
-		Type=Terminal
-		Loc=8, 7
-
-8: 	int z;
-	int
-		Type=Terminal
-		Loc=9, 2
-	z
-		Type=Identifier
-		Loc=9, 6
-	;
-		Type=Terminal
-		Loc=9, 7
-
-9: 	int[] a = new int[3];
-	int
-		Type=Terminal
-		Loc=10, 2
 	[
 		Type=Terminal
-		Loc=10, 5
+		Loc=4, 8
 	]
 		Type=Terminal
-		Loc=10, 6
-	a
+		Loc=4, 9
+	duplicateField
 		Type=Identifier
-		Loc=10, 8
+		Loc=4, 11
 	=
 		Type=Terminal
-		Loc=10, 10
+		Loc=4, 26
 	new
 		Type=Terminal
-		Loc=10, 12
+		Loc=4, 28
 	int
 		Type=Terminal
-		Loc=10, 16
+		Loc=4, 32
 	[
 		Type=Terminal
-		Loc=10, 19
-	3
+		Loc=4, 35
+	100
 		Type=Number
-		Loc=10, 20
+		Loc=4, 36
 	]
 		Type=Terminal
-		Loc=10, 21
+		Loc=4, 39
 	;
 		Type=Terminal
-		Loc=10, 22
+		Loc=4, 40
 
-10:         while (y == 0)
-	while
+4: 	int bar;
+	int
 		Type=Terminal
-		Loc=11, 9
-	(
-		Type=Terminal
-		Loc=11, 15
-	y
-		Type=Identifier
-		Loc=11, 16
-	==
-		Type=Terminal
-		Loc=11, 18
-	0
-		Type=Number
-		Loc=11, 21
-	)
-		Type=Terminal
-		Loc=11, 22
-
-11:         {
-	{
-		Type=Terminal
-		Loc=12, 9
-
-12:             if (y != 1)
-	if
-		Type=Terminal
-		Loc=13, 13
-	(
-		Type=Terminal
-		Loc=13, 16
-	y
-		Type=Identifier
-		Loc=13, 17
-	!=
-		Type=Terminal
-		Loc=13, 19
-	1
-		Type=Number
-		Loc=13, 22
-	)
-		Type=Terminal
-		Loc=13, 23
-
-13:             {
-	{
-		Type=Terminal
-		Loc=14, 13
-
-14:                 foo(y);
-	foo
-		Type=Identifier
-		Loc=15, 17
-	(
-		Type=Terminal
-		Loc=15, 20
-	y
-		Type=Identifier
-		Loc=15, 21
-	)
-		Type=Terminal
-		Loc=15, 22
-	;
-		Type=Terminal
-		Loc=15, 23
-
-15: 		bar(y);
+		Loc=5, 5
 	bar
 		Type=Identifier
-		Loc=16, 3
+		Loc=5, 9
+	;
+		Type=Terminal
+		Loc=5, 12
+
+5: 	int sameNameAsField; 
+	int
+		Type=Terminal
+		Loc=6, 5
+	sameNameAsField
+		Type=Identifier
+		Loc=6, 9
+	;
+		Type=Terminal
+		Loc=6, 24
+
+6: 	int fieldHasIntType;
+	int
+		Type=Terminal
+		Loc=7, 5
+	fieldHasIntType
+		Type=Identifier
+		Loc=7, 9
+	;
+		Type=Terminal
+		Loc=7, 24
+
+7: 	
+
+8:     void main() 
+	void
+		Type=Terminal
+		Loc=9, 5
+	main
+		Type=Terminal
+		Loc=9, 10
 	(
 		Type=Terminal
-		Loc=16, 6
-	y
-		Type=Identifier
-		Loc=16, 7
+		Loc=9, 14
 	)
 		Type=Terminal
-		Loc=16, 8
+		Loc=9, 15
+
+9:     { 
+	{
+		Type=Terminal
+		Loc=10, 5
+
+10: 		char fieldHasIntType;
+	char
+		Type=Terminal
+		Loc=11, 9
+	fieldHasIntType
+		Type=Identifier
+		Loc=11, 14
 	;
+		Type=Terminal
+		Loc=11, 29
+
+11:         
+
+12: 		int duplicateParam;
+	int
+		Type=Terminal
+		Loc=13, 9
+	duplicateParam
+		Type=Identifier
+		Loc=13, 13
+	;
+		Type=Terminal
+		Loc=13, 27
+
+13: 		int duplicateParam; // error here
+	int
+		Type=Terminal
+		Loc=14, 9
+	duplicateParam
+		Type=Identifier
+		Loc=14, 13
+	;
+		Type=Terminal
+		Loc=14, 27
+
+14: 		
+
+15: 		int i;
+	int
 		Type=Terminal
 		Loc=16, 9
-
-16:                 return 3;
-	return
-		Type=Terminal
-		Loc=17, 17
-	3
-		Type=Number
-		Loc=17, 24
+	i
+		Type=Identifier
+		Loc=16, 13
 	;
 		Type=Terminal
-		Loc=17, 25
+		Loc=16, 14
 
-17:             }
-	}
-		Type=Terminal
-		Loc=18, 13
-
-18:             else
-	else
-		Type=Terminal
-		Loc=19, 13
-
-19:             {
-	{
-		Type=Terminal
-		Loc=20, 13
-
-20:                 if (i == 'x')
-	if
-		Type=Terminal
-		Loc=21, 17
-	(
-		Type=Terminal
-		Loc=21, 20
-	i
-		Type=Identifier
-		Loc=21, 21
-	==
-		Type=Terminal
-		Loc=21, 23
-	'x'
-		Type=CharConst
-		Loc=21, 26
-	)
-		Type=Terminal
-		Loc=21, 29
-
-21:                 {
-	{
-		Type=Terminal
-		Loc=22, 17
-
-22:                     i = System.in.int();
-	i
-		Type=Identifier
-		Loc=23, 21
-	=
-		Type=Terminal
-		Loc=23, 23
-	System
-		Type=Terminal
-		Loc=23, 25
-	.
-		Type=Terminal
-		Loc=23, 31
-	in
-		Type=Terminal
-		Loc=23, 32
-	.
-		Type=Terminal
-		Loc=23, 34
+16: 		int z;
 	int
 		Type=Terminal
-		Loc=23, 35
-	(
-		Type=Terminal
-		Loc=23, 38
-	)
-		Type=Terminal
-		Loc=23, 39
-	;
-		Type=Terminal
-		Loc=23, 40
-
-23:                     System.out(i);
-	System
-		Type=Terminal
-		Loc=24, 21
-	.
-		Type=Terminal
-		Loc=24, 27
-	out
-		Type=Terminal
-		Loc=24, 28
-	(
-		Type=Terminal
-		Loc=24, 31
-	i
-		Type=Identifier
-		Loc=24, 32
-	)
-		Type=Terminal
-		Loc=24, 33
-	;
-		Type=Terminal
-		Loc=24, 34
-
-24:                 }
-	}
-		Type=Terminal
-		Loc=25, 17
-
-25:                 else
-	else
-		Type=Terminal
-		Loc=26, 17
-
-26:                 {
-	{
-		Type=Terminal
-		Loc=27, 17
-
-27:                     z = '�';
+		Loc=17, 9
 	z
 		Type=Identifier
-		Loc=28, 21
-	=
-		Type=Terminal
-		Loc=28, 23
-	'�'
-		Type=CharConst
-		Loc=28, 25
+		Loc=17, 13
 	;
 		Type=Terminal
-		Loc=28, 28
+		Loc=17, 14
 
-28:                     y = 4 + 5 / 5 % 4 + 3 - 223428;
-	y
-		Type=Identifier
-		Loc=29, 21
-	=
+17: 		int[] a = new int[3];
+	int
 		Type=Terminal
-		Loc=29, 23
-	4
-		Type=Number
-		Loc=29, 25
-	+
-		Type=Terminal
-		Loc=29, 27
-	5
-		Type=Number
-		Loc=29, 29
-	/
-		Type=Terminal
-		Loc=29, 31
-	5
-		Type=Number
-		Loc=29, 33
-	%
-		Type=Terminal
-		Loc=29, 35
-	4
-		Type=Number
-		Loc=29, 37
-	+
-		Type=Terminal
-		Loc=29, 39
-	3
-		Type=Number
-		Loc=29, 41
-	-
-		Type=Terminal
-		Loc=29, 43
-	223428
-		Type=Number
-		Loc=29, 45
-	;
-		Type=Terminal
-		Loc=29, 51
-
-29:                     x = a[3 * 4 + 5];
-	x
-		Type=Identifier
-		Loc=30, 21
-	=
-		Type=Terminal
-		Loc=30, 23
-	a
-		Type=Identifier
-		Loc=30, 25
+		Loc=18, 9
 	[
 		Type=Terminal
-		Loc=30, 26
-	3
-		Type=Number
-		Loc=30, 27
-	*
-		Type=Terminal
-		Loc=30, 29
-	4
-		Type=Number
-		Loc=30, 31
-	+
-		Type=Terminal
-		Loc=30, 33
-	5
-		Type=Number
-		Loc=30, 35
+		Loc=18, 12
 	]
 		Type=Terminal
-		Loc=30, 36
+		Loc=18, 13
+	a
+		Type=Identifier
+		Loc=18, 15
+	=
+		Type=Terminal
+		Loc=18, 17
+	new
+		Type=Terminal
+		Loc=18, 19
+	int
+		Type=Terminal
+		Loc=18, 23
+	[
+		Type=Terminal
+		Loc=18, 26
+	3
+		Type=Number
+		Loc=18, 27
+	]
+		Type=Terminal
+		Loc=18, 28
 	;
 		Type=Terminal
-		Loc=30, 37
+		Loc=18, 29
 
-30:                 }
-	}
-		Type=Terminal
-		Loc=31, 17
+18: 		
 
-31:             }
-	}
-		Type=Terminal
-		Loc=32, 13
+19: 		// No error here. Functions and variables
 
-32:         }
-	}
-		Type=Terminal
-		Loc=33, 9
+20: 		// are stored in different symbol tables.
 
-33:     } 
-	}
-		Type=Terminal
-		Loc=34, 5
-
-34: 
-
-35:     int foo(int x)
+21: 		int bor;
 	int
 		Type=Terminal
-		Loc=36, 5
-	foo
+		Loc=22, 9
+	bor
 		Type=Identifier
-		Loc=36, 9
+		Loc=22, 13
+	;
+		Type=Terminal
+		Loc=22, 16
+
+22: 		
+
+23: 		// No error here. Shows that the
+
+24: 		// fieldHasIntType local variable with
+
+25: 		// type "int" shadows the field with
+
+26: 		// type "char"
+
+27: 		fieldHasIntType = 'a';
+	fieldHasIntType
+		Type=Identifier
+		Loc=28, 9
+	=
+		Type=Terminal
+		Loc=28, 25
+	'a'
+		Type=CharConst
+		Loc=28, 27
+	;
+		Type=Terminal
+		Loc=28, 30
+
+28: 		
+
+29:         while (y == 0)
+	while
+		Type=Terminal
+		Loc=30, 9
 	(
 		Type=Terminal
-		Loc=36, 12
-	int
-		Type=Terminal
-		Loc=36, 13
-	x
+		Loc=30, 15
+	y
 		Type=Identifier
-		Loc=36, 17
+		Loc=30, 16
+	==
+		Type=Terminal
+		Loc=30, 18
+	0
+		Type=Number
+		Loc=30, 21
 	)
 		Type=Terminal
-		Loc=36, 18
+		Loc=30, 22
 
-36:     {
+30:         {
 	{
 		Type=Terminal
-		Loc=37, 5
+		Loc=31, 9
 
-37:         System.out(x);
-	System
+31:             if (i!= 1)
+	if
 		Type=Terminal
-		Loc=38, 9
-	.
-		Type=Terminal
-		Loc=38, 15
-	out
-		Type=Terminal
-		Loc=38, 16
+		Loc=32, 13
 	(
 		Type=Terminal
-		Loc=38, 19
-	x
+		Loc=32, 16
+	i
 		Type=Identifier
-		Loc=38, 20
+		Loc=32, 17
+	!=
+		Type=Terminal
+		Loc=32, 18
+	1
+		Type=Number
+		Loc=32, 21
 	)
 		Type=Terminal
-		Loc=38, 21
+		Loc=32, 22
+
+32:             {
+	{
+		Type=Terminal
+		Loc=33, 13
+
+33:                 foo(i);
+	foo
+		Type=Identifier
+		Loc=34, 17
+	(
+		Type=Terminal
+		Loc=34, 20
+	i
+		Type=Identifier
+		Loc=34, 21
+	)
+		Type=Terminal
+		Loc=34, 22
 	;
 		Type=Terminal
+		Loc=34, 23
+
+34: 				
+
+35: 				// Error here. Although bor is a field name
+
+36: 				// no bor function was defined.
+
+37: 				bor(i);
+	bor
+		Type=Identifier
+		Loc=38, 17
+	(
+		Type=Terminal
+		Loc=38, 20
+	i
+		Type=Identifier
+		Loc=38, 21
+	)
+		Type=Terminal
 		Loc=38, 22
+	;
+		Type=Terminal
+		Loc=38, 23
 
-38:     }
+38: 				
+
+39:                 return 3;
+	return
+		Type=Terminal
+		Loc=40, 17
+	3
+		Type=Number
+		Loc=40, 24
+	;
+		Type=Terminal
+		Loc=40, 25
+
+40:             }
 	}
 		Type=Terminal
-		Loc=39, 5
+		Loc=41, 13
 
-39: }
+41:             else
+	else
+		Type=Terminal
+		Loc=42, 13
+
+42:             {
+	{
+		Type=Terminal
+		Loc=43, 13
+
+43:                 if (i == 'x')
+	if
+		Type=Terminal
+		Loc=44, 17
+	(
+		Type=Terminal
+		Loc=44, 20
+	i
+		Type=Identifier
+		Loc=44, 21
+	==
+		Type=Terminal
+		Loc=44, 23
+	'x'
+		Type=CharConst
+		Loc=44, 26
+	)
+		Type=Terminal
+		Loc=44, 29
+
+44:                 {
+	{
+		Type=Terminal
+		Loc=45, 17
+
+45:                     i = System.in.int();
+	i
+		Type=Identifier
+		Loc=46, 21
+	=
+		Type=Terminal
+		Loc=46, 23
+	System
+		Type=Terminal
+		Loc=46, 25
+	.
+		Type=Terminal
+		Loc=46, 31
+	in
+		Type=Terminal
+		Loc=46, 32
+	.
+		Type=Terminal
+		Loc=46, 34
+	int
+		Type=Terminal
+		Loc=46, 35
+	(
+		Type=Terminal
+		Loc=46, 38
+	)
+		Type=Terminal
+		Loc=46, 39
+	;
+		Type=Terminal
+		Loc=46, 40
+
+46:                     System.out(i);
+	System
+		Type=Terminal
+		Loc=47, 21
+	.
+		Type=Terminal
+		Loc=47, 27
+	out
+		Type=Terminal
+		Loc=47, 28
+	(
+		Type=Terminal
+		Loc=47, 31
+	i
+		Type=Identifier
+		Loc=47, 32
+	)
+		Type=Terminal
+		Loc=47, 33
+	;
+		Type=Terminal
+		Loc=47, 34
+
+47:                 }
 	}
 		Type=Terminal
-		Loc=40, 1
+		Loc=48, 17
 
-7, 6: y has already been defined
-16, 3: "bar" referenced but not declared
-30, 21: "x" referenced but not declared
-Concluded in 0.346 seconds
+48:                 else
+	else
+		Type=Terminal
+		Loc=49, 17
+
+49:                 {
+	{
+		Type=Terminal
+		Loc=50, 17
+
+50:                     z = 'e';
+	z
+		Type=Identifier
+		Loc=51, 21
+	=
+		Type=Terminal
+		Loc=51, 23
+	'e'
+		Type=CharConst
+		Loc=51, 25
+	;
+		Type=Terminal
+		Loc=51, 28
+
+51:                     y = 4 + 5 / 5 % 4 + 3 - 223428;
+	y
+		Type=Identifier
+		Loc=52, 21
+	=
+		Type=Terminal
+		Loc=52, 23
+	4
+		Type=Number
+		Loc=52, 25
+	+
+		Type=Terminal
+		Loc=52, 27
+	5
+		Type=Number
+		Loc=52, 29
+	/
+		Type=Terminal
+		Loc=52, 31
+	5
+		Type=Number
+		Loc=52, 33
+	%
+		Type=Terminal
+		Loc=52, 35
+	4
+		Type=Number
+		Loc=52, 37
+	+
+		Type=Terminal
+		Loc=52, 39
+	3
+		Type=Number
+		Loc=52, 41
+	-
+		Type=Terminal
+		Loc=52, 43
+	223428
+		Type=Number
+		Loc=52, 45
+	;
+		Type=Terminal
+		Loc=52, 51
+
+52: 					
+
+53:                     // Error here. neverDefined
+
+54: 					// was never defined.
+
+55: 					neverDefined = a[3 * 4 + 5];
+	neverDefined
+		Type=Identifier
+		Loc=56, 21
+	=
+		Type=Terminal
+		Loc=56, 34
+	a
+		Type=Identifier
+		Loc=56, 36
+	[
+		Type=Terminal
+		Loc=56, 37
+	3
+		Type=Number
+		Loc=56, 38
+	*
+		Type=Terminal
+		Loc=56, 40
+	4
+		Type=Number
+		Loc=56, 42
+	+
+		Type=Terminal
+		Loc=56, 44
+	5
+		Type=Number
+		Loc=56, 46
+	]
+		Type=Terminal
+		Loc=56, 47
+	;
+		Type=Terminal
+		Loc=56, 48
+
+56:                 }
+	}
+		Type=Terminal
+		Loc=57, 17
+
+57:             }
+	}
+		Type=Terminal
+		Loc=58, 13
+
+58:         }
+	}
+		Type=Terminal
+		Loc=59, 9
+
+59:     } 
+	}
+		Type=Terminal
+		Loc=60, 5
+
+60: 
+
+61: 	// Error here.
+
+62:     int foo(int duplicateParam, int duplicateParam) 
+	int
+		Type=Terminal
+		Loc=63, 5
+	foo
+		Type=Identifier
+		Loc=63, 9
+	(
+		Type=Terminal
+		Loc=63, 12
+	int
+		Type=Terminal
+		Loc=63, 13
+	duplicateParam
+		Type=Identifier
+		Loc=63, 17
+	,
+		Type=Terminal
+		Loc=63, 31
+	int
+		Type=Terminal
+		Loc=63, 33
+	duplicateParam
+		Type=Identifier
+		Loc=63, 37
+	)
+		Type=Terminal
+		Loc=63, 51
+
+63:     {
+	{
+		Type=Terminal
+		Loc=64, 5
+
+64:         System.out(x);
+	System
+		Type=Terminal
+		Loc=65, 9
+	.
+		Type=Terminal
+		Loc=65, 15
+	out
+		Type=Terminal
+		Loc=65, 16
+	(
+		Type=Terminal
+		Loc=65, 19
+	x
+		Type=Identifier
+		Loc=65, 20
+	)
+		Type=Terminal
+		Loc=65, 21
+	;
+		Type=Terminal
+		Loc=65, 22
+
+65: 		return 0;
+	return
+		Type=Terminal
+		Loc=66, 9
+	0
+		Type=Number
+		Loc=66, 16
+	;
+		Type=Terminal
+		Loc=66, 17
+
+66:     }
+	}
+		Type=Terminal
+		Loc=67, 5
+
+67: 	
+
+68: 	int foo2(int paramName)
+	int
+		Type=Terminal
+		Loc=69, 5
+	foo2
+		Type=Identifier
+		Loc=69, 9
+	(
+		Type=Terminal
+		Loc=69, 13
+	int
+		Type=Terminal
+		Loc=69, 14
+	paramName
+		Type=Identifier
+		Loc=69, 18
+	)
+		Type=Terminal
+		Loc=69, 27
+
+69: 	{
+	{
+		Type=Terminal
+		Loc=70, 5
+
+70: 		// Error here. Local variables use the same symbol
+
+71: 		// table as parameters
+
+72: 		int paramName;
+	int
+		Type=Terminal
+		Loc=73, 9
+	paramName
+		Type=Identifier
+		Loc=73, 13
+	;
+		Type=Terminal
+		Loc=73, 22
+
+73: 		return 0;
+	return
+		Type=Terminal
+		Loc=74, 9
+	0
+		Type=Number
+		Loc=74, 16
+	;
+		Type=Terminal
+		Loc=74, 17
+
+74: 	}
+	}
+		Type=Terminal
+		Loc=75, 5
+
+75: 	
+
+76: 	// No error here. Variables and functions
+
+77: 	// use different symbol tables.
+
+78: 	int sameNameAsField() 
+	int
+		Type=Terminal
+		Loc=79, 5
+	sameNameAsField
+		Type=Identifier
+		Loc=79, 9
+	(
+		Type=Terminal
+		Loc=79, 24
+	)
+		Type=Terminal
+		Loc=79, 25
+
+79: 	{
+	{
+		Type=Terminal
+		Loc=80, 5
+
+80: 		return 0;
+	return
+		Type=Terminal
+		Loc=81, 9
+	0
+		Type=Number
+		Loc=81, 16
+	;
+		Type=Terminal
+		Loc=81, 17
+
+81: 	}
+	}
+		Type=Terminal
+		Loc=82, 5
+
+82: }
+	}
+		Type=Terminal
+		Loc=83, 1
+
+208 tokens
+Lexing and parsing  in 0.287
+
+4:11	"duplicateField" has already been defined
+14:13	"duplicateParam" has already been defined
+30:16	"y" referenced but not declared
+38:17	"bor" referenced but not declared
+52:21	"y" referenced but not declared
+56:21	"neverDefined" referenced but not declared
+63:37	"duplicateParam" has already been defined
+65:20	"x" referenced but not declared
+73:13	"paramName" has already been defined
+Concluded in 0.431 seconds
 

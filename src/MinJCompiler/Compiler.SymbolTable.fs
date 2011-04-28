@@ -1,4 +1,5 @@
-﻿[<AutoOpen>]
+﻿/// Contains functionality for a language agnostic symbol table.
+[<AutoOpen>]
 module Compiler.SymbolTable
 
 open System.Collections.Generic
@@ -6,7 +7,7 @@ open System.IO
 
 module private Errors =
     let SymbolAlreadyDefined (idToken : Identifier) =
-        (sprintf "%s has already been defined" idToken.Value), idToken.StartLocation
+        (sprintf "\"%s\" has already been defined" idToken.Value), idToken.StartLocation
     let SymbolReferencedButNotDeclared (idToken : Identifier) =
         (sprintf "\"%s\" referenced but not declared" idToken.Value), idToken.StartLocation
 
