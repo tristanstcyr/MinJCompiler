@@ -14,6 +14,7 @@ open System.IO
 type ParserTests() =
     
     static member TestIndexNull =           makeParser("x").ParseIndex()
+    
     static member TestIndex =               makeParser("[1]").ParseIndex()
     
     static member TestElemId =              makeParser("hello").ParseElem()

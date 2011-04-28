@@ -1,0 +1,1011 @@
+0: class Example 
+	class
+		Type=Terminal
+		Loc=1, 1
+	Example
+		Type=Identifier
+		Loc=1, 7
+
+1: { 
+	{
+		Type=Terminal
+		Loc=2, 1
+
+2:     void main() 
+	void
+		Type=Terminal
+		Loc=3, 5
+	main
+		Type=Terminal
+		Loc=3, 10
+	(
+		Type=Terminal
+		Loc=3, 14
+	)
+		Type=Terminal
+		Loc=3, 15
+
+3:     {
+	{
+		Type=Terminal
+		Loc=4, 5
+
+4: 		int[] data = new int[100];
+	int
+		Type=Terminal
+		Loc=5, 9
+	[
+		Type=Terminal
+		Loc=5, 12
+	]
+		Type=Terminal
+		Loc=5, 13
+	data
+		Type=Identifier
+		Loc=5, 15
+	=
+		Type=Terminal
+		Loc=5, 20
+	new
+		Type=Terminal
+		Loc=5, 22
+	int
+		Type=Terminal
+		Loc=5, 26
+	[
+		Type=Terminal
+		Loc=5, 29
+	100
+		Type=Number
+		Loc=5, 30
+	]
+		Type=Terminal
+		Loc=5, 33
+	;
+		Type=Terminal
+		Loc=5, 34
+
+5: 		int size;
+	int
+		Type=Terminal
+		Loc=6, 9
+	size
+		Type=Identifier
+		Loc=6, 13
+	;
+		Type=Terminal
+		Loc=6, 17
+
+6: 		size = 100;
+	size
+		Type=Identifier
+		Loc=7, 9
+	=
+		Type=Terminal
+		Loc=7, 14
+	100
+		Type=Number
+		Loc=7, 16
+	;
+		Type=Terminal
+		Loc=7, 19
+
+7: 		assignArray(data, size);
+	assignArray
+		Type=Identifier
+		Loc=8, 9
+	(
+		Type=Terminal
+		Loc=8, 20
+	data
+		Type=Identifier
+		Loc=8, 21
+	,
+		Type=Terminal
+		Loc=8, 25
+	size
+		Type=Identifier
+		Loc=8, 27
+	)
+		Type=Terminal
+		Loc=8, 31
+	;
+		Type=Terminal
+		Loc=8, 32
+
+8: 		if (checkArray(data, size) == 1)
+	if
+		Type=Terminal
+		Loc=9, 9
+	(
+		Type=Terminal
+		Loc=9, 12
+	checkArray
+		Type=Identifier
+		Loc=9, 13
+	(
+		Type=Terminal
+		Loc=9, 23
+	data
+		Type=Identifier
+		Loc=9, 24
+	,
+		Type=Terminal
+		Loc=9, 28
+	size
+		Type=Identifier
+		Loc=9, 30
+	)
+		Type=Terminal
+		Loc=9, 34
+	==
+		Type=Terminal
+		Loc=9, 36
+	1
+		Type=Number
+		Loc=9, 39
+	)
+		Type=Terminal
+		Loc=9, 40
+
+9: 		{
+	{
+		Type=Terminal
+		Loc=10, 9
+
+10: 			System.out('P','A','S','S','\n');
+	System
+		Type=Terminal
+		Loc=11, 13
+	.
+		Type=Terminal
+		Loc=11, 19
+	out
+		Type=Terminal
+		Loc=11, 20
+	(
+		Type=Terminal
+		Loc=11, 23
+	'P'
+		Type=CharConst
+		Loc=11, 24
+	,
+		Type=Terminal
+		Loc=11, 27
+	'A'
+		Type=CharConst
+		Loc=11, 28
+	,
+		Type=Terminal
+		Loc=11, 31
+	'S'
+		Type=CharConst
+		Loc=11, 32
+	,
+		Type=Terminal
+		Loc=11, 35
+	'S'
+		Type=CharConst
+		Loc=11, 36
+	,
+		Type=Terminal
+		Loc=11, 39
+	'
+'
+		Type=CharConst
+		Loc=11, 40
+	)
+		Type=Terminal
+		Loc=11, 44
+	;
+		Type=Terminal
+		Loc=11, 45
+
+11: 		}
+	}
+		Type=Terminal
+		Loc=12, 9
+
+12: 		else
+	else
+		Type=Terminal
+		Loc=13, 9
+
+13: 		{
+	{
+		Type=Terminal
+		Loc=14, 9
+
+14: 			System.out('F','A','I','L','\n');
+	System
+		Type=Terminal
+		Loc=15, 13
+	.
+		Type=Terminal
+		Loc=15, 19
+	out
+		Type=Terminal
+		Loc=15, 20
+	(
+		Type=Terminal
+		Loc=15, 23
+	'F'
+		Type=CharConst
+		Loc=15, 24
+	,
+		Type=Terminal
+		Loc=15, 27
+	'A'
+		Type=CharConst
+		Loc=15, 28
+	,
+		Type=Terminal
+		Loc=15, 31
+	'I'
+		Type=CharConst
+		Loc=15, 32
+	,
+		Type=Terminal
+		Loc=15, 35
+	'L'
+		Type=CharConst
+		Loc=15, 36
+	,
+		Type=Terminal
+		Loc=15, 39
+	'
+'
+		Type=CharConst
+		Loc=15, 40
+	)
+		Type=Terminal
+		Loc=15, 44
+	;
+		Type=Terminal
+		Loc=15, 45
+
+15: 		}
+	}
+		Type=Terminal
+		Loc=16, 9
+
+16:     }
+	}
+		Type=Terminal
+		Loc=17, 5
+
+17: 	
+
+18: 	int printNumber(int number)
+	int
+		Type=Terminal
+		Loc=19, 5
+	printNumber
+		Type=Identifier
+		Loc=19, 9
+	(
+		Type=Terminal
+		Loc=19, 20
+	int
+		Type=Terminal
+		Loc=19, 21
+	number
+		Type=Identifier
+		Loc=19, 25
+	)
+		Type=Terminal
+		Loc=19, 31
+
+19: 	{
+	{
+		Type=Terminal
+		Loc=20, 5
+
+20: 		if (number == 0)
+	if
+		Type=Terminal
+		Loc=21, 9
+	(
+		Type=Terminal
+		Loc=21, 12
+	number
+		Type=Identifier
+		Loc=21, 13
+	==
+		Type=Terminal
+		Loc=21, 20
+	0
+		Type=Number
+		Loc=21, 23
+	)
+		Type=Terminal
+		Loc=21, 24
+
+21: 			System.out('0');
+	System
+		Type=Terminal
+		Loc=22, 13
+	.
+		Type=Terminal
+		Loc=22, 19
+	out
+		Type=Terminal
+		Loc=22, 20
+	(
+		Type=Terminal
+		Loc=22, 23
+	'0'
+		Type=CharConst
+		Loc=22, 24
+	)
+		Type=Terminal
+		Loc=22, 27
+	;
+		Type=Terminal
+		Loc=22, 28
+
+22: 		else
+	else
+		Type=Terminal
+		Loc=23, 9
+
+23: 			rec_printNumber(number);
+	rec_printNumber
+		Type=Identifier
+		Loc=24, 13
+	(
+		Type=Terminal
+		Loc=24, 28
+	number
+		Type=Identifier
+		Loc=24, 29
+	)
+		Type=Terminal
+		Loc=24, 35
+	;
+		Type=Terminal
+		Loc=24, 36
+
+24: 		return 0;
+	return
+		Type=Terminal
+		Loc=25, 9
+	0
+		Type=Number
+		Loc=25, 16
+	;
+		Type=Terminal
+		Loc=25, 17
+
+25: 	}
+	}
+		Type=Terminal
+		Loc=26, 5
+
+26: 	
+
+27: 	int rec_printNumber(int number)
+	int
+		Type=Terminal
+		Loc=28, 5
+	rec_printNumber
+		Type=Identifier
+		Loc=28, 9
+	(
+		Type=Terminal
+		Loc=28, 24
+	int
+		Type=Terminal
+		Loc=28, 25
+	number
+		Type=Identifier
+		Loc=28, 29
+	)
+		Type=Terminal
+		Loc=28, 35
+
+28: 	{
+	{
+		Type=Terminal
+		Loc=29, 5
+
+29: 		int rest;
+	int
+		Type=Terminal
+		Loc=30, 9
+	rest
+		Type=Identifier
+		Loc=30, 13
+	;
+		Type=Terminal
+		Loc=30, 17
+
+30: 		int div;
+	int
+		Type=Terminal
+		Loc=31, 9
+	div
+		Type=Identifier
+		Loc=31, 13
+	;
+		Type=Terminal
+		Loc=31, 16
+
+31: 		if (number != 0)
+	if
+		Type=Terminal
+		Loc=32, 9
+	(
+		Type=Terminal
+		Loc=32, 12
+	number
+		Type=Identifier
+		Loc=32, 13
+	!=
+		Type=Terminal
+		Loc=32, 20
+	0
+		Type=Number
+		Loc=32, 23
+	)
+		Type=Terminal
+		Loc=32, 24
+
+32: 		{
+	{
+		Type=Terminal
+		Loc=33, 9
+
+33: 			rest = number % 10;
+	rest
+		Type=Identifier
+		Loc=34, 13
+	=
+		Type=Terminal
+		Loc=34, 18
+	number
+		Type=Identifier
+		Loc=34, 20
+	%
+		Type=Terminal
+		Loc=34, 27
+	10
+		Type=Number
+		Loc=34, 29
+	;
+		Type=Terminal
+		Loc=34, 31
+
+34: 			div = number / 10;
+	div
+		Type=Identifier
+		Loc=35, 13
+	=
+		Type=Terminal
+		Loc=35, 17
+	number
+		Type=Identifier
+		Loc=35, 19
+	/
+		Type=Terminal
+		Loc=35, 26
+	10
+		Type=Number
+		Loc=35, 28
+	;
+		Type=Terminal
+		Loc=35, 30
+
+35: 			rec_printNumber(div);
+	rec_printNumber
+		Type=Identifier
+		Loc=36, 13
+	(
+		Type=Terminal
+		Loc=36, 28
+	div
+		Type=Identifier
+		Loc=36, 29
+	)
+		Type=Terminal
+		Loc=36, 32
+	;
+		Type=Terminal
+		Loc=36, 33
+
+36: 			rest = rest + 48;
+	rest
+		Type=Identifier
+		Loc=37, 13
+	=
+		Type=Terminal
+		Loc=37, 18
+	rest
+		Type=Identifier
+		Loc=37, 20
+	+
+		Type=Terminal
+		Loc=37, 25
+	48
+		Type=Number
+		Loc=37, 27
+	;
+		Type=Terminal
+		Loc=37, 29
+
+37: 			System.out(rest);
+	System
+		Type=Terminal
+		Loc=38, 13
+	.
+		Type=Terminal
+		Loc=38, 19
+	out
+		Type=Terminal
+		Loc=38, 20
+	(
+		Type=Terminal
+		Loc=38, 23
+	rest
+		Type=Identifier
+		Loc=38, 24
+	)
+		Type=Terminal
+		Loc=38, 28
+	;
+		Type=Terminal
+		Loc=38, 29
+
+38: 		}
+	}
+		Type=Terminal
+		Loc=39, 9
+
+39: 		else ;
+	else
+		Type=Terminal
+		Loc=40, 9
+	;
+		Type=Terminal
+		Loc=40, 14
+
+40: 		return 0;
+	return
+		Type=Terminal
+		Loc=41, 9
+	0
+		Type=Number
+		Loc=41, 16
+	;
+		Type=Terminal
+		Loc=41, 17
+
+41: 	}
+	}
+		Type=Terminal
+		Loc=42, 5
+
+42: 	
+
+43: 	int assignArray(int[] data, int size)
+	int
+		Type=Terminal
+		Loc=44, 5
+	assignArray
+		Type=Identifier
+		Loc=44, 9
+	(
+		Type=Terminal
+		Loc=44, 20
+	int
+		Type=Terminal
+		Loc=44, 21
+	[
+		Type=Terminal
+		Loc=44, 24
+	]
+		Type=Terminal
+		Loc=44, 25
+	data
+		Type=Identifier
+		Loc=44, 27
+	,
+		Type=Terminal
+		Loc=44, 31
+	int
+		Type=Terminal
+		Loc=44, 33
+	size
+		Type=Identifier
+		Loc=44, 37
+	)
+		Type=Terminal
+		Loc=44, 41
+
+44: 	{
+	{
+		Type=Terminal
+		Loc=45, 5
+
+45: 		int i;
+	int
+		Type=Terminal
+		Loc=46, 9
+	i
+		Type=Identifier
+		Loc=46, 13
+	;
+		Type=Terminal
+		Loc=46, 14
+
+46: 		i = 0;
+	i
+		Type=Identifier
+		Loc=47, 9
+	=
+		Type=Terminal
+		Loc=47, 11
+	0
+		Type=Number
+		Loc=47, 13
+	;
+		Type=Terminal
+		Loc=47, 14
+
+47: 		while(i < size)
+	while
+		Type=Terminal
+		Loc=48, 9
+	(
+		Type=Terminal
+		Loc=48, 14
+	i
+		Type=Identifier
+		Loc=48, 15
+	<
+		Type=Terminal
+		Loc=48, 17
+	size
+		Type=Identifier
+		Loc=48, 19
+	)
+		Type=Terminal
+		Loc=48, 23
+
+48: 		{
+	{
+		Type=Terminal
+		Loc=49, 9
+
+49: 			data[i] = i;
+	data
+		Type=Identifier
+		Loc=50, 13
+	[
+		Type=Terminal
+		Loc=50, 17
+	i
+		Type=Identifier
+		Loc=50, 18
+	]
+		Type=Terminal
+		Loc=50, 19
+	=
+		Type=Terminal
+		Loc=50, 21
+	i
+		Type=Identifier
+		Loc=50, 23
+	;
+		Type=Terminal
+		Loc=50, 24
+
+50: 			i = i + 1;
+	i
+		Type=Identifier
+		Loc=51, 13
+	=
+		Type=Terminal
+		Loc=51, 15
+	i
+		Type=Identifier
+		Loc=51, 17
+	+
+		Type=Terminal
+		Loc=51, 19
+	1
+		Type=Number
+		Loc=51, 21
+	;
+		Type=Terminal
+		Loc=51, 22
+
+51: 		}
+	}
+		Type=Terminal
+		Loc=52, 9
+
+52: 		return 0;
+	return
+		Type=Terminal
+		Loc=53, 9
+	0
+		Type=Number
+		Loc=53, 16
+	;
+		Type=Terminal
+		Loc=53, 17
+
+53: 	}
+	}
+		Type=Terminal
+		Loc=54, 5
+
+54: 	
+
+55: 	int checkArray(int[] data, int size)
+	int
+		Type=Terminal
+		Loc=56, 5
+	checkArray
+		Type=Identifier
+		Loc=56, 9
+	(
+		Type=Terminal
+		Loc=56, 19
+	int
+		Type=Terminal
+		Loc=56, 20
+	[
+		Type=Terminal
+		Loc=56, 23
+	]
+		Type=Terminal
+		Loc=56, 24
+	data
+		Type=Identifier
+		Loc=56, 26
+	,
+		Type=Terminal
+		Loc=56, 30
+	int
+		Type=Terminal
+		Loc=56, 32
+	size
+		Type=Identifier
+		Loc=56, 36
+	)
+		Type=Terminal
+		Loc=56, 40
+
+56: 	{
+	{
+		Type=Terminal
+		Loc=57, 5
+
+57: 		int i;
+	int
+		Type=Terminal
+		Loc=58, 9
+	i
+		Type=Identifier
+		Loc=58, 13
+	;
+		Type=Terminal
+		Loc=58, 14
+
+58: 		int a;
+	int
+		Type=Terminal
+		Loc=59, 9
+	a
+		Type=Identifier
+		Loc=59, 13
+	;
+		Type=Terminal
+		Loc=59, 14
+
+59: 		int passed;
+	int
+		Type=Terminal
+		Loc=60, 9
+	passed
+		Type=Identifier
+		Loc=60, 13
+	;
+		Type=Terminal
+		Loc=60, 19
+
+60: 		
+
+61: 		i = 0;
+	i
+		Type=Identifier
+		Loc=62, 9
+	=
+		Type=Terminal
+		Loc=62, 11
+	0
+		Type=Number
+		Loc=62, 13
+	;
+		Type=Terminal
+		Loc=62, 14
+
+62: 		passed = 1;
+	passed
+		Type=Identifier
+		Loc=63, 9
+	=
+		Type=Terminal
+		Loc=63, 16
+	1
+		Type=Number
+		Loc=63, 18
+	;
+		Type=Terminal
+		Loc=63, 19
+
+63: 		
+
+64: 		while (i < size) 
+	while
+		Type=Terminal
+		Loc=65, 9
+	(
+		Type=Terminal
+		Loc=65, 15
+	i
+		Type=Identifier
+		Loc=65, 16
+	<
+		Type=Terminal
+		Loc=65, 18
+	size
+		Type=Identifier
+		Loc=65, 20
+	)
+		Type=Terminal
+		Loc=65, 24
+
+65: 		{
+	{
+		Type=Terminal
+		Loc=66, 9
+
+66: 			if (data[i] != i)
+	if
+		Type=Terminal
+		Loc=67, 13
+	(
+		Type=Terminal
+		Loc=67, 16
+	data
+		Type=Identifier
+		Loc=67, 17
+	[
+		Type=Terminal
+		Loc=67, 21
+	i
+		Type=Identifier
+		Loc=67, 22
+	]
+		Type=Terminal
+		Loc=67, 23
+	!=
+		Type=Terminal
+		Loc=67, 25
+	i
+		Type=Identifier
+		Loc=67, 28
+	)
+		Type=Terminal
+		Loc=67, 29
+
+67: 			{
+	{
+		Type=Terminal
+		Loc=68, 13
+
+68: 				passed = 0;
+	passed
+		Type=Identifier
+		Loc=69, 17
+	=
+		Type=Terminal
+		Loc=69, 24
+	0
+		Type=Number
+		Loc=69, 26
+	;
+		Type=Terminal
+		Loc=69, 27
+
+69: 			} else;
+	}
+		Type=Terminal
+		Loc=70, 13
+	else
+		Type=Terminal
+		Loc=70, 15
+	;
+		Type=Terminal
+		Loc=70, 19
+
+70: 			i = i + 1;
+	i
+		Type=Identifier
+		Loc=71, 13
+	=
+		Type=Terminal
+		Loc=71, 15
+	i
+		Type=Identifier
+		Loc=71, 17
+	+
+		Type=Terminal
+		Loc=71, 19
+	1
+		Type=Number
+		Loc=71, 21
+	;
+		Type=Terminal
+		Loc=71, 22
+
+71: 		}
+	}
+		Type=Terminal
+		Loc=72, 9
+
+72: 		System.out('\n');
+	System
+		Type=Terminal
+		Loc=73, 9
+	.
+		Type=Terminal
+		Loc=73, 15
+	out
+		Type=Terminal
+		Loc=73, 16
+	(
+		Type=Terminal
+		Loc=73, 19
+	'
+'
+		Type=CharConst
+		Loc=73, 20
+	)
+		Type=Terminal
+		Loc=73, 24
+	;
+		Type=Terminal
+		Loc=73, 25
+
+73: 		return passed;
+	return
+		Type=Terminal
+		Loc=74, 9
+	passed
+		Type=Identifier
+		Loc=74, 16
+	;
+		Type=Terminal
+		Loc=74, 22
+
+74: 	}
+	}
+		Type=Terminal
+		Loc=75, 5
+
+75: }
+	}
+		Type=Terminal
+		Loc=76, 1
+
+284 tokens
+Lexing and parsing  in 0.345
+Semantic analysis in 0.022
+Intermediate code generation in 0.055
+Target code generation in 0.128
+Concluded in 0.647 seconds
+

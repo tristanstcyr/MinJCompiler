@@ -2,5 +2,5 @@
 open TestFramework
 open System
 
-RunAllTests(typeof<MinJ.Scanner.Tests.Performance.Tests>)
+RunAllTests(typeof<MinJ.ToTac.Tests.ThreeAddressCodeTranslationTests>)
 ignore(Console.Read())

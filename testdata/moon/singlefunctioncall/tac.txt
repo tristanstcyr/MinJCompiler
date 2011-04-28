@@ -1,0 +1,30 @@
+	start
+	FrSz, =, (c, 0)
+	call L0, 0
+	halt
+L0	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 0)
+	param (c, 4)
+	call L1, 1
+L2	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+L1	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 4)
+	Result, =, (c, 8)
+	goto L3
+L3	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+f	12
+	16
+Size	0
+ST

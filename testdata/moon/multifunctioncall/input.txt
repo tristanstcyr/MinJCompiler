@@ -1,0 +1,31 @@
+class Example 
+{ 
+    void main() 
+    {
+		param1(0);
+		param2(0,0);
+		param3(0,0,0);
+    }
+	
+	// Cannot be called due to the grammar
+	int param0()
+	{
+		return 0;
+	}
+	
+	int param1(int a)
+	{
+		return 0;
+	}
+	
+	int param2(int a, int b)
+	{
+		return 0;
+	}
+	
+	int param3(int a, int b, int c)
+	{
+		return 0;
+	}
+}
+

@@ -1,0 +1,887 @@
+0: class DeadCodeDetection 
+	class
+		Type=Terminal
+		Loc=1, 1
+	DeadCodeDetection
+		Type=Identifier
+		Loc=1, 7
+
+1: { 
+	{
+		Type=Terminal
+		Loc=2, 1
+
+2:     void main() 
+	void
+		Type=Terminal
+		Loc=3, 5
+	main
+		Type=Terminal
+		Loc=3, 10
+	(
+		Type=Terminal
+		Loc=3, 14
+	)
+		Type=Terminal
+		Loc=3, 15
+
+3:     {
+	{
+		Type=Terminal
+		Loc=4, 5
+
+4: 		return 0; // error main cannot return
+	return
+		Type=Terminal
+		Loc=5, 9
+	0
+		Type=Number
+		Loc=5, 16
+	;
+		Type=Terminal
+		Loc=5, 17
+
+5:     }
+	}
+		Type=Terminal
+		Loc=6, 5
+
+6: 	
+
+7: 	int hasDeadCode() // error here
+	int
+		Type=Terminal
+		Loc=8, 5
+	hasDeadCode
+		Type=Identifier
+		Loc=8, 9
+	(
+		Type=Terminal
+		Loc=8, 20
+	)
+		Type=Terminal
+		Loc=8, 21
+
+8: 	{
+	{
+		Type=Terminal
+		Loc=9, 5
+
+9: 		int i;
+	int
+		Type=Terminal
+		Loc=10, 9
+	i
+		Type=Identifier
+		Loc=10, 13
+	;
+		Type=Terminal
+		Loc=10, 14
+
+10: 		i = 0;
+	i
+		Type=Identifier
+		Loc=11, 9
+	=
+		Type=Terminal
+		Loc=11, 11
+	0
+		Type=Number
+		Loc=11, 13
+	;
+		Type=Terminal
+		Loc=11, 14
+
+11: 		return 0;
+	return
+		Type=Terminal
+		Loc=12, 9
+	0
+		Type=Number
+		Loc=12, 16
+	;
+		Type=Terminal
+		Loc=12, 17
+
+12: 		i = 10;
+	i
+		Type=Identifier
+		Loc=13, 9
+	=
+		Type=Terminal
+		Loc=13, 11
+	10
+		Type=Number
+		Loc=13, 13
+	;
+		Type=Terminal
+		Loc=13, 15
+
+13: 		return i;
+	return
+		Type=Terminal
+		Loc=14, 9
+	i
+		Type=Identifier
+		Loc=14, 16
+	;
+		Type=Terminal
+		Loc=14, 17
+
+14: 	}
+	}
+		Type=Terminal
+		Loc=15, 5
+
+15: 	
+
+16: 	int doesNotReturn() // error here
+	int
+		Type=Terminal
+		Loc=17, 5
+	doesNotReturn
+		Type=Identifier
+		Loc=17, 9
+	(
+		Type=Terminal
+		Loc=17, 22
+	)
+		Type=Terminal
+		Loc=17, 23
+
+17: 	{
+	{
+		Type=Terminal
+		Loc=18, 5
+
+18: 		int i;
+	int
+		Type=Terminal
+		Loc=19, 9
+	i
+		Type=Identifier
+		Loc=19, 13
+	;
+		Type=Terminal
+		Loc=19, 14
+
+19: 		i = 0;
+	i
+		Type=Identifier
+		Loc=20, 9
+	=
+		Type=Terminal
+		Loc=20, 11
+	0
+		Type=Number
+		Loc=20, 13
+	;
+		Type=Terminal
+		Loc=20, 14
+
+20: 	}
+	}
+		Type=Terminal
+		Loc=21, 5
+
+21: 	
+
+22: 	int deadCodeIfElse()
+	int
+		Type=Terminal
+		Loc=23, 5
+	deadCodeIfElse
+		Type=Identifier
+		Loc=23, 9
+	(
+		Type=Terminal
+		Loc=23, 23
+	)
+		Type=Terminal
+		Loc=23, 24
+
+23: 	{
+	{
+		Type=Terminal
+		Loc=24, 5
+
+24: 		int i;
+	int
+		Type=Terminal
+		Loc=25, 9
+	i
+		Type=Identifier
+		Loc=25, 13
+	;
+		Type=Terminal
+		Loc=25, 14
+
+25: 		i = 13;
+	i
+		Type=Identifier
+		Loc=26, 9
+	=
+		Type=Terminal
+		Loc=26, 11
+	13
+		Type=Number
+		Loc=26, 13
+	;
+		Type=Terminal
+		Loc=26, 15
+
+26: 		if (i == 10)
+	if
+		Type=Terminal
+		Loc=27, 9
+	(
+		Type=Terminal
+		Loc=27, 12
+	i
+		Type=Identifier
+		Loc=27, 13
+	==
+		Type=Terminal
+		Loc=27, 15
+	10
+		Type=Number
+		Loc=27, 18
+	)
+		Type=Terminal
+		Loc=27, 20
+
+27: 		{
+	{
+		Type=Terminal
+		Loc=28, 9
+
+28: 			return 0;
+	return
+		Type=Terminal
+		Loc=29, 13
+	0
+		Type=Number
+		Loc=29, 20
+	;
+		Type=Terminal
+		Loc=29, 21
+
+29: 		}
+	}
+		Type=Terminal
+		Loc=30, 9
+
+30: 		else
+	else
+		Type=Terminal
+		Loc=31, 9
+
+31: 		{
+	{
+		Type=Terminal
+		Loc=32, 9
+
+32: 			return 0;
+	return
+		Type=Terminal
+		Loc=33, 13
+	0
+		Type=Number
+		Loc=33, 20
+	;
+		Type=Terminal
+		Loc=33, 21
+
+33: 		}
+	}
+		Type=Terminal
+		Loc=34, 9
+
+34: 		// dead code
+
+35: 		i = 10;
+	i
+		Type=Identifier
+		Loc=36, 9
+	=
+		Type=Terminal
+		Loc=36, 11
+	10
+		Type=Number
+		Loc=36, 13
+	;
+		Type=Terminal
+		Loc=36, 15
+
+36: 		return 10;
+	return
+		Type=Terminal
+		Loc=37, 9
+	10
+		Type=Number
+		Loc=37, 16
+	;
+		Type=Terminal
+		Loc=37, 18
+
+37: 	}
+	}
+		Type=Terminal
+		Loc=38, 5
+
+38: 	
+
+39: 	int validIfElse()
+	int
+		Type=Terminal
+		Loc=40, 5
+	validIfElse
+		Type=Identifier
+		Loc=40, 9
+	(
+		Type=Terminal
+		Loc=40, 20
+	)
+		Type=Terminal
+		Loc=40, 21
+
+40: 	{
+	{
+		Type=Terminal
+		Loc=41, 5
+
+41: 		int i;
+	int
+		Type=Terminal
+		Loc=42, 9
+	i
+		Type=Identifier
+		Loc=42, 13
+	;
+		Type=Terminal
+		Loc=42, 14
+
+42: 		if (i == 10)
+	if
+		Type=Terminal
+		Loc=43, 9
+	(
+		Type=Terminal
+		Loc=43, 12
+	i
+		Type=Identifier
+		Loc=43, 13
+	==
+		Type=Terminal
+		Loc=43, 15
+	10
+		Type=Number
+		Loc=43, 18
+	)
+		Type=Terminal
+		Loc=43, 20
+
+43: 		{
+	{
+		Type=Terminal
+		Loc=44, 9
+
+44: 			return 10;
+	return
+		Type=Terminal
+		Loc=45, 13
+	10
+		Type=Number
+		Loc=45, 20
+	;
+		Type=Terminal
+		Loc=45, 22
+
+45: 		}
+	}
+		Type=Terminal
+		Loc=46, 9
+
+46: 		else
+	else
+		Type=Terminal
+		Loc=47, 9
+
+47: 		{
+	{
+		Type=Terminal
+		Loc=48, 9
+
+48: 			i = 13;
+	i
+		Type=Identifier
+		Loc=49, 13
+	=
+		Type=Terminal
+		Loc=49, 15
+	13
+		Type=Number
+		Loc=49, 17
+	;
+		Type=Terminal
+		Loc=49, 19
+
+49: 		}
+	}
+		Type=Terminal
+		Loc=50, 9
+
+50: 		
+
+51: 		return i;
+	return
+		Type=Terminal
+		Loc=52, 9
+	i
+		Type=Identifier
+		Loc=52, 16
+	;
+		Type=Terminal
+		Loc=52, 17
+
+52: 	}
+	}
+		Type=Terminal
+		Loc=53, 5
+
+53: 	
+
+54: 	int doesNotTypeCheck()
+	int
+		Type=Terminal
+		Loc=55, 5
+	doesNotTypeCheck
+		Type=Identifier
+		Loc=55, 9
+	(
+		Type=Terminal
+		Loc=55, 25
+	)
+		Type=Terminal
+		Loc=55, 26
+
+55: 	{
+	{
+		Type=Terminal
+		Loc=56, 5
+
+56: 		int i;
+	int
+		Type=Terminal
+		Loc=57, 9
+	i
+		Type=Identifier
+		Loc=57, 13
+	;
+		Type=Terminal
+		Loc=57, 14
+
+57: 		i = 'a'; // error here
+	i
+		Type=Identifier
+		Loc=58, 9
+	=
+		Type=Terminal
+		Loc=58, 11
+	'a'
+		Type=CharConst
+		Loc=58, 13
+	;
+		Type=Terminal
+		Loc=58, 16
+
+58: 		return i;
+	return
+		Type=Terminal
+		Loc=59, 9
+	i
+		Type=Identifier
+		Loc=59, 16
+	;
+		Type=Terminal
+		Loc=59, 17
+
+59: 	}
+	}
+		Type=Terminal
+		Loc=60, 5
+
+60: 	
+
+61: 	int mathOnChars()
+	int
+		Type=Terminal
+		Loc=62, 5
+	mathOnChars
+		Type=Identifier
+		Loc=62, 9
+	(
+		Type=Terminal
+		Loc=62, 20
+	)
+		Type=Terminal
+		Loc=62, 21
+
+62: 	{
+	{
+		Type=Terminal
+		Loc=63, 5
+
+63: 		char a;
+	char
+		Type=Terminal
+		Loc=64, 9
+	a
+		Type=Identifier
+		Loc=64, 14
+	;
+		Type=Terminal
+		Loc=64, 15
+
+64: 		char b;
+	char
+		Type=Terminal
+		Loc=65, 9
+	b
+		Type=Identifier
+		Loc=65, 14
+	;
+		Type=Terminal
+		Loc=65, 15
+
+65: 		int i;
+	int
+		Type=Terminal
+		Loc=66, 9
+	i
+		Type=Identifier
+		Loc=66, 13
+	;
+		Type=Terminal
+		Loc=66, 14
+
+66: 		a = b + a; // error on b here
+	a
+		Type=Identifier
+		Loc=67, 9
+	=
+		Type=Terminal
+		Loc=67, 11
+	b
+		Type=Identifier
+		Loc=67, 13
+	+
+		Type=Terminal
+		Loc=67, 15
+	a
+		Type=Identifier
+		Loc=67, 17
+	;
+		Type=Terminal
+		Loc=67, 18
+
+67: 		i = i + a; // error on a here
+	i
+		Type=Identifier
+		Loc=68, 9
+	=
+		Type=Terminal
+		Loc=68, 11
+	i
+		Type=Identifier
+		Loc=68, 13
+	+
+		Type=Terminal
+		Loc=68, 15
+	a
+		Type=Identifier
+		Loc=68, 17
+	;
+		Type=Terminal
+		Loc=68, 18
+
+68: 		return 0;
+	return
+		Type=Terminal
+		Loc=69, 9
+	0
+		Type=Number
+		Loc=69, 16
+	;
+		Type=Terminal
+		Loc=69, 17
+
+69: 	}
+	}
+		Type=Terminal
+		Loc=70, 5
+
+70: 	
+
+71: 	int arrayPassToSystemOut()
+	int
+		Type=Terminal
+		Loc=72, 5
+	arrayPassToSystemOut
+		Type=Identifier
+		Loc=72, 9
+	(
+		Type=Terminal
+		Loc=72, 29
+	)
+		Type=Terminal
+		Loc=72, 30
+
+72: 	{
+	{
+		Type=Terminal
+		Loc=73, 5
+
+73: 		int[] a = new int[100];
+	int
+		Type=Terminal
+		Loc=74, 9
+	[
+		Type=Terminal
+		Loc=74, 12
+	]
+		Type=Terminal
+		Loc=74, 13
+	a
+		Type=Identifier
+		Loc=74, 15
+	=
+		Type=Terminal
+		Loc=74, 17
+	new
+		Type=Terminal
+		Loc=74, 19
+	int
+		Type=Terminal
+		Loc=74, 23
+	[
+		Type=Terminal
+		Loc=74, 26
+	100
+		Type=Number
+		Loc=74, 27
+	]
+		Type=Terminal
+		Loc=74, 30
+	;
+		Type=Terminal
+		Loc=74, 31
+
+74: 		System.out(a); // error here
+	System
+		Type=Terminal
+		Loc=75, 9
+	.
+		Type=Terminal
+		Loc=75, 15
+	out
+		Type=Terminal
+		Loc=75, 16
+	(
+		Type=Terminal
+		Loc=75, 19
+	a
+		Type=Identifier
+		Loc=75, 20
+	)
+		Type=Terminal
+		Loc=75, 21
+	;
+		Type=Terminal
+		Loc=75, 22
+
+75: 	}
+	}
+		Type=Terminal
+		Loc=76, 5
+
+76: 	
+
+77: 	int systemInError()
+	int
+		Type=Terminal
+		Loc=78, 5
+	systemInError
+		Type=Identifier
+		Loc=78, 9
+	(
+		Type=Terminal
+		Loc=78, 22
+	)
+		Type=Terminal
+		Loc=78, 23
+
+78: 	{
+	{
+		Type=Terminal
+		Loc=79, 5
+
+79: 		int i;
+	int
+		Type=Terminal
+		Loc=80, 9
+	i
+		Type=Identifier
+		Loc=80, 13
+	;
+		Type=Terminal
+		Loc=80, 14
+
+80: 		i = System.in.char(); // error here
+	i
+		Type=Identifier
+		Loc=81, 9
+	=
+		Type=Terminal
+		Loc=81, 11
+	System
+		Type=Terminal
+		Loc=81, 13
+	.
+		Type=Terminal
+		Loc=81, 19
+	in
+		Type=Terminal
+		Loc=81, 20
+	.
+		Type=Terminal
+		Loc=81, 22
+	char
+		Type=Terminal
+		Loc=81, 23
+	(
+		Type=Terminal
+		Loc=81, 27
+	)
+		Type=Terminal
+		Loc=81, 28
+	;
+		Type=Terminal
+		Loc=81, 29
+
+81: 		return i;
+	return
+		Type=Terminal
+		Loc=82, 9
+	i
+		Type=Identifier
+		Loc=82, 16
+	;
+		Type=Terminal
+		Loc=82, 17
+
+82: 	}
+	}
+		Type=Terminal
+		Loc=83, 5
+
+83: 	
+
+84: 	int wrongArgumentType(int i)
+	int
+		Type=Terminal
+		Loc=85, 5
+	wrongArgumentType
+		Type=Identifier
+		Loc=85, 9
+	(
+		Type=Terminal
+		Loc=85, 26
+	int
+		Type=Terminal
+		Loc=85, 27
+	i
+		Type=Identifier
+		Loc=85, 31
+	)
+		Type=Terminal
+		Loc=85, 32
+
+85: 	{
+	{
+		Type=Terminal
+		Loc=86, 5
+
+86: 		int x;
+	int
+		Type=Terminal
+		Loc=87, 9
+	x
+		Type=Identifier
+		Loc=87, 13
+	;
+		Type=Terminal
+		Loc=87, 14
+
+87: 		x = wrongArgumentType('b');
+	x
+		Type=Identifier
+		Loc=88, 9
+	=
+		Type=Terminal
+		Loc=88, 11
+	wrongArgumentType
+		Type=Identifier
+		Loc=88, 13
+	(
+		Type=Terminal
+		Loc=88, 30
+	'b'
+		Type=CharConst
+		Loc=88, 31
+	)
+		Type=Terminal
+		Loc=88, 34
+	;
+		Type=Terminal
+		Loc=88, 35
+
+88: 		return i;
+	return
+		Type=Terminal
+		Loc=89, 9
+	i
+		Type=Identifier
+		Loc=89, 16
+	;
+		Type=Terminal
+		Loc=89, 17
+
+89: 	}
+	}
+		Type=Terminal
+		Loc=90, 5
+
+90: }
+	}
+		Type=Terminal
+		Loc=91, 1
+
+230 tokens
+Lexing and parsing  in 0.438
+Semantic analysis in 0.047
+
+5:16	The main function cannot have a return statement.
+8:9	Function hasDeadCode contains dead code.
+17:9	Not all paths return a value for function doesNotReturn
+23:9	Function deadCodeIfElse contains dead code.
+58:9	Unexpected type
+67:13	Math operators may only be used on values of type "int"
+68:13	Unexpected type
+68:17	Math operators may only be used on values of type "int"
+72:9	Not all paths return a value for function arrayPassToSystemOut
+75:20	Arrays cannot be passed to System.out
+81:9	Unexpected type
+85:31	Unexpected type
+Concluded in 0.591 seconds
+

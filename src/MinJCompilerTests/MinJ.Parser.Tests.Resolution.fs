@@ -9,7 +9,7 @@ open System
 open System.IO
 
 
-type ParserIdentifierResolutionTests() =
+type ParserTests() =
     static member TestNoErrors = 
         parseWithErrorCount "class X { int field; void main() {;} }" 0
     static member TestPrimError = 

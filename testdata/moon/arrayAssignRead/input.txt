@@ -1,0 +1,27 @@
+class Example 
+{ 
+	// A correct program should output number 0 to 9 
+    void main() 
+    {
+		int[] data = new int[10];
+		int i;
+		int size;
+		int a;
+		size = 10;
+		i = 0;
+		while(i < size)
+		{
+			data[i] = i;
+			i = i + 1;
+		}
+		
+		i = 0;
+		while(i < size)
+		{
+			a = data[i] + 48;
+			System.out(a);
+			i = i + 1;
+		}
+    }
+}
+

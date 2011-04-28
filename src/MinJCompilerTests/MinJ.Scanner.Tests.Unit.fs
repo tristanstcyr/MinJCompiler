@@ -4,6 +4,7 @@ module MinJ.Scanner.Tests.Unit
 open TestFramework
 open Compiler
 open MinJ
+open MinJ.Tests
 
 open System
 open System.Diagnostics
@@ -44,41 +45,8 @@ let CheckTokens  input (expected : Token list) =
 let CheckTerminal input tt =
     CheckTokens input [Terminal(tt, l)]
 
-let largeText = 
-    "// example of a code in MinJ
-    class Average
-    }
-    //a sample program. It calculates the average of several numbers,
-    // the first value gives how many numbers are to be read
-    void main() //the main method
-    }
-    int n,ave;
-    n=In.int();
-    if (n > 0)
-    }
-    int total = sum_int(n);
-    ave =(total/ n);
-    System.out( 'a','=',ave);
-    {
-    else System.out('e','r','r','o','r');
-    {
-    int sum_int(int m) // read and sum up m integers
-    }
-    int i=1;
-    int[] val = new int[100];
-    int res= 0;
-    while (i <=m)
-    }
-    val[i] =System.in.int();
-    res = res + val[i];
-    i = i+1;
-    {
-    return res;
-    {
-    {"
-
 /// Contains the tests for the MinJ scanner, see the documentation for details.
-type UnitTests() =
+type Tests() =
     
     static member TestIdentifierIsTokenizedWithSpaces = CheckTokens " hello " [Identifier("hello", l)]
 
@@ -90,14 +58,12 @@ type UnitTests() =
     static member TestMultiDigitNumber = CheckTokens "3345Hello" [Number(3345, l); Identifier("Hello", l)]
     
     static member TestConstantChar = CheckTokens "'c'=='b'" [CharConst('c', l);CreateIdentifierOrToken "==" l;CharConst('b', l)]
-    
-    static member TestUnicodeCharConst = CheckTokens "'Ń'" [CharConst('Ń', l)]
 
-    static member TestInvalidCharConst = CheckTokens "'askdjh'" [Error("Invalid character format askdjh", l)]
+    static member TestInvalidCharConst = CheckTokens "'askdjh'" [Error(Errors.InvalidCharacterFormat "'askdjh'", l)]
 
     static member TestTooLargeNumber = 
         CheckTokens "92473246238746238746287364872346283468273462834682364782648" 
-            [Error("Number constants cannot exceed " + string(Int64.MaxValue), l)]
+            [Error(MinJ.Tokens.Errors.NumberConstantOverflow, l)]
 
     static member TestTerminals =
         let (input, tokens) = Map.fold (fun state strValue token -> 
@@ -105,9 +71,6 @@ type UnitTests() =
                                         | (str, tokens) -> (strValue+" "+str, Terminal(token, l) :> Token :: tokens)) 
                                         ("", []) terminalMap
         CheckTokens input tokens
-
-        //let keywordsString  = String.Join(" ", Set.toArray terminalMap)
-        //CheckTokens keywordsString (List.map (fun str -> Terminal(str, l) :> Token) (Set.toList (keywords))) 
 
     static member TestIncompleteToken =
         CheckTokenType "&" [typeof<Error>]
@@ -120,7 +83,7 @@ type UnitTests() =
     static member TestCommentEnd = CheckTokens "//\nIdentifier" [Identifier("Identifier", l)]
  
     static member TestLargeText =
-        let tokens = (tokenize largeText).GetEnumerator()
+        let tokens = (tokenize (Data.makeClass Data.mainText (Data.makeFunction "test"))).GetEnumerator()
         while tokens.MoveNext() do
             match tokens.Current with
                 | :? Error as e ->  Fail <| "Found error token " + e.ToString()

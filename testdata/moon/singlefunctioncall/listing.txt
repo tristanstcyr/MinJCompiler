@@ -1,0 +1,109 @@
+0: class Example 
+	class
+		Type=Terminal
+		Loc=1, 1
+	Example
+		Type=Identifier
+		Loc=1, 7
+
+1: { 
+	{
+		Type=Terminal
+		Loc=2, 1
+
+2:     void main() 
+	void
+		Type=Terminal
+		Loc=3, 5
+	main
+		Type=Terminal
+		Loc=3, 10
+	(
+		Type=Terminal
+		Loc=3, 14
+	)
+		Type=Terminal
+		Loc=3, 15
+
+3:     {
+	{
+		Type=Terminal
+		Loc=4, 5
+
+4: 		param1(0);
+	param1
+		Type=Identifier
+		Loc=5, 3
+	(
+		Type=Terminal
+		Loc=5, 9
+	0
+		Type=Number
+		Loc=5, 10
+	)
+		Type=Terminal
+		Loc=5, 11
+	;
+		Type=Terminal
+		Loc=5, 12
+
+5:     }
+	}
+		Type=Terminal
+		Loc=6, 5
+
+6: 	
+
+7: 	int param1(int a)
+	int
+		Type=Terminal
+		Loc=8, 2
+	param1
+		Type=Identifier
+		Loc=8, 6
+	(
+		Type=Terminal
+		Loc=8, 12
+	int
+		Type=Terminal
+		Loc=8, 13
+	a
+		Type=Identifier
+		Loc=8, 17
+	)
+		Type=Terminal
+		Loc=8, 18
+
+8: 	{
+	{
+		Type=Terminal
+		Loc=9, 2
+
+9: 		return 0;
+	return
+		Type=Terminal
+		Loc=10, 3
+	0
+		Type=Number
+		Loc=10, 10
+	;
+		Type=Terminal
+		Loc=10, 11
+
+10: 	}
+	}
+		Type=Terminal
+		Loc=11, 2
+
+11: }
+	}
+		Type=Terminal
+		Loc=12, 1
+
+27 tokens
+Lexing and parsing  in 0.313
+Semantic analysis in 0.021
+Intermediate code generation in 0.067
+Target code generation in 0.140
+Concluded in 0.687 seconds
+

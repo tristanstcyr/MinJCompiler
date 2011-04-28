@@ -36,6 +36,9 @@ type Scanner(rootState: State, characters : char seq, listing : IListingWriter) 
                     | '\n' -> 
                         listing.AdvanceLine()
                         location.Value.advanceRow
+                    | '\t' ->
+                        listing.AddChar(c)
+                        {!location with Col=location.Value.Col + 4}
                     | _ ->
                         listing.AddChar(c)
                         location.Value.advanceCol

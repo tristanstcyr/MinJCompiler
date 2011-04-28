@@ -25,11 +25,12 @@ let openOutputStream (directory : DirectoryInfo) filename =
     new StreamWriter(File.OpenWrite(path))
 
 let time (output : TextWriter) what func =
-    let sw = new Stopwatch()
-    sw.Start()
-    let result = func()
-    output.WriteLine(sprintf "%s in %.3f" what (float(sw.ElapsedMilliseconds) / float(1000)))
-    result
+    let sw = new Stopwatch()    
+    sw.Start() 
+    try 
+        func()
+    finally
+        output.WriteLine(sprintf "%s in %.3f" what (float(sw.ElapsedMilliseconds) / float(1000)))
 
 let countTokensThen onDone tokens = seq {
     let count = ref 0

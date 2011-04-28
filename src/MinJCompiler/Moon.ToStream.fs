@@ -1,7 +1,11 @@
-﻿module Moon.ToStream
+﻿/// Extends Moon.Ast class with a ToStream method.
+/// The ToStream method outputs Moon.Ast nodes to a stream
+/// usually used for outputting to a file.
+module Moon.ToStream
 
 open System.IO
 
+/// Helper method for outputting as command seperated list
 let private asCommaList (out : TextWriter) func (l : 'a list) =
     if ( l.Length > 0) then
         func out (l.Head)
@@ -80,8 +84,11 @@ type Line with
                 out.Write(str)                        
             | None -> ()
 
-        out.Write("\t")
-        LineContent.ToStream out content
+        match content with
+            | Blank -> ()
+            | _ ->
+                out.Write("\t")
+                LineContent.ToStream out content
                 
         match comment with
             | Some(str) ->

@@ -1,0 +1,92 @@
+class DeadCodeDetection 
+{ 
+    void main() 
+    {
+		return 0; // error main cannot return
+    }
+	
+	int hasDeadCode() // error here
+	{
+		int i;
+		i = 0;
+		return 0;
+		i = 10;
+		return i;
+	}
+	
+	int doesNotReturn() // error here
+	{
+		int i;
+		i = 0;
+	}
+	
+	int deadCodeIfElse()
+	{
+		int i;
+		i = 13;
+		if (i == 10)
+		{
+			return 0;
+		}
+		else
+		{
+			return 0;
+		}
+		// dead code
+		i = 10;
+		return 10;
+	}
+	
+	int validIfElse()
+	{
+		int i;
+		if (i == 10)
+		{
+			return 10;
+		}
+		else
+		{
+			i = 13;
+		}
+		
+		return i;
+	}
+	
+	int doesNotTypeCheck()
+	{
+		int i;
+		i = 'a'; // error here
+		return i;
+	}
+	
+	int mathOnChars()
+	{
+		char a;
+		char b;
+		int i;
+		a = b + a; // error on b here
+		i = i + a; // error on a here
+		return 0;
+	}
+	
+	int arrayPassToSystemOut()
+	{
+		int[] a = new int[100];
+		System.out(a); // error here
+	}
+	
+	int systemInError()
+	{
+		int i;
+		i = System.in.char(); // error here
+		return i;
+	}
+	
+	int wrongArgumentType(int i)
+	{
+		int x;
+		x = wrongArgumentType('b');
+		return i;
+	}
+}
+

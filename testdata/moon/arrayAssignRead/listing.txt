@@ -1,0 +1,338 @@
+0: class Example 
+	class
+		Type=Terminal
+		Loc=1, 1
+	Example
+		Type=Identifier
+		Loc=1, 7
+
+1: { 
+	{
+		Type=Terminal
+		Loc=2, 1
+
+2: 	// A correct program should output number 0 to 9 
+
+3:     void main() 
+	void
+		Type=Terminal
+		Loc=4, 5
+	main
+		Type=Terminal
+		Loc=4, 10
+	(
+		Type=Terminal
+		Loc=4, 14
+	)
+		Type=Terminal
+		Loc=4, 15
+
+4:     {
+	{
+		Type=Terminal
+		Loc=5, 5
+
+5: 		int[] data = new int[10];
+	int
+		Type=Terminal
+		Loc=6, 9
+	[
+		Type=Terminal
+		Loc=6, 12
+	]
+		Type=Terminal
+		Loc=6, 13
+	data
+		Type=Identifier
+		Loc=6, 15
+	=
+		Type=Terminal
+		Loc=6, 20
+	new
+		Type=Terminal
+		Loc=6, 22
+	int
+		Type=Terminal
+		Loc=6, 26
+	[
+		Type=Terminal
+		Loc=6, 29
+	10
+		Type=Number
+		Loc=6, 30
+	]
+		Type=Terminal
+		Loc=6, 32
+	;
+		Type=Terminal
+		Loc=6, 33
+
+6: 		int i;
+	int
+		Type=Terminal
+		Loc=7, 9
+	i
+		Type=Identifier
+		Loc=7, 13
+	;
+		Type=Terminal
+		Loc=7, 14
+
+7: 		int size;
+	int
+		Type=Terminal
+		Loc=8, 9
+	size
+		Type=Identifier
+		Loc=8, 13
+	;
+		Type=Terminal
+		Loc=8, 17
+
+8: 		int a;
+	int
+		Type=Terminal
+		Loc=9, 9
+	a
+		Type=Identifier
+		Loc=9, 13
+	;
+		Type=Terminal
+		Loc=9, 14
+
+9: 		size = 10;
+	size
+		Type=Identifier
+		Loc=10, 9
+	=
+		Type=Terminal
+		Loc=10, 14
+	10
+		Type=Number
+		Loc=10, 16
+	;
+		Type=Terminal
+		Loc=10, 18
+
+10: 		i = 0;
+	i
+		Type=Identifier
+		Loc=11, 9
+	=
+		Type=Terminal
+		Loc=11, 11
+	0
+		Type=Number
+		Loc=11, 13
+	;
+		Type=Terminal
+		Loc=11, 14
+
+11: 		while(i < size)
+	while
+		Type=Terminal
+		Loc=12, 9
+	(
+		Type=Terminal
+		Loc=12, 14
+	i
+		Type=Identifier
+		Loc=12, 15
+	<
+		Type=Terminal
+		Loc=12, 17
+	size
+		Type=Identifier
+		Loc=12, 19
+	)
+		Type=Terminal
+		Loc=12, 23
+
+12: 		{
+	{
+		Type=Terminal
+		Loc=13, 9
+
+13: 			data[i] = i;
+	data
+		Type=Identifier
+		Loc=14, 13
+	[
+		Type=Terminal
+		Loc=14, 17
+	i
+		Type=Identifier
+		Loc=14, 18
+	]
+		Type=Terminal
+		Loc=14, 19
+	=
+		Type=Terminal
+		Loc=14, 21
+	i
+		Type=Identifier
+		Loc=14, 23
+	;
+		Type=Terminal
+		Loc=14, 24
+
+14: 			i = i + 1;
+	i
+		Type=Identifier
+		Loc=15, 13
+	=
+		Type=Terminal
+		Loc=15, 15
+	i
+		Type=Identifier
+		Loc=15, 17
+	+
+		Type=Terminal
+		Loc=15, 19
+	1
+		Type=Number
+		Loc=15, 21
+	;
+		Type=Terminal
+		Loc=15, 22
+
+15: 		}
+	}
+		Type=Terminal
+		Loc=16, 9
+
+16: 		
+
+17: 		i = 0;
+	i
+		Type=Identifier
+		Loc=18, 9
+	=
+		Type=Terminal
+		Loc=18, 11
+	0
+		Type=Number
+		Loc=18, 13
+	;
+		Type=Terminal
+		Loc=18, 14
+
+18: 		while(i < size)
+	while
+		Type=Terminal
+		Loc=19, 9
+	(
+		Type=Terminal
+		Loc=19, 14
+	i
+		Type=Identifier
+		Loc=19, 15
+	<
+		Type=Terminal
+		Loc=19, 17
+	size
+		Type=Identifier
+		Loc=19, 19
+	)
+		Type=Terminal
+		Loc=19, 23
+
+19: 		{
+	{
+		Type=Terminal
+		Loc=20, 9
+
+20: 			a = data[i] + 48;
+	a
+		Type=Identifier
+		Loc=21, 13
+	=
+		Type=Terminal
+		Loc=21, 15
+	data
+		Type=Identifier
+		Loc=21, 17
+	[
+		Type=Terminal
+		Loc=21, 21
+	i
+		Type=Identifier
+		Loc=21, 22
+	]
+		Type=Terminal
+		Loc=21, 23
+	+
+		Type=Terminal
+		Loc=21, 25
+	48
+		Type=Number
+		Loc=21, 27
+	;
+		Type=Terminal
+		Loc=21, 29
+
+21: 			System.out(a);
+	System
+		Type=Terminal
+		Loc=22, 13
+	.
+		Type=Terminal
+		Loc=22, 19
+	out
+		Type=Terminal
+		Loc=22, 20
+	(
+		Type=Terminal
+		Loc=22, 23
+	a
+		Type=Identifier
+		Loc=22, 24
+	)
+		Type=Terminal
+		Loc=22, 25
+	;
+		Type=Terminal
+		Loc=22, 26
+
+22: 			i = i + 1;
+	i
+		Type=Identifier
+		Loc=23, 13
+	=
+		Type=Terminal
+		Loc=23, 15
+	i
+		Type=Identifier
+		Loc=23, 17
+	+
+		Type=Terminal
+		Loc=23, 19
+	1
+		Type=Number
+		Loc=23, 21
+	;
+		Type=Terminal
+		Loc=23, 22
+
+23: 		}
+	}
+		Type=Terminal
+		Loc=24, 9
+
+24:     }
+	}
+		Type=Terminal
+		Loc=25, 5
+
+25: }
+	}
+		Type=Terminal
+		Loc=26, 1
+
+94 tokens
+Lexing and parsing  in 0.157
+Semantic analysis in 0.020
+Intermediate code generation in 0.037
+Target code generation in 0.112
+Concluded in 0.421 seconds
+

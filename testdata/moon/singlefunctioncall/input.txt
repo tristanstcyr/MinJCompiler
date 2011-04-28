@@ -1,0 +1,13 @@
+class Example 
+{ 
+    void main() 
+    {
+		param1(0);
+    }
+	
+	int param1(int a)
+	{
+		return 0;
+	}
+}
+

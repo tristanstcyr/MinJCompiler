@@ -1,4 +1,5 @@
-﻿module MinJ.Parser
+﻿/// Functionality for parsing the MinJ language.
+module MinJ.Parser
 
 open System
 open System.IO
@@ -7,6 +8,7 @@ open System.Collections.Generic
 open Compiler
 open MinJ.Scanner
 
+/// User facing errors produced by this module
 module Errors =
     let UnexpectedEof (token : Token) =
         "Syntax error. The end of the file was encountered unexpectedly. Did you forget a closing bracket?", token.StartLocation
@@ -51,6 +53,9 @@ type Parser(tokens : IEnumerable<Token>,
         variables.PrintDefinedSymbols debugOutput
         debugOutput.WriteLine()
 
+    member this.Init() =
+        // Setup the scanner
+        scanner.MoveNext() |> ignore
 
     /// Starts parsing the input characters provided by the scanner.
     /// Returns the abstract syntax tree.
@@ -58,8 +63,7 @@ type Parser(tokens : IEnumerable<Token>,
     member this.Parse() =
         let prg, errors = 
             try
-                // Setup the scanner
-                scanner.MoveNext() |> ignore
+                this.Init()
                 checkError scanner
                 // Parse
                 Some(this.ParsePrg()), []
@@ -72,14 +76,13 @@ type Parser(tokens : IEnumerable<Token>,
             raise <| CompilerException(variables.Errors @ functions.Errors @ errors)
         prg.Value
 
-    /// "< prg > −− > class i {{< decl >} < main f > {< f unct def >}"
+    /// "< prg > −− > class i {{< decl >} < main f > {< funct_def >}"
     member this.ParsePrg() =
-        ruleLogger.Push "< prg > −− > class i {{< decl >} < main f > {< f unct def >}}"
+        ruleLogger.Push "< prg > −− > class i {{< decl >} < main f > {< funct_def >}}"
 
         // Create a news scope for variables and functions
         variables.PushScope()
         functions.PushScope()
-
 
         // Parse
         popTerminal scanner Class
@@ -175,7 +178,7 @@ type Parser(tokens : IEnumerable<Token>,
 
     /// "< funct_def > −−> < type > i ( < par list > ){{< decl >} < st list > }"
     member this.ParseFunctDef() =
-        ruleLogger.Push "< funct_def > −−> < type > i ( < par list > ){{< decl >} < st list > }"
+        ruleLogger.Push "<funct_def> −−> <type> i ( <par_list> ){{< decl >} <st_list> }"
 
         variables.PushScope()
 
@@ -205,7 +208,7 @@ type Parser(tokens : IEnumerable<Token>,
 
         Ast.FunctionDefinition({Token=i;Attributes=Some attributes}, parList, FunctionBody(decls, stList))
 
-    /// "< par_list > --> e | < p type > i{, < p type > i}"
+    /// "< par_list > --> e | < p_type > i{, < p_type > i}"
     member this.ParseParList() : Parameter list =
         match scanner.Current with
             | Terminal CParen -> 
@@ -214,7 +217,7 @@ type Parser(tokens : IEnumerable<Token>,
                 []
 
             | _ ->
-                ruleLogger.Push "<par_list> −−> < p type > i{, < p type > i}"
+                ruleLogger.Push "<par_list> −−> <p_type> i{, <p_type> i}"
 
                 let typ = this.ParsePType()
                 let i = popIdentifier scanner
@@ -754,4 +757,11 @@ type Parser(tokens : IEnumerable<Token>,
             | _ ->
                 raiseUnexpected()
 
-let parse debugOutput ruleLogger tokens = (new Parser(tokens, debugOutput, ruleLogger)).Parse()
+/// <summary>Produces the MinJ AST from a sequence of tokens.</summary>
+/// <param name="debugOutput">A stream to print debug information to</param>
+/// <param name="ruleLogger">A rule logger to output grammar rules used to parse the input</param>
+/// <param name="tokens">The token sequence used to produce the AST</param>
+/// <exception cref="CompilerException">If there was an error in the input</exception>
+/// <exception cref="CompilerInternalException">If there was an error in the compiler detected</exception>
+let parse debugOutput ruleLogger tokens = 
+    (new Parser(tokens, debugOutput, ruleLogger)).Parse()

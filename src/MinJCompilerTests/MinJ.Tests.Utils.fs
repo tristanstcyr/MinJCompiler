@@ -10,6 +10,7 @@ open System.Collections.Generic
 let makeParser str = 
     let memStream = new StreamWriter(new MemoryStream())
     let parser = new MinJ.Parser.Parser(Scanner.tokenize (NullListingWriter()) str, memStream, RuleLogger(memStream))
+    parser.Init()
     parser
 
 let parseWithErrorCount str expectedErrorCount = 
@@ -27,7 +28,7 @@ let parseWithErrorCount str expectedErrorCount =
 let time func =
     let sw = Stopwatch()
     sw.Start()
-    func()
+    func() |> ignore
     sw.Stop()
     float32(sw.ElapsedMilliseconds)
 
@@ -39,3 +40,5 @@ let repeat n func = seq {
 let consume s = for _ in s do ()
 
 let tokenize chars = Scanner.tokenize (NullListingWriter()) chars
+
+let double input nTimes = List.fold (fun (s:string) i -> s + s) input [1..nTimes]

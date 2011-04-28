@@ -11,7 +11,7 @@ module Errors =
     
     let UnexpectedType actual expected (location : Location) =
         "Unexpected type", location
-    
+
     let WrongNumberOfArguments actualCount expectedCount (location : Location) =
         sprintf "Wrong number of argument. Expected %i but is %i" actualCount expectedCount, location
     
@@ -26,6 +26,12 @@ module Errors =
     
     let NotAllPathsReturn (funcId : FunctionIdentifier) =
         sprintf "Not all paths return a value for function %s" funcId.Token.Value, funcId.Token.StartLocation
+
+    let FunctionHasDeadCode (funcId : FunctionIdentifier) =
+        sprintf "Function %s contains dead code." funcId.Token.Value, funcId.Attributes.Value.Definition.StartLocation
+
+    let ArrayTypeCannotBePrinted location =
+        "Arrays cannot be passed to System.out", location
 
 /// Instances of this type are used for doing semantic verification 
 /// on MinJ AST nodes.
@@ -51,6 +57,26 @@ type SemanticVerifier() =
             for a, b in List.zip types1 types2 do
                 checkTypes a b
 
+    member this.VerifyStatementBlock(stmts : Statement list, funcId : FunctionIdentifier option) =
+        // Any statements following a return statement is dead code.
+        let rec verify previousReturns (stmts : Statement list) =
+            match stmts with
+                | stmt :: rest ->
+                    if previousReturns then
+                        errors.Add(Errors.FunctionHasDeadCode funcId.Value)
+                        // Continue parsing the remaining statements without
+                        // producing any further errors
+                        for stmt in stmt :: rest do
+                            this.Verify(stmt, funcId) |> ignore
+                        true
+                    else
+                        verify (this.Verify(stmt, funcId)) rest
+
+                | [] -> 
+                    previousReturns
+        verify false stmts
+
+    /// All errors found during verification
     member this.Errors with get() = errors
 
     member this.Verify ast  =
@@ -97,19 +123,25 @@ type SemanticVerifier() =
                 primType, token
 
     member this.Verify (ExpressionPrime(op, term, rest)) =
-        let termType = this.Verify term
+        let typeLeft, leftToken = this.Verify term
+        if typeLeft <> Primitive(IntType) then
+            errors.Add(Errors.MathWithNonIntegerOperands leftToken)
         match rest with
-            | Some(rest) -> checkTypes termType <| this.Verify rest
+            | Some(rest) -> 
+                this.Verify rest |> ignore
             | _ -> ()
-        termType
+        typeLeft, leftToken
 
-    member this.Verify(Expression(bool, term, rest)) =
+    member this.Verify(Expression(isNegated, term, rest)) =
         let termType, token = this.Verify term
-        if bool && termType <> Primitive(IntType) then
+        if isNegated && termType <> Primitive(IntType) then
             errors.Add(Errors.MathWithNonIntegerOperands token)
-        if rest.IsSome then
-            let restType = this.Verify rest.Value
-            checkTypes (termType, token) restType
+        else if rest.IsSome then
+            if termType <> Primitive(IntType) then
+                 errors.Add(Errors.MathWithNonIntegerOperands token)
+            else          
+                let restType = this.Verify rest.Value
+                checkTypes (termType, token) restType
         termType, token
 
     member this.Verify(ast : Primitive) =
@@ -154,26 +186,30 @@ type SemanticVerifier() =
                 if assignedType <> expected then
                     errors.Add(Errors.UnexpectedType assignedType expected token.StartLocation)
 
-    member this.Verify(ast, funcId : FunctionIdentifier option) =
+    /// Verifies the semantics of a function node.
+    /// Returns true is all paths in the function return.
+    /// funcId is None if the function being parsed is the main function.
+    /// Never returns true if funcId is None.
+    member this.Verify(ast : Statement, funcId : FunctionIdentifier option) =
         match ast with
             | Block(statements) ->
-                let returnFound = ref false
-                for stmt in statements do
-                    returnFound := !returnFound || this.Verify(stmt, funcId)
-                !returnFound
+                this.VerifyStatementBlock(statements, funcId)
             
             | AssignmentStatement(assignment) ->
                 this.Verify assignment
+                // Assignments never return
                 false
 
             | IfElse(lExp, ifStatement, elseStatement) ->
+                // For an if/else statement to return, both if AND else must have a return statement.
                 this.Verify lExp
-                this.Verify(ifStatement, funcId) 
-                    && this.Verify(elseStatement, funcId)
+                this.Verify(ifStatement, funcId) && this.Verify(elseStatement, funcId)
 
             | WhileStatement(logicExp, body) ->
                 this.Verify logicExp
                 this.Verify(body, funcId) |> ignore
+                // While statements are equivalent to an if with an else
+                // The while loop could therefore never be entered.
                 false
 
             | ReturnStatement(exp) ->
@@ -182,25 +218,35 @@ type SemanticVerifier() =
                     | Some(funcId) ->
                         let funcType = funcId.Attributes.Value.ReturnType, funcId.Token :> Token
                         checkTypes (expType, expToken) funcType
-                    | _ ->
+                        true
+                    | None ->
                         errors.Add(Errors.MainCannotHaveReturn expToken.StartLocation)
-                true
+                        // Return false since other parts of this function except
+                        // that Main never returns true.
+                        false
 
             | MethodInvocationStatement(identifier, arguments) ->
                 let argTypes = List.map (fun (a : Element) -> this.Verify a) arguments
                 checkTypeLists argTypes identifier.Attributes.Value.ParameterTypes
                 false
             
-            | SystemOutInvocation(arguments) -> false
+            | SystemOutInvocation(arguments) ->
+                // Arrays cannot be printed
+                for arg in arguments do
+                    match this.Verify(arg) with
+                        | (Primitive(_), _) -> ()
+                        | (ArrayType(_), token) ->
+                            errors.Add(Errors.ArrayTypeCannotBePrinted token.StartLocation)
+                // Never returns
+                false
             
-            | EmptyStatement -> false
+            | EmptyStatement -> 
+                // Never returns
+                false
     
 
     member this.Verify(FunctionBody(decls, stmts), funcId) =
-        let returnFound = ref false
-        for stmt in stmts do
-            returnFound := !returnFound || this.Verify(stmt, funcId)
-        !returnFound
+        this.VerifyStatementBlock(stmts, funcId)
     
     member this.Verify (MainFunction(body)) =
         this.Verify(body, None) |> ignore

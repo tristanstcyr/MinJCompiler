@@ -1,0 +1,122 @@
+< prg > −− > class i {{< decl >} < main f > {< funct_def >}}
+ <main_f> −−> void main(){{< decl >} < st list > }
+  <set> −−> <st> { <st> }
+   <st> −−> i <st'>
+    <st'> −−> (v_list)
+     <v_list> --> <elem><v_list'>
+      <elem> --> n
+    <v_list'> --> e
+  <st> −−> i <st'>
+   <st'> −−> (v_list)
+    <v_list> --> <elem><v_list'>
+     <elem> --> n
+   <v_list'> --> ,<v_list'>
+    <v_list> --> <elem><v_list'>
+     <elem> --> n
+   <v_list'> --> e
+<st> −−> i <st'>
+ <st'> −−> (v_list)
+  <v_list> --> <elem><v_list'>
+   <elem> --> n
+ <v_list'> --> ,<v_list'>
+  <v_list> --> <elem><v_list'>
+   <elem> --> n
+ <v_list'> --> ,<v_list'>
+  <v_list> --> <elem><v_list'>
+   <elem> --> n
+ <v_list'> --> e
+Symbol table after parsing "main"
+
+<funct_def> −−> <type> i ( <par_list> ){{< decl >} <st_list> }
+<type> --> int
+< par_list > --> e
+<set> −−> <st> { <st> }
+<st> −−> return <exp>;
+<exp> --> <term><exp'>
+<term> --> <prim><term'>
+<prim> --> n
+<term'> --> e
+<exp'> --> e
+Symbol table after parsing param0
+
+<funct_def> −−> <type> i ( <par_list> ){{< decl >} <st_list> }
+<type> --> int
+<par_list> −−> <p_type> i{, <p_type> i}
+<p_type> --> <type> <p_type’>
+<type> --> int
+<p_type’> --> e
+<set> −−> <st> { <st> }
+<st> −−> return <exp>;
+<exp> --> <term><exp'>
+<term> --> <prim><term'>
+ <prim> --> n
+ <term'> --> e
+<exp'> --> e
+Symbol table after parsing param1
+{Definition = a;
+ Type = Primitive IntType;
+ Scope = ParameterVariable;
+ MemoryAddress = 0u;}
+
+<funct_def> −−> <type> i ( <par_list> ){{< decl >} <st_list> }
+<type> --> int
+<par_list> −−> <p_type> i{, <p_type> i}
+<p_type> --> <type> <p_type’>
+<type> --> int
+<p_type’> --> e
+<par_list> −−> <p_type> i{, <p_type> i}
+<p_type> --> <type> <p_type’>
+<type> --> int
+<p_type’> --> e
+<set> −−> <st> { <st> }
+<st> −−> return <exp>;
+ <exp> --> <term><exp'>
+  <term> --> <prim><term'>
+   <prim> --> n
+   <term'> --> e
+  <exp'> --> e
+Symbol table after parsing param2
+{Definition = a;
+ Type = Primitive IntType;
+ Scope = ParameterVariable;
+ MemoryAddress = 0u;}
+{Definition = b;
+ Type = Primitive IntType;
+ Scope = ParameterVariable;
+ MemoryAddress = 0u;}
+
+<funct_def> −−> <type> i ( <par_list> ){{< decl >} <st_list> }
+<type> --> int
+<par_list> −−> <p_type> i{, <p_type> i}
+<p_type> --> <type> <p_type’>
+ <type> --> int
+ <p_type’> --> e
+<par_list> −−> <p_type> i{, <p_type> i}
+ <p_type> --> <type> <p_type’>
+  <type> --> int
+  <p_type’> --> e
+ <par_list> −−> <p_type> i{, <p_type> i}
+  <p_type> --> <type> <p_type’>
+   <type> --> int
+   <p_type’> --> e
+  <set> −−> <st> { <st> }
+   <st> −−> return <exp>;
+    <exp> --> <term><exp'>
+     <term> --> <prim><term'>
+      <prim> --> n
+      <term'> --> e
+     <exp'> --> e
+Symbol table after parsing param3
+{Definition = a;
+ Type = Primitive IntType;
+ Scope = ParameterVariable;
+ MemoryAddress = 0u;}
+{Definition = b;
+ Type = Primitive IntType;
+ Scope = ParameterVariable;
+ MemoryAddress = 0u;}
+{Definition = c;
+ Type = Primitive IntType;
+ Scope = ParameterVariable;
+ MemoryAddress = 0u;}
+

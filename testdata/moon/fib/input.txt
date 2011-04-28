@@ -1,0 +1,68 @@
+class Example 
+{ 
+    void main() 
+    {
+		int result;
+		result = fib(30);
+		System.out('F','i','b','(','2','5',')',':');
+		printNumber(result);
+		System.out('\n');
+		if (result == 832040)
+		{
+			System.out('P','A','S','S','\n');
+		}
+		else
+		{
+			System.out('F','A','I','L','\n');
+		}
+    }
+	
+	int printNumber(int number)
+	{
+		if (number == 0)
+			System.out('0');
+		else
+			rec_printNumber(number);
+		return 0;
+	}
+	
+	int rec_printNumber(int number)
+	{
+		int rest;
+		int div;
+		if (number != 0)
+		{
+			rest = number % 10;
+			div = number / 10;
+			rec_printNumber(div);
+			rest = rest + 48;
+			System.out(rest);
+		}
+		else ;
+		return 0;
+	}
+	
+	int fib(int i)
+	{
+		int a;
+		int b;
+		if (i == 0)
+		{
+			return i;
+		}
+		else
+		{
+			if (i == 1)
+			{
+				return 1;
+			}
+			else
+			{
+				a = i - 1;
+				b = i - 2;
+				return fib(a) + fib(b);
+			}
+		}
+	}
+}
+

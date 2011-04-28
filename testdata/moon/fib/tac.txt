@@ -1,0 +1,112 @@
+	start
+	FrSz, =, (c, 0)
+	call L0, 0
+	halt
+L0	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 0)
+	param (c, 4)
+	call L3, 1
+	(l, 12), =, Result
+	write (c, 8)
+	write (c, 12)
+	write (c, 16)
+	write (c, 20)
+	write (c, 24)
+	write (c, 28)
+	write (c, 32)
+	write (c, 36)
+	param (l, 12)
+	call L1, 1
+	write (c, 40)
+	(l, 16), ==, (l, 12), (c, 44)
+	if_false (l, 16) goto L5
+	write (c, 48)
+	write (c, 52)
+	write (c, 56)
+	write (c, 60)
+	write (c, 64)
+	goto L6
+L5	write (c, 68)
+	write (c, 72)
+	write (c, 76)
+	write (c, 80)
+	write (c, 84)
+L6L4	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+L1	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 4)
+	(l, 16), ==, (p, 12), (c, 88)
+	if_false (l, 16) goto L8
+	write (c, 92)
+	goto L9
+L8	param (p, 12)
+	call L2, 1
+L9	Result, =, (c, 96)
+	goto L7
+L7	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+L2	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 8)
+	(l, 24), !=, (p, 12), (c, 100)
+	if_false (l, 24) goto L11
+	(l, 16), %, (p, 12), (c, 104)
+	(l, 20), /, (p, 12), (c, 108)
+	param (l, 20)
+	call L2, 1
+	(l, 16), +, (l, 16), (c, 112)
+	write (l, 16)
+	goto L12
+L11L12	Result, =, (c, 116)
+	goto L10
+L10	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+L3	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 12)
+	(l, 24), ==, (p, 12), (c, 120)
+	if_false (l, 24) goto L14
+	Result, =, (p, 12)
+	goto L13
+	goto L15
+L14	(l, 24), ==, (p, 12), (c, 124)
+	if_false (l, 24) goto L16
+	Result, =, (c, 128)
+	goto L13
+	goto L17
+L16	(l, 16), -, (p, 12), (c, 132)
+	(l, 20), -, (p, 12), (c, 136)
+	param (l, 16)
+	call L3, 1
+	(l, 24), =, Result
+	param (l, 20)
+	call L3, 1
+	Result, =, Result
+	Result, +, (l, 24), Result
+	goto L13
+L17L15L13	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+f	24
+	24
+	32
+	32
+Size	0
+ST

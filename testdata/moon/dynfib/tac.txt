@@ -1,0 +1,110 @@
+	start
+	FrSz, =, (c, 0)
+	call L0, 0
+	halt
+L0	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 0)
+	param (c, 4)
+	call L1, 1
+	(l, 12), =, Result
+	write (c, 8)
+	write (c, 12)
+	write (c, 16)
+	write (c, 20)
+	write (c, 24)
+	write (c, 28)
+	write (c, 32)
+	write (c, 36)
+	write (c, 40)
+	param (l, 12)
+	call L2, 1
+	write (c, 44)
+	write (c, 48)
+	(l, 16), ==, (l, 12), (c, 52)
+	if_false (l, 16) goto L5
+	write (c, 56)
+	write (c, 60)
+	write (c, 64)
+	write (c, 68)
+	write (c, 72)
+	goto L6
+L5	write (c, 76)
+	write (c, 80)
+	write (c, 84)
+	write (c, 88)
+	write (c, 92)
+L6L4	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+L1	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 4)
+	(l, 16), +, TopSt, (c, 96)
+	(l, 16), [, (c, 104), (c, 100)
+	(l, 16), [, (c, 112), (c, 108)
+	(l, 820), =, (c, 116)
+L8	(l, 824), <=, (l, 820), (p, 12)
+	if_false (l, 824) goto L9
+	(l, 832), -, (l, 820), (c, 120)
+	(l, 832), (l, 16), [, (l, 832)
+	(l, 824), -, (l, 820), (c, 124)
+	(l, 824), (l, 16), [, (l, 824)
+	(l, 824), +, (l, 832), (l, 824)
+	(l, 16), [, (l, 820), (l, 824)
+	(l, 820), +, (l, 820), (c, 128)
+	goto L8
+L9	Result, (l, 16), [, (p, 12)
+	goto L7
+L7	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+L2	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 8)
+	(l, 16), ==, (p, 12), (c, 132)
+	if_false (l, 16) goto L11
+	write (c, 136)
+	goto L12
+L11	param (p, 12)
+	call L3, 1
+L12	Result, =, (c, 140)
+	goto L10
+L10	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+L3	TopSt, +, TopSt, FrSz
+	(l, 0), =, RetAdd
+	(l, 4), -, TopSt, FrSz
+	(l, 8), =, FrSz
+	FrSz, =, (f, 12)
+	(l, 24), !=, (p, 12), (c, 144)
+	if_false (l, 24) goto L14
+	(l, 16), %, (p, 12), (c, 148)
+	(l, 20), /, (p, 12), (c, 152)
+	param (l, 20)
+	call L3, 1
+	(l, 16), +, (l, 16), (c, 156)
+	write (l, 16)
+	goto L15
+L14L15	Result, =, (c, 160)
+	goto L13
+L13	FrSz, =, (l, 8)
+	RetAdd, =, (l, 0)
+	TopSt, =, (l, 4)
+	return
+f	24
+	836
+	24
+	32
+Size	0
+ST
