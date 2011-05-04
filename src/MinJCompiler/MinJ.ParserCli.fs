@@ -102,7 +102,7 @@ let Run inputPath =
 let Main() =
     let cmds = Environment.GetCommandLineArgs()
     if cmds.Length <> 2 then
-        printfn "usage: <assembly-file>"
+        printfn "usage: <input-file>"
     else
         Run <| Environment.GetCommandLineArgs().[1]
 Main()

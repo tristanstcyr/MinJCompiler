@@ -101,4 +101,4 @@ type Line with
 let write (out : TextWriter) lines =
     for line in lines do
         Line.ToStream out line
-        out.Write("\n")
+        out.Write("\r\n")
